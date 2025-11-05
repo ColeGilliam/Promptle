@@ -1,0 +1,19 @@
+{
+  "topic": "League of Legends",
+  "headers": ["Character", "Gender", "Region", "Role", "Release Year", "Species", "Difficulty"],
+  "answers": [
+    {
+      "name": "Ahri",
+      "values": ["Ahri", "Female", "Ionia", "Mage", "2011", "Vastaya", "Moderate"]
+    },
+    {
+      "name": "Yone",
+      "values": ["Yone", "Male", "Ionia", "Assassin", "2020", "Human", "Hard"]
+    },
+    {
+      "name": "Garen",
+      "values": ["Garen", "Male", "Demacia", "Fighter", "2010", "Human", "Easy"]
+    }
+  ],
+  "correctAnswer": "Ahri"
+}

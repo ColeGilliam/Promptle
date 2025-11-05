@@ -1,26 +1,56 @@
-.header-grid {
-  display: grid;
-  /*grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); Dynamic challenge */
-  grid-template-columns: 100px 100px 100px 100px 100px;
-  gap: 10px;
-  background-color: #f1f1f1;
-  padding: 10px;
-  border-radius: 10px;
+.promptle-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+  font-family: Arial, sans-serif;
 }
 
-.header-cell {
-  background: white;
-  text-align: center;
-  padding: 10px;
-  border-radius: 6px;
-  font-weight: bold;
-  box-shadow: 0 0 4px rgba(0,0,0,0.1);
+.headers {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
 }
-.cell {
-  background: white;
-  text-align: center;
-  padding: 10px;
-  border-radius: 6px;
+
+.header {
+  background-color: #eee;
+  border-radius: 5px;
+  padding: 10px 15px;
   font-weight: bold;
-  box-shadow: 0 0 4px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.guesses {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 700px;
+}
+
+.guess-row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.guess-cell {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 10px 15px;
+  text-align: center;
+  background-color: #f9f9f9;
+}
+
+.guess-input {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+select, button {
+  padding: 8px 12px;
+  font-size: 1rem;
 }

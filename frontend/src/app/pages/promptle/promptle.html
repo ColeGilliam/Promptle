@@ -1,31 +1,37 @@
-<link rel="stylesheet" type="text/css" href="promptle.css">
-<p>Promptle Demo</p>
+<div class="promptle-container">
+  <h1>{{ topic }} Promptle</h1>
 
-<p>GAME TOPIC: {{answer.topic}} </p>
+  <!-- Dropdown Input -->
+  <div class="guess-input">
+    <select [(ngModel)]="selectedGuess">
+      <option value="">-- Select a Guess --</option>
+      <option *ngFor="let answer of answers" [value]="answer.name">
+        {{ answer.name }}
+      </option>
+    </select>
+    <button (click)="onSubmitGuess()" [disabled]="!selectedGuess">
+      Submit Guess
+    </button>
+  </div>
 
-<!-- Controls -->
-<div class="controls">
-  <select>
-    <option value="" disabled selected>Select a character</option>
-    <option *ngFor="let e of list" [value]="e">{{ e.name }}</option>
-  </select>
-  <button>GO</button>
-</div>
-
-
-  <div class="header-grid">
-    <div *ngFor="let h of headers" class="header-cell">
-      {{ h.label }}
-    </div>
-
-    <div *ngFor="let h of headers" class="cell">
-      {{ h.key }}
+  <!-- Headers Row -->
+  <div class="headers">
+    <div class="header" *ngFor="let header of headers">
+      {{ header }}
     </div>
   </div>
-    
-  
 
-  
-    
-  
+  <!-- Guess Results -->
+  <div class="guesses">
+    <div *ngIf="submittedGuesses.length === 0">
+      <p>No guesses yet...</p>
+    </div>
 
+    <div class="guess-row" *ngFor="let guess of submittedGuesses">
+      <div class="guess-cell" *ngFor="let value of guess.values">
+        {{ value }}
+      </div>
+    </div>
+  </div>
+
+</div>
