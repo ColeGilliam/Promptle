@@ -14,24 +14,17 @@
     </button>
   </div>
 
-  <!-- Headers Row -->
-  <div class="headers">
-    <div class="header" *ngFor="let header of headers">
-      {{ header }}
-    </div>
-  </div>
 
-  <!-- Guess Results -->
-  <div class="guesses">
-    <div *ngIf="submittedGuesses.length === 0">
-      <p>No guesses yet...</p>
-    </div>
+  <!-- Game Grid -->
+  <div class="game-grid">
+    <div class="column" *ngFor="let header of headers; let i = index">
+      <!-- Header -->
+      <div class="header">{{ header }}</div>
 
-    <div class="guess-row" *ngFor="let guess of submittedGuesses">
-      <div class="guess-cell" *ngFor="let value of guess.values">
-        {{ value }}
+      <!-- Guess cells under each header -->
+      <div class="guess-cell" *ngFor="let guess of submittedGuesses" [ngStyle]="{ 'background-color': guess.colors[i] }">
+        {{ guess.values[i] }}
       </div>
     </div>
   </div>
-
 </div>
