@@ -1,18 +1,31 @@
+<link rel="stylesheet" type="text/css" href="promptle.css">
 <p>Promptle Demo</p>
 
 <p>GAME TOPIC: {{answer.topic}} </p>
 
-<select>
-  <option value="" disabled selected>Select a character</option>
-  <option *ngFor="let e of list" value="{{e}}">{{e.name}}</option>
-</select>
-<button (click)="guess()">GO</button>
+<!-- Controls -->
+<div class="controls">
+  <select>
+    <option value="" disabled selected>Select a character</option>
+    <option *ngFor="let e of list" [value]="e">{{ e.name }}</option>
+  </select>
+  <button>GO</button>
+</div>
 
-<table>
-  <thead>
-    <th *ngFor="let e of headers">{{e.label}}</th>
-  </thead>
-  <tbody>
-    <td>{{statement}}</td>
-  </tbody>
-</table>
+
+  <div class="header-grid">
+    <div *ngFor="let h of headers" class="header-cell">
+      {{ h.label }}
+    </div>
+
+    <div *ngFor="let h of headers" class="cell">
+      {{ h.key }}
+    </div>
+  </div>
+    
+  
+
+  
+    
+  
+

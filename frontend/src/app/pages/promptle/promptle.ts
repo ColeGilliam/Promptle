@@ -1,18 +1,15 @@
 import { Component } from '@angular/core';
-import { Box } from "../../box/box";
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 
 @Component({
   selector: 'app-promptle',
-  imports: [Box, CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './promptle.html',
   styleUrl: './promptle.css',
 })
 export class Promptle {
-
-  statement: string = 'first';
-
   list = [
     {
       name: "Walter White",
@@ -39,9 +36,15 @@ export class Promptle {
     },
     {
       key: "clue1", label: "Occupation"
-    }
+    },
+    {
+      key: "clue2", label: "blank"
+    },
+    {
+      key: "clue3", label: "blank"
+    },
+    {
+      key: "clue4", label: "blank"
+    },
   ];
-  guess(){
-    this.statement = "new";
-  }
 }

@@ -1,0 +1,26 @@
+.header-grid {
+  display: grid;
+  /*grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); Dynamic challenge */
+  grid-template-columns: 100px 100px 100px 100px 100px;
+  gap: 10px;
+  background-color: #f1f1f1;
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.header-cell {
+  background: white;
+  text-align: center;
+  padding: 10px;
+  border-radius: 6px;
+  font-weight: bold;
+  box-shadow: 0 0 4px rgba(0,0,0,0.1);
+}
+.cell {
+  background: white;
+  text-align: center;
+  padding: 10px;
+  border-radius: 6px;
+  font-weight: bold;
+  box-shadow: 0 0 4px rgba(0,0,0,0.1);
+}
