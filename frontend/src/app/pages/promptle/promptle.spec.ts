@@ -1,18 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { Promptle } from './promptle';
+import { PromptleComponent } from './promptle';
 
-describe('Promptle', () => {
-  let component: Promptle;
-  let fixture: ComponentFixture<Promptle>;
+describe('PromptleComponent', () => {
+  let component: PromptleComponent;
+  let fixture: ComponentFixture<PromptleComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Promptle]
-    })
-    .compileComponents();
+      imports: [PromptleComponent]
+    }).compileComponents();
 
-    fixture = TestBed.createComponent(Promptle);
+    fixture = TestBed.createComponent(PromptleComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
