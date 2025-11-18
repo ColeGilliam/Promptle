@@ -1,18 +1,18 @@
 {
   "topic": "League of Legends",
-  "headers": ["Character", "Gender", "Region", "Role", "Release Year", "Species", "Difficulty", "target"],
+  "headers": ["Character", "Gender", "Region", "Role", "Release Year", "Species", "Difficulty"],
   "answers": [
     {
       "name": "Ahri",
-      "values": ["Ahri", "Female", "Ionia", "Mage", "2011", "Vastaya", "Moderate", "Ranged"]
+      "values": ["Ahri", "Female", "Ionia", "Mage", "2011", "Vastaya", "Moderate"]
     },
     {
       "name": "Yone",
-      "values": ["Yone", "Male", "Ionia", "Assassin, Mage", "2011", "Human", "Hard", "Melee"]
+      "values": ["Yone", "Male", "Ionia", "Assassin, Mage", "2011", "Human", "Hard"]
     },
     {
       "name": "Garen",
-      "values": ["Garen", "Male", "Demacia", "Fighter", "2010", "Human", "Easy", "Melee"]
+      "values": ["Garen", "Male", "Demacia", "Fighter", "2010", "Human", "Easy"]
     }
   ],
   "correctAnswer": "Ahri"
