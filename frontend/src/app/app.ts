@@ -1,12 +1,20 @@
 import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { AuthService } from '@auth0/auth0-angular';
+import { CommonModule, NgIf, AsyncPipe, JsonPipe } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  standalone: true,
+  imports: [CommonModule, NgIf, AsyncPipe, JsonPipe, RouterOutlet],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
 export class App {
   protected readonly title = signal('frontend');
+  constructor(public auth: AuthService, private http: HttpClient) {}
+  get windowRef() {
+    return window;
+  }
 }
