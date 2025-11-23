@@ -1,32 +1,19 @@
-<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
-<!-- * * * * * * * * * * * The content below * * * * * * * * * * * -->
-<!-- * * * * * * * * * * is only a placeholder * * * * * * * * * * -->
-<!-- * * * * * * * * * * and can be replaced.  * * * * * * * * * * -->
-<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
-<!-- * * * * * * * * * Delete the template below * * * * * * * * * -->
-<!-- * * * * * * * to get started with your project! * * * * * * * -->
-<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
+<nav class="navbar">
+  <!-- Login Button-->
+  <button (click)="auth.loginWithRedirect()">
+    Login
+  </button>
+    
+  <!-- Logout Button-->
+  <button *ngIf="auth.isAuthenticated$ | async"
+          (click)="auth.logout({ logoutParams: { returnTo: windowRef.location.origin } })">
+    Logout
+  </button>
 
-<button (click)="auth.loginWithRedirect()">
-  Login
-</button>
-  
-
-<button *ngIf="auth.isAuthenticated$ | async"
-        (click)="auth.logout({ logoutParams: { returnTo: windowRef.location.origin } })">
-  Logout
-</button>
-
-<div *ngIf="auth.isAuthenticated$ | async">
-  <p>Welcome, {{ (auth.user$ | async)?.email }}</p>
-</div>
-<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
-<!-- * * * * * * * * * * * The content above * * * * * * * * * * * * -->
-<!-- * * * * * * * * * * is only a placeholder * * * * * * * * * * * -->
-<!-- * * * * * * * * * * and can be replaced.  * * * * * * * * * * * -->
-<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
-<!-- * * * * * * * * * * End of Placeholder  * * * * * * * * * * * * -->
-<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
+  <div *ngIf="auth.isAuthenticated$ | async">
+    <p>Welcome, {{ (auth.user$ | async)?.email }}</p>
+  </div>
+</nav>
 
 
-<router-outlet />
+<router-outlet /><router-outlet/>

@@ -1,0 +1,96 @@
+.promptle-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  font-family: Arial, sans-serif;
+}
+
+.guess-input {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+select, button {
+  padding: 8px 12px;
+  font-size: 1rem;
+}
+
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+  max-width: 90%;
+  width: 100%;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px; /* spacing between cells in a column */
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.header {
+  font-weight: bold;
+  background-color: #eee;
+  padding: 10px;
+  border-radius: 6px;
+  text-align: center;
+  height: 40px;
+}
+
+.guess-cell {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 8px;
+  text-align: center;
+  background-color: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Color palette */
+.guess-cell[style*="green"] {
+  background-color: #4caf50 !important; /* Green */
+}
+
+.guess-cell[style*="yellow"] {
+  background-color: #ffeb3b !important; /* Yellow */
+  color: #000;
+}
+
+.guess-cell[style*="gray"] {
+  background-color: #9e9e9e !important; /* Gray */
+}
+
+/* ===== NEW: backend preview styling ===== */
+
+.demo-grid {
+  width: 100%;
+  max-width: 900px;
+  margin-bottom: 20px;
+}
+
+.demo-grid h2 {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+}
+
+.single-row .guess-cell {
+  font-weight: 500;
+}
+
+/* backend preview cells so they look a bit different from guesses */
+.backend-cell {
+  background-color: #f5f5f5;
+}
+
+/* generic error styling for backend load errors */
+.error {
+  color: red;
+  font-weight: bold;
+}
