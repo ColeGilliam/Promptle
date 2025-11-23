@@ -159,7 +159,35 @@ async function startServer() {
         res.status(400).json({ error: "Invalid id" });
       }
     });
+    // Route to register user
+    app.post('/api/users/register', async (req, res) => {
+      const { auth0_sub, email } = req.body;
 
+      if (!auth0_sub || !email) {
+        return res.status(400).send('Missing user info');
+      }
+
+      const users = db.collection('users');
+      try {
+        const result = await users.updateOne(
+          { auth0_sub }, // find by auth0_sub
+          {
+            $set: { email, updatedAt: new Date() },
+            $setOnInsert: { createdAt: new Date() },
+          },
+          { upsert: true } // creates the user if not found
+        );
+
+        if (result.upsertedCount > 0) {
+          return res.status(201).send('User created');
+        } else {
+          return res.status(200).send('User already exists / updated');
+        }
+      } catch (err) {
+        console.error('MongoDB error:', err);
+        return res.status(500).send('Server error');
+      }
+    });
     // Start HTTP server
     // TODO (future): when you deploy, this port will likely come from the
     // hosting platform (Render, Railway, etc.) via process.env.PORT.
