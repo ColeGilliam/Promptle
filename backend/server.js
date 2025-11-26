@@ -1,20 +1,18 @@
 import dotenv from 'dotenv';
-dotenv.config(); // Load environment variables from .env (Mongo URI, future API keys, etc.)
+dotenv.config();
 
 import express from 'express';
 import cors from 'cors';
 import { MongoClient, ServerApiVersion, ObjectId } from 'mongodb';
 
 const app = express();
-app.use(cors());           // Allow frontend (localhost:4200 etc.) to call this API
-app.use(express.json());   // Parse JSON request bodies
+app.use(cors());
+app.use(express.json());
 
 // Mongo URI from .env (keeps credentials out of source code)
 // TODO (future): add a separate DB/cluster or URI for production vs. development.
 const uri = process.env.MONGODB_URI;
 
-// Create the MongoDB client
-// This is the shared MongoDB connection for the whole server.
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -35,28 +33,37 @@ function prettyLabel(key) {
 
 async function startServer() {
   try {
-    // Connect to MongoDB once and keep connection open
     await client.connect();
     console.log("Connected to MongoDB!");
 
-    // Select your database and collection
-    // NOTE: "promptle" DB and "J_Demo" collection are the current demo setup.
-    // TODO (future): if you add more collections (e.g., prompts, cached topics),
-    // create them here too, e.g. const prompts = db.collection("Prompts");
     const db = client.db("promptle");
-    const demoCollection = db.collection("J_Demo");
+    const guessesCollection = db.collection("guesses");
+    const topicCollection = db.collection("topic");
 
-    // Test route
-    // Quick health check so you can see the backend is alive.
     app.get("/", (req, res) => {
       res.send("Backend is running!");
     });
 
-    // === YOUR TASK ENDPOINT ===
-    // Get one random champion from J_Demo (raw MongoDB document).
-    // Currently used mainly for debugging / demo.
-    // TODO (future): If you want a "random challenge" endpoint, you can
-    // standardize the shape or add filters here.
+    app.get("/api/topics/:topicId/headers", async (req, res) => {
+      try {
+        const topicId = Number(req.params.topicId);
+        if (isNaN(topicId)) {
+          return res.status(400).json({ error: "Invalid topicId" });
+        }
+
+        const topic = await topicCollection.findOne({ topicId: topicId });
+
+        if (!topic) {
+          return res.status(404).json({ error: "Topic Not Found" });
+        }
+
+        res.json({ headers: topic.headers });
+      } catch (err) {
+        console.error("Error fetching headers:", err);
+        res.status(500).json({ error: "Server error" });
+      }
+    });
+
     app.get("/api/demo/one/random", async (_req, res) => {
       try {
         const docs = await demoCollection
