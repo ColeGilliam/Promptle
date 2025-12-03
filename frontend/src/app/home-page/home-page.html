@@ -1,5 +1,39 @@
-<div style="justify-content: center;">
-  <h1 style="text-align: center;">Game Select</h1>
-  <mat-card-header> This is the card header </mat-card-header>
-  <mat-card>This is the dropdown select </mat-card>
+<h1>Game Setup</h1>
+<div class="topic-selection">
+
+  <div class="columns">
+
+    <!-- LEFT -->
+    <div class="column">
+      <h2>Choose from Popular Topics</h2>
+
+      <mat-form-field appearance="fill" class="topic-field">
+        <mat-label>Select a topic</mat-label>
+        <mat-select [(value)]="selectedTopic">
+          <mat-option *ngFor="let topic of allTopics" [value]="topic">
+            {{ topic }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <p class="subtext">
+        This list will generate a game with no down time
+        as it pulls from the MongoDB database
+      </p>
+
+      <button matButton="filled">GENERATE</button>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="column">
+      <h2>Create Unique</h2>
+
+      <input type="text" class="text-input">
+
+      <p class="subtext">
+        Placeholder for the AI generated game, coming soon
+      </p>
+    </div>
+
+  </div>
 </div>
