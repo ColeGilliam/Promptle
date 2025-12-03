@@ -28,7 +28,8 @@ export class JDemoService {
   // Base URL for your backend API
   // TODO (future): when you deploy, change this to your production URL,
   // or read it from an environment file (environment.ts).
-  private baseUrl = 'http://localhost:3001/api/demo';
+
+  private baseUrl = 'http://localhost:3001/api/demo'; //Move to appsettings
 
   constructor(private http: HttpClient) {}
 

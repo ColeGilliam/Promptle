@@ -31,6 +31,7 @@ function prettyLabel(key) {
     .replace(/\b\w/g, c => c.toUpperCase());
 }
 
+//Start Server
 async function startServer() {
   try {
     await client.connect();
@@ -60,7 +61,22 @@ async function startServer() {
         res.json({ headers: topic.headers });
       } catch (err) {
         console.error("Error fetching headers:", err);
-        res.status(500).json({ error: "Server error" });
+        res.status(500).json({ error: "Server error 3" });
+      }
+    });
+
+    //Get popular topics list 
+    app.get("/api/popularTopics/list", async (_req, res) =>{
+      try{
+        const topicList = await topicCollection.find({}).toArray();
+        if(!topicList.length){
+          return res.status(404).json({error: "No values Found for topics"});
+        }
+        const topicNames = topicList.map(t => t.topicName);
+        res.json(topicNames)
+      } catch (err){
+        console.error(err);
+        res.status(500).json({error: "Server error Popular topics"})
       }
     });
 
@@ -77,9 +93,11 @@ async function startServer() {
         res.json(docs[0]);
       } catch (err) {
         console.error(err);
-        res.status(500).json({ error: "Server error" });
+        res.status(500).json({ error: "Server error 2" });
       }
     });
+
+    
 
     // Game data endpoint: returns topic, headers, answers[], correctAnswer
     //
@@ -146,7 +164,7 @@ async function startServer() {
         res.json({ topic, headers, answers, correctAnswer });
       } catch (err) {
         console.error("Error building game-data:", err);
-        res.status(500).json({ error: "Server error" });
+        res.status(500).json({ error: "Server error 1" });
       }
     });
 
