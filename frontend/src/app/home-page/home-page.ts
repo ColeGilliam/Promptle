@@ -9,7 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatChipsModule } from '@angular/material/chips';
 import { FormsModule } from '@angular/forms';
-import { MatButton } from '@angular/material/button';
+import { MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'app-home-page',
@@ -21,7 +21,7 @@ import { MatButton } from '@angular/material/button';
     MatFormFieldModule,
     MatSelectModule,
     MatChipsModule,
-    MatButton
+    MatButtonModule
   ],
   templateUrl: './home-page.html',
   styleUrls: ['./home-page.css'],

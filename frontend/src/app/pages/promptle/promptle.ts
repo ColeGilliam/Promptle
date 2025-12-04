@@ -103,12 +103,10 @@ export class PromptleComponent implements OnInit {
   }
 
   // Called when the user clicks "Submit Guess".
-  // This uses the same logic you had before, but now "answers" and
-  // "correctAnswer" come from the database instead of static JSON.
   //
   // TODO (future, ChatGPT integration):
   //  - If ChatGPT starts producing more complex fields (e.g., ranges, tags,
-  //    numeric hints), you might adjust the comparison rules here:
+  //    numeric hints), adjust the comparison rules here:
   //      * different colors for different types of partial matches
   //      * extra visual hints based on ChatGPT-provided metadata.
   onSubmitGuess() {
