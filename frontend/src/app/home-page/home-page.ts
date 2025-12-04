@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TopicsListService } from '../services/topics-list';
+import { TopicsListService, TopicInfo } from '../services/topics-list';
+import { Router } from '@angular/router';
 
 // Angular Material modules
 import { MatCardModule } from '@angular/material/card';
@@ -9,8 +10,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatChipsModule } from '@angular/material/chips';
 import { FormsModule } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
-
-
 
 @Component({
   selector: 'app-home-page',
@@ -29,10 +28,11 @@ import { MatButton } from '@angular/material/button';
 })
 export class HomePage implements OnInit {
   topicNames: string[] = [];
-  allTopics: string[] = [];       // optional, for full dropdown
-  selectedTopic: string | null = null;
+  allTopics: TopicInfo[] = [];   // this should be an array of TopicInfo
+  selectedTopic: TopicInfo | null = null;
 
-  constructor(private topicsService: TopicsListService) {}
+
+  constructor(private topicsService: TopicsListService, private router: Router) {}
 
   ngOnInit() {
     this.getTopics();
@@ -40,12 +40,29 @@ export class HomePage implements OnInit {
 
   getTopics() {
     this.topicsService.getTopicsList().subscribe({
-      next: (data: string[]) => {
+      next: (data: TopicInfo[]) => {
         console.log('Topics data from backend:', data);
-        this.topicNames = data;
-        this.allTopics = data; // if using same list for dropdown
+
+        this.allTopics = data;
+
+        this.topicNames = data.map(t => t.topicName);
+
+        const topicIds = data.map(t => t.topicId);
       },
       error: (err) => console.error(err)
     });
   }
+
+  startGame(){
+    if(!this.selectedTopic) return;
+
+    this.router.navigate(['/game'], {
+      queryParams: {
+        id: this.selectedTopic.topicId,
+        name: this.selectedTopic.topicName
+      }
+    });
+  }
+
 }
+

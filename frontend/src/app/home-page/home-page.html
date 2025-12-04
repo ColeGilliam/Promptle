@@ -1,4 +1,8 @@
-<h1>Game Setup</h1>
+<div class="logoTitle">
+  <img src="PromptleLogoTransparent.png">
+</div>
+
+
 <div class="topic-selection">
 
   <div class="columns">
@@ -11,7 +15,7 @@
         <mat-label>Select a topic</mat-label>
         <mat-select [(value)]="selectedTopic">
           <mat-option *ngFor="let topic of allTopics" [value]="topic">
-            {{ topic }}
+            {{ topic.topicName }}
           </mat-option>
         </mat-select>
       </mat-form-field>
@@ -21,14 +25,16 @@
         as it pulls from the MongoDB database
       </p>
 
-      <button matButton="filled">GENERATE</button>
+      <button matButton="filled"
+      [disabled]="!selectedTopic"
+      (click)="startGame()">GENERATE</button>
     </div>
 
     <!-- RIGHT -->
     <div class="column">
-      <h2>Create Unique</h2>
+      <h2>Create Unique (disabled)</h2>
 
-      <input type="text" class="text-input">
+      <input type="text" class="text-input" [disabled]="true">
 
       <p class="subtext">
         Placeholder for the AI generated game, coming soon

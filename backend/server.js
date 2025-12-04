@@ -65,15 +65,19 @@ async function startServer() {
       }
     });
 
-    //Get popular topics list 
+    //Get popular topics list with ID
     app.get("/api/popularTopics/list", async (_req, res) =>{
       try{
         const topicList = await topicCollection.find({}).toArray();
         if(!topicList.length){
           return res.status(404).json({error: "No values Found for topics"});
         }
-        const topicNames = topicList.map(t => t.topicName);
-        res.json(topicNames)
+        const result = topicList.map(t => ({
+          topicId: t.topicId,
+          topicName: t.topicName
+        }));
+        
+        res.json(result);
       } catch (err){
         console.error(err);
         res.status(500).json({error: "Server error Popular topics"})

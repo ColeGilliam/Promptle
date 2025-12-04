@@ -2,6 +2,11 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+
+export interface TopicInfo {
+  topicId: number;
+  topicName: string;
+}
 @Injectable({
   providedIn: 'root'
 })
@@ -10,7 +15,7 @@ export class TopicsListService {
 
   constructor(private http: HttpClient) {}
 
-  getTopicsList(): Observable<string[]> {
-    return this.http.get<string[]>(`${this.baseUrl}/popularTopics/list`);
+  getTopicsList(): Observable<TopicInfo[]> {
+    return this.http.get<TopicInfo[]>(`${this.baseUrl}/popularTopics/list`);
   }
 }
