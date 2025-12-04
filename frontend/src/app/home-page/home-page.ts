@@ -31,11 +31,19 @@ export class HomePage implements OnInit {
   allTopics: TopicInfo[] = [];   // this should be an array of TopicInfo
   selectedTopic: TopicInfo | null = null;
 
+  // FAKE LOG IN STATE FOR UI
+  isLoggedIn = false;
+  displayName = 'future username display';
 
   constructor(private topicsService: TopicsListService, private router: Router) {}
 
   ngOnInit() {
     this.getTopics();
+  }
+
+  // TOGGLES FAKE LOG IN STATE
+  toggleLogin() {
+    this.isLoggedIn = !this.isLoggedIn;
   }
 
   getTopics() {
@@ -65,4 +73,3 @@ export class HomePage implements OnInit {
   }
 
 }
-
