@@ -3,198 +3,181 @@ dotenv.config();
 
 import express from 'express';
 import cors from 'cors';
-import { MongoClient, ServerApiVersion, ObjectId } from 'mongodb';
+import { MongoClient, ServerApiVersion } from 'mongodb';
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Mongo URI from .env (keeps credentials out of source code)
-// TODO (future): add a separate DB/cluster or URI for production vs. development.
-const uri = process.env.MONGODB_URI;
 
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
+const uri = process.env.MONGODB_URI;
+const port = process.env.PORT || 3001;
+
+// Global references
+let topicCollection;
+let guessesCollection;
+
+// ROUTES
+
+app.get("/", (_req, res) => {
+  res.send("Backend is running!");
+});
+
+app.get("/api/topics/:topicId/headers", async (req, res) => {
+  try {
+    const topicId = Number(req.params.topicId);
+
+    if (isNaN(topicId)) {
+      return res.status(400).json({ error: "Invalid topicId" });
+    }
+
+    const topic = await topicCollection.findOne({ topicId });
+
+    if (!topic) {
+      return res.status(404).json({ error: "Topic Not Found" });
+    }
+
+    res.json({ headers: topic.headers });
+
+  } catch (err) {
+    console.error("Error fetching headers:", err);
+    res.status(500).json({ error: "Server error 3" });
   }
 });
 
-// Helper: Turn "releaseYear" -> "Release Year", "target" -> "Target"
-function prettyLabel(key) {
-  return key
-    .replace(/_/g, ' ')
-    .replace(/([A-Z])/g, ' $1')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .replace(/\b\w/g, c => c.toUpperCase());
-}
+app.get("/api/popularTopics/list", async (_req, res) => {
+  try {
+    const topicList = await topicCollection.find({}).toArray();
 
-//Start Server
+    if (!topicList.length) {
+      return res.status(404).json({ error: "No topics found" });
+    }
+
+    const result = topicList.map(t => ({
+      topicId: t.topicId,
+      topicName: t.topicName
+    }));
+
+    res.json(result);
+
+  } catch (err) {
+    console.error("Error fetching topics:", err);
+    res.status(500).json({ error: "Server error Popular topics" });
+  }
+});
+
+//Query Param 
+//EX:
+//localhost:3001/api/game/start?topicId=1
+app.get("/api/game/start", async (req, res) => {
+  try {
+    const topicId = Number(req.query.topicId);
+    const includeAnswer = req.query.includeAnswer === "true";
+
+    if (isNaN(topicId)) {
+      return res.status(400).json({ error: "Invalid or missing topicId" });
+    }
+    
+
+    // --- fetch topic meta: name + headers ---
+    const topic = await topicCollection.findOne({ topicId });
+
+    if (!topic) {
+      return res.status(404).json({ error: "Topic not found" });
+    }
+
+    const headers = topic.headers || [];
+    const topicName = topic.topicName || "Unknown Topic";
+
+    if (!headers.length) {
+      return res.status(500).json({ error: "Topic has no headers defined" });
+    }
+
+    // --- fetch all guesses for topic ---
+    const docs = await guessesCollection
+      .find({ topicId })
+      .toArray();
+
+    if (!docs.length) {
+      return res.status(404).json({ error: "No guesses found for topic" });
+    }
+
+    // --- pick correct answer randomly ---
+    const correctDoc = docs[Math.floor(Math.random() * docs.length)];
+    const correctName = correctDoc.name;
+
+    // --- build the answers array with normalized values ---
+    const answers = docs.map(doc => {
+      const values = headers.map(h => {
+        const val = doc[h];
+
+        if (Array.isArray(val)) return val.join(", ");
+        if (val === undefined || val === null) return "";
+        return String(val);
+      });
+
+      return {
+        name: doc.name,
+        values
+      };
+    });
+
+    // --- extract options list (names only) ---
+    const options = answers.map(a => a.name);
+
+    // --- optionally include the correct answer ---
+    const round = {
+      options,
+      answers
+    };
+
+    if (includeAnswer) {
+      round.correctAnswer = correctName;
+    }
+
+    // --- build final payload ---
+    const payload = {
+      topic: {
+        id: topicId,
+        name: topicName,
+        headers
+      },
+      round
+    };
+
+    res.json(payload);
+
+  } catch (err) {
+    console.error("Error building game data:", err);
+    res.status(500).json({ error: "Server error building game data" });
+  }
+});
+
+// SERVER + DB INIT
+
 async function startServer() {
   try {
+    const client = new MongoClient(uri, {
+      serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true
+      }
+    });
+
     await client.connect();
     console.log("Connected to MongoDB!");
 
     const db = client.db("promptle");
-    const guessesCollection = db.collection("guesses");
-    const topicCollection = db.collection("topic");
 
-    app.get("/", (req, res) => {
-      res.send("Backend is running!");
-    });
+    // Assign collections
+    topicCollection = db.collection("topic");
+    guessesCollection = db.collection("guesses");
 
-    app.get("/api/topics/:topicId/headers", async (req, res) => {
-      try {
-        const topicId = Number(req.params.topicId);
-        if (isNaN(topicId)) {
-          return res.status(400).json({ error: "Invalid topicId" });
-        }
 
-        const topic = await topicCollection.findOne({ topicId: topicId });
-
-        if (!topic) {
-          return res.status(404).json({ error: "Topic Not Found" });
-        }
-
-        res.json({ headers: topic.headers });
-      } catch (err) {
-        console.error("Error fetching headers:", err);
-        res.status(500).json({ error: "Server error 3" });
-      }
-    });
-
-    //Get popular topics list with ID
-    app.get("/api/popularTopics/list", async (_req, res) =>{
-      try{
-        const topicList = await topicCollection.find({}).toArray();
-        if(!topicList.length){
-          return res.status(404).json({error: "No values Found for topics"});
-        }
-        const result = topicList.map(t => ({
-          topicId: t.topicId,
-          topicName: t.topicName
-        }));
-        
-        res.json(result);
-      } catch (err){
-        console.error(err);
-        res.status(500).json({error: "Server error Popular topics"})
-      }
-    });
-
-    app.get("/api/demo/one/random", async (_req, res) => {
-      try {
-        const docs = await demoCollection
-          .aggregate([{ $sample: { size: 1 } }])
-          .toArray();
-
-        if (!docs.length) {
-          return res.status(404).json({ error: "No documents found" });
-        }
-
-        res.json(docs[0]);
-      } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "Server error 2" });
-      }
-    });
-
-    
-
-    // Game data endpoint: returns topic, headers, answers[], correctAnswer
-    //
-    // This endpoint returns data in the same shape as the old mock-data.json:
-    // {
-    //   topic: string,
-    //   headers: string[],
-    //   answers: [{ name: string, values: string[] }],
-    //   correctAnswer: string
-    // }
-    //
-    // The frontend uses this to:
-    //  - fill the dropdown (answers[].name)
-    //  - fill the grid columns (headers + answers[].values)
-    //  - know which answer is the correct one (correctAnswer)
-    //
-    // TODO (future, ChatGPT integration):
-    //  - Instead of always using J_Demo, you can:
-    //      * accept a "topic" or "prompt" from the client (req.query or req.body)
-    //      * call ChatGPT to generate a topic + list of entities
-    //      * cache those entities & topic in MongoDB
-    //      * return the same { topic, headers, answers, correctAnswer } shape.
-    //  - This endpoint is the ideal place to add "if cached → read from DB,
-    //    else → call ChatGPT + store result".
-    app.get("/api/demo/game-data", async (_req, res) => {
-      try {
-        const docs = await demoCollection.find({}).toArray();
-        if (!docs.length) {
-          return res.status(404).json({ error: "No documents found in J_Demo" });
-        }
-
-        // Use the first doc to determine field order
-        const sample = docs[0];
-
-        // Use all keys except _id for the game fields
-        const fields = Object.keys(sample).filter((k) => k !== "_id");
-
-        // Headers: pretty labels of those keys
-        const headers = fields.map((key) => prettyLabel(key));
-
-        // Answers: same shape as your mock-data.json
-        const answers = docs.map((doc) => ({
-          // what shows in dropdown
-          // NOTE: Right now we assume "character" exists for display. If you switch
-          // to other topics (e.g., countries, movies), you can swap this to
-          // doc.name or doc.title, etc.
-          name: doc.character ?? String(doc[fields[0]] ?? "Unknown"),
-          // what fills each column in the grid
-          values: fields.map((f) => String(doc[f] ?? ""))
-        }));
-
-        // Pick a random correct answer from docs
-        // TODO (future): If you want deterministic "daily" puzzles, replace this
-        // random choice with a seed based on the date or a given puzzle ID.
-        const randomDoc = docs[Math.floor(Math.random() * docs.length)];
-        const correctAnswer =
-          randomDoc.character ?? String(randomDoc[fields[0]] ?? "Unknown");
-
-        // Topic label for the UI
-        // TODO (future): change this to match the current category (e.g., "Movie Guess",
-        // "Country Guess") or pull from a "topic" field in the DB/ChatGPT response.
-        const topic = "Champion Guess";
-
-        res.json({ topic, headers, answers, correctAnswer });
-      } catch (err) {
-        console.error("Error building game-data:", err);
-        res.status(500).json({ error: "Server error 1" });
-      }
-    });
-
-    // Optional: get by id if needed later
-    //
-    // Currently unused by the Promptle UI, but this can be helpful for
-    // admin/debug tools (e.g., view a specific doc in J_Demo).
-    // TODO (future): You can repurpose this route for editing/deleting
-    // specific entries from an admin page.
-    app.get("/api/demo/:id", async (req, res) => {
-      try {
-        const id = req.params.id;
-        const doc = await demoCollection.findOne({ _id: new ObjectId(id) });
-        if (!doc) return res.status(404).json({ error: "Not found" });
-        res.json(doc);
-      } catch (err) {
-        res.status(400).json({ error: "Invalid id" });
-      }
-    });
-
-    // Start HTTP server
-    // TODO (future): when you deploy, this port will likely come from the
-    // hosting platform (Render, Railway, etc.) via process.env.PORT.
-    const port = process.env.PORT || 3001;
+    // Start server
     app.listen(port, () => {
-      console.log(`Server is running at http://localhost:${port}`);
+      console.log(`Server running at http://localhost:${port}`);
     });
 
   } catch (err) {
@@ -203,4 +186,4 @@ async function startServer() {
   }
 }
 
-startServer(); // Entry point for starting the backend
+startServer();
