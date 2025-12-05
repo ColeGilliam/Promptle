@@ -77,7 +77,6 @@ app.get("/api/game/start", async (req, res) => {
     if (isNaN(topicId)) {
       return res.status(400).json({ error: "Invalid or missing topicId" });
     }
-    
 
     // --- fetch topic meta: name + headers ---
     const topic = await topicCollection.findOne({ topicId });
@@ -94,23 +93,16 @@ app.get("/api/game/start", async (req, res) => {
     }
 
     // --- fetch all guesses for topic ---
-    const docs = await guessesCollection
-      .find({ topicId })
-      .toArray();
+    const docs = await guessesCollection.find({ topicId }).toArray();
 
     if (!docs.length) {
       return res.status(404).json({ error: "No guesses found for topic" });
     }
 
-    // --- pick correct answer randomly ---
-    const correctDoc = docs[Math.floor(Math.random() * docs.length)];
-    const correctName = correctDoc.name;
-
-    // --- build the answers array with normalized values ---
+    // --- build the answers array ---
     const answers = docs.map(doc => {
       const values = headers.map(h => {
         const val = doc[h];
-
         if (Array.isArray(val)) return val.join(", ");
         if (val === undefined || val === null) return "";
         return String(val);
@@ -122,36 +114,23 @@ app.get("/api/game/start", async (req, res) => {
       };
     });
 
-    // --- extract options list (names only) ---
-    const options = answers.map(a => a.name);
+    // --- pick a random correct answer ---
+    const correctAnswer = answers[Math.floor(Math.random() * answers.length)]?.name;
 
-    // --- optionally include the correct answer ---
-    const round = {
-      options,
-      answers
-    };
-
-    if (includeAnswer) {
-      round.correctAnswer = correctName;
-    }
-
-    // --- build final payload ---
-    const payload = {
-      topic: {
-        id: topicId,
-        name: topicName,
-        headers
-      },
-      round
-    };
-
-    res.json(payload);
+    // --- return normalized JSON matching AI structure ---
+    res.json({
+      topic: topicName,
+      headers,
+      answers,
+      correctAnswer
+    });
 
   } catch (err) {
-    console.error("Error building game data:", err);
-    res.status(500).json({ error: "Server error building game data" });
+    console.error("Error starting game:", err);
+    res.status(500).json({ error: "Server error starting game" });
   }
 });
+
 
 // SERVER + DB INIT
 
