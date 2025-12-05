@@ -197,6 +197,36 @@ async function startServer() {
       console.log(`Server is running at http://localhost:${port}`);
     });
 
+    app.post('/api/auth-user', async (req, res) => {
+      const { auth0Id, email, name} = req.body;
+
+      if (!auth0Id) return res.status(400).json({ error: 'Missing auth0Id' });
+
+      const users = db.collection('users');
+
+      // Check if user already exists
+      const existing = await users.findOne({ auth0Id });
+
+      if (existing) {
+        await users.updateOne(
+          { auth0Id },
+          { $set: { lastLogin: new Date() } }
+        );
+        return res.json({ status: 'existing-user-updated' });
+      }
+
+      // Create new user
+      await users.insertOne({
+        auth0Id,
+        email,
+        name,
+        createdAt: new Date(),
+        lastLogin: new Date()
+      });
+
+      res.json({ status: 'new-user-created' });
+    });
+
   } catch (err) {
     console.error("Error starting server:", err);
     process.exit(1);

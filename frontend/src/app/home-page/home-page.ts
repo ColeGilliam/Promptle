@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TopicsListService, TopicInfo } from '../services/topics-list';
 import { Router } from '@angular/router';
+import { AuthenticationService } from '../services/authentication.service';
 
 // Angular Material modules
 import { MatCardModule } from '@angular/material/card';
@@ -35,15 +36,47 @@ export class HomePage implements OnInit {
   isLoggedIn = false;
   displayName = 'future username display';
 
-  constructor(private topicsService: TopicsListService, private router: Router) {}
+  constructor(private topicsService: TopicsListService, private router: Router, private auth: AuthenticationService) {}
 
   ngOnInit() {
     this.getTopics();
+    // Subscribe to Auth0's real authentication state
+    this.auth.isAuthenticated$.subscribe((status) => {
+      this.isLoggedIn = status;
+    });
+
+    this.auth.user$.subscribe((user) => {
+      if (user) {
+        this.displayName = user.name ?? '';
+
+        // Send user to backend
+        this.registerUser(user);
+      }
+    });
+  }
+
+  registerUser(user: any) {
+    fetch('http://localhost:3001/api/auth-user', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+          auth0Id: user.sub,
+          email: user.email,
+          name: user.name,
+          picture: user.picture
+        })
+      });
   }
 
   // TOGGLES FAKE LOG IN STATE
   toggleLogin() {
-    this.isLoggedIn = !this.isLoggedIn;
+    if (this.isLoggedIn) {
+      this.auth.logout();
+    } else {
+      this.auth.login();
+    }
   }
 
   getTopics() {
