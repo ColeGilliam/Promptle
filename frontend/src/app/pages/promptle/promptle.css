@@ -6,6 +6,55 @@
   font-family: Arial, sans-serif;
 }
 
+.ai-generator {
+  width: 100%;
+  max-width: 720px;
+  background: #f8f8f8;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.ai-generator h2 {
+  margin: 0 0 12px;
+}
+
+.topic-input {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.topic-input input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.subjects {
+  list-style: disc;
+  padding-left: 20px;
+  margin-top: 12px;
+}
+
+.subjects li {
+  margin: 4px 0;
+}
+
+.status {
+  margin-top: 8px;
+  color: #444;
+}
+
+.error {
+  color: #c62828;
+  margin-top: 8px;
+}
+
 .guess-input {
   display: flex;
   gap: 10px;

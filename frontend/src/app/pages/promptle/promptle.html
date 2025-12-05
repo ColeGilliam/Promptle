@@ -1,6 +1,31 @@
 <div class="promptle-container">
   <h1>{{ topic }} Promptle</h1>
 
+  <!-- AI Topic Input -->
+  <section class="ai-generator">
+    <h2>Generate a new game with AI</h2>
+    <div class="topic-input">
+      <input
+        type="text"
+        name="topic"
+        [(ngModel)]="topicInput"
+        placeholder="Enter a topic (e.g., 'World War II')"
+      />
+      <button (click)="generateSubjects()" [disabled]="loadingSubjects || !topicInput">
+        {{ loadingSubjects ? 'Generating…' : 'Generate game data' }}
+      </button>
+    </div>
+
+    <!-- Status and Error Messages -->
+    <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+    <p class="status" *ngIf="!errorMessage && answers.length">
+      Loaded {{ answers.length }} subjects with {{ headers.length }} categories for topic "{{ topic }}".
+    </p>
+    <p class="status" *ngIf="!errorMessage && !answers.length">
+      No game loaded yet. Enter a topic to generate subjects.
+    </p>
+  </section>
+
   <!-- Dropdown Input -->
   <div class="guess-input">
     <select [(ngModel)]="selectedGuess">
