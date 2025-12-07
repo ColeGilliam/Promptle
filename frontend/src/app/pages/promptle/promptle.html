@@ -1,28 +1,51 @@
 <div class="promptle-container">
-  <h1>{{ topic }} Promptle</h1>
+  <h1 style="text-align: center;">
+    Promptle <br><br> {{ topic }}
+  </h1>
 
-  <!-- Dropdown Input -->
-  <div class="guess-input">
+  <!-- Loading / errors -->
+  <div *ngIf="gameLoading">Loading game data...</div>
+  <div *ngIf="gameError" class="error">{{ gameError }}</div>
+
+  <!-- Backend preview (single correct answer row) -->
+  <div *ngIf="!gameLoading && !gameError && correctAnswer && correctAnswer.values.length" hidden>
+    <h2 style="text-align:center;">Current Answer (from backend)</h2>
+
+    <div class="game-grid single-row">
+      <div class="column" *ngFor="let header of headers; let i = index">
+        <div class="header">{{ header }}</div>
+
+        <div class="guess-cell backend-cell">
+          {{ correctAnswer.values[i] }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Guess Input -->
+  <div class="guess-input" *ngIf="answers.length">
     <select [(ngModel)]="selectedGuess">
       <option value="">-- Select a Guess --</option>
       <option *ngFor="let answer of answers" [value]="answer.name">
         {{ answer.name }}
       </option>
     </select>
+
     <button (click)="onSubmitGuess()" [disabled]="!selectedGuess">
       Submit Guess
     </button>
   </div>
 
-
   <!-- Game Grid -->
-  <div class="game-grid">
+  <div class="game-grid" *ngIf="submittedGuesses.length">
     <div class="column" *ngFor="let header of headers; let i = index">
-      <!-- Header -->
       <div class="header">{{ header }}</div>
 
-      <!-- Guess cells under each header -->
-      <div class="guess-cell" *ngFor="let guess of submittedGuesses" [ngStyle]="{ 'background-color': guess.colors[i] }">
+      <div
+        class="guess-cell"
+        *ngFor="let guess of submittedGuesses"
+        [style.background-color]="guess.colors[i]"
+      >
         {{ guess.values[i] }}
       </div>
     </div>

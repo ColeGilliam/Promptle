@@ -1,3 +1,8 @@
 import { Routes } from '@angular/router';
+import { HomePage } from './home-page/home-page';
+import { PromptleComponent } from './pages/promptle/promptle';
 
-export const routes: Routes = [];
+export const routes: Routes = [
+  {path: '', component: HomePage},
+  {path: 'game', component: PromptleComponent}
+];

@@ -1,0 +1,45 @@
+<div class="logoTitle">
+  <img src="PromptleLogoTransparent.png">
+</div>
+
+
+<div class="topic-selection">
+
+  <div class="columns">
+
+    <!-- LEFT -->
+    <div class="column">
+      <h2>Choose from Popular Topics</h2>
+
+      <mat-form-field appearance="fill" class="topic-field">
+        <mat-label>Select a topic</mat-label>
+        <mat-select [(value)]="selectedTopic">
+          <mat-option *ngFor="let topic of allTopics" [value]="topic">
+            {{ topic.topicName }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <p class="subtext">
+        This list will generate a game with no down time
+        as it pulls from the MongoDB database
+      </p>
+
+      <button matButton="filled"
+      [disabled]="!selectedTopic"
+      (click)="startGame()">GENERATE</button>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="column">
+      <h2>Create Unique (disabled)</h2>
+
+      <input type="text" class="text-input" [disabled]="true">
+
+      <p class="subtext">
+        Placeholder for the AI generated game, coming soon
+      </p>
+    </div>
+
+  </div>
+</div>
