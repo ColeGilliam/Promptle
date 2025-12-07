@@ -115,7 +115,7 @@ app.get("/api/game/start", async (req, res) => {
     });
 
     // --- pick a random correct answer ---
-    const correctAnswer = answers[Math.floor(Math.random() * answers.length)]?.name;
+    const correctAnswer = answers[Math.floor(Math.random() * answers.length)];
 
     // --- return normalized JSON matching AI structure ---
     res.json({

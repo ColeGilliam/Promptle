@@ -58,8 +58,7 @@ export class HomePage implements OnInit {
 
     this.router.navigate(['/game'], {
       queryParams: {
-        id: this.selectedTopic.topicId,
-        name: this.selectedTopic.topicName
+        id: this.selectedTopic.topicId
       }
     });
   }
