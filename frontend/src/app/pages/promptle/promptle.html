@@ -8,7 +8,7 @@
   <div *ngIf="gameError" class="error">{{ gameError }}</div>
 
   <!-- Backend preview (single correct answer row) -->
-  <div *ngIf="!gameLoading && !gameError && correctAnswer && correctAnswer.values.length">
+  <div *ngIf="!gameLoading && !gameError && correctAnswer && correctAnswer.values.length" hidden>
     <h2 style="text-align:center;">Current Answer (from backend)</h2>
 
     <div class="game-grid single-row">
