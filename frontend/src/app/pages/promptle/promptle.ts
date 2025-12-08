@@ -9,6 +9,8 @@ import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
 
 @Component({
   selector: 'app-promptle',
@@ -19,7 +21,9 @@ import { MatButtonModule } from '@angular/material/button';
     HttpClientModule, 
     MatIconModule,
     MatMenuModule,
-    MatButtonModule
+    MatButtonModule,
+    MatFormFieldModule,
+    MatSelectModule
   ],
   templateUrl: './promptle.html',
   styleUrls: ['./promptle.css']
@@ -93,9 +97,7 @@ export class PromptleComponent implements OnInit {
     this.selectedGuess = '';
   }
 
-  /**
-   * Split a string into lowercase word tokens (for partial match scoring)
-   */
+    //Split a string into lowercase word tokens (for partial match scoring)
   tokenize(value: string): string[] {
     if (!value) return [];
     return value
@@ -104,9 +106,7 @@ export class PromptleComponent implements OnInit {
       .filter(Boolean);
   }
 
-  /**
-   * Submit a guess and calculate colors for feedback
-   */
+  // Submit a guess and calculate colors for feedback
   onSubmitGuess() {
     if (!this.selectedGuess) return;
 

@@ -8,8 +8,13 @@
 
 .guess-input {
   display: flex;
-  gap: 10px;
+  gap: 15px;
   margin-bottom: 20px;
+  align-items: center;
+}
+
+.guess-select-field {
+  min-width: 260px;
 }
 
 select, button {

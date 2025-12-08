@@ -23,18 +23,25 @@
   </div>
 
   <!-- Guess Input -->
-  <div class="guess-input" *ngIf="answers.length">
-    <select [(ngModel)]="selectedGuess">
-      <option value="">-- Select a Guess --</option>
-      <option *ngFor="let answer of answers" [value]="answer.name">
+<div class="guess-input" *ngIf="answers.length">
+  <mat-form-field appearance="fill" class="guess-select-field">
+    <mat-label>Select a Guess</mat-label>
+    <mat-select [(ngModel)]="selectedGuess">
+      <mat-option *ngFor="let answer of answers" [value]="answer.name">
         {{ answer.name }}
-      </option>
-    </select>
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
 
-    <button (click)="onSubmitGuess()" [disabled]="!selectedGuess">
-      Submit Guess
-    </button>
-  </div>
+
+  <button
+    matButton="filled"
+    [disabled]="!selectedGuess"
+    (click)="onSubmitGuess()"
+  >
+    SUBMIT
+  </button>
+</div>
 
   <!-- Game Grid -->
   <div class="game-grid" *ngIf="submittedGuesses.length">
