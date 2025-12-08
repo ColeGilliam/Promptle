@@ -47,10 +47,18 @@ select, button {
 .guess-cell {
   border: 1px solid #ccc;
   border-radius: 6px;
-  padding: 8px;
+  padding: 4px;
   text-align: center;
   background-color: #fff;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+
+  height: 70px;
+  overflow-y: auto;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 /* Color palette */
