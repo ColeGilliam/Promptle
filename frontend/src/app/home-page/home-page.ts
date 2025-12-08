@@ -31,6 +31,7 @@ export class HomePage implements OnInit {
   topicNames: string[] = [];
   allTopics: TopicInfo[] = [];   // this should be an array of TopicInfo
   selectedTopic: TopicInfo | null = null;
+  customTopic = '';
 
   // FAKE LOG IN STATE FOR UI
   isLoggedIn = false;
@@ -101,6 +102,15 @@ export class HomePage implements OnInit {
       queryParams: {
         id: this.selectedTopic.topicId
       }
+    });
+  }
+
+  startAiGame() {
+    const topic = this.customTopic.trim();
+    if (!topic) return;
+
+    this.router.navigate(['/game'], {
+      queryParams: { topic }
     });
   }
 

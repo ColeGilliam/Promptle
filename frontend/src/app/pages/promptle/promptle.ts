@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { DbGameService, GameData } from '../../services/setup-game';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -49,33 +49,48 @@ export class PromptleComponent implements OnInit {
   gameLoading = false;
   gameError = '';
 
-  constructor(private dbGameService: DbGameService, private router: Router) {}
+  constructor(private dbGameService: DbGameService, private router: Router, private route: ActivatedRoute) {}
 
   ngOnInit() {
-    // Load a game for topicId 1 by default (can be dynamic later)
-    this.loadGame(1);
+    this.route.queryParamMap.subscribe(params => {
+      const aiTopic = params.get('topic');
+      const topicIdParam = params.get('id');
+      const topicId = topicIdParam ? Number(topicIdParam) : NaN;
+
+      if (aiTopic && aiTopic.trim()) {
+        this.loadGame({ topic: aiTopic.trim() });
+        return;
+      }
+
+      if (!isNaN(topicId)) {
+        this.loadGame({ topicId });
+        return;
+      }
+
+      this.gameError = 'No valid topic or game ID provided.';
+    });
   }
 
-  /**
-   * Fetch game data from the database service
+    /**
+   * Fetch a game via unified service (AI or DB depending on params)
    */
-  loadGame(topicId: number) {
+  private loadGame(params: { topic?: string; topicId?: number }) {
     this.gameLoading = true;
     this.gameError = '';
 
-    this.dbGameService.fetchGameByTopic(topicId).subscribe({
+    this.dbGameService.fetchGame(params).subscribe({
       next: (data: GameData) => {
         this.applyGameData(data);
         this.gameLoading = false;
       },
       error: (err) => {
         console.error('Error loading game data:', err);
-        this.gameError = err?.error?.error ?? 'Failed to load game data';
+        this.gameError = err?.error?.error ?? err?.message ?? 'Failed to load game data';
         this.gameLoading = false;
       }
     });
   }
-
+  
   /**
    * Apply fetched game data to the component state
    */
@@ -85,11 +100,14 @@ export class PromptleComponent implements OnInit {
     this.answers = data.answers;
     this.correctAnswer = data.correctAnswer;
 
-    // Build backend preview row from correct answer
+    // Build preview row from the matching correct answer
     const correct = this.answers.find(a => a.name === this.correctAnswer.name);
     if (correct) {
       this.backendHeaders = [...this.headers];
       this.backendRow = [...correct.values];
+    } else {
+      this.backendHeaders = [];
+      this.backendRow = [];
     }
 
     // Reset guesses

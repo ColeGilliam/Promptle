@@ -14,7 +14,8 @@
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "mongodb": "^6.21.0",
-    "mongoose": "^8.19.2"
+    "mongoose": "^8.19.2",
+    "openai": "^4.77.4"
   },
   "devDependencies": {
     "dotenv": "^17.2.3",

@@ -57,13 +57,22 @@
 
     <!-- RIGHT -->
     <div class="column">
-      <h2>Create Unique (disabled)</h2>
+      <h2>Create Unique</h2>
 
-      <input type="text" class="text-input" [disabled]="true">
+      <input
+        type="text"
+        class="text-input"
+        placeholder="Enter any topic (e.g., Solar System, K-Pop groups)"
+        [(ngModel)]="customTopic"
+      >
 
       <p class="subtext">
-        Placeholder for the AI generated game, coming soon
+        Uses AI to generate a new Promptle on the fly
       </p>
+
+      <button matButton="filled"
+      [disabled]="!customTopic.trim()"
+      (click)="startAiGame()">GENERATE AI GAME</button>
     </div>
 
   </div>
