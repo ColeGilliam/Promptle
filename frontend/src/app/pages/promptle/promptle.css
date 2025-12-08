@@ -94,3 +94,40 @@ select, button {
   color: red;
   font-weight: bold;
 }
+
+.settings-container {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
+.settings-button {
+  background: none;
+  border: none;
+  font-size: 32px;
+  cursor: pointer;
+}
+
+.settings-menu {
+  margin-top: 8px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-item {
+  border: none;
+  background: #ff4f4f;
+  color: white;
+  padding: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.settings-item:hover {
+  background: #e04444;
+}

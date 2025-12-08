@@ -50,4 +50,15 @@
       </div>
     </div>
   </div>
+
+  <div class="settings-container">
+    <button class="settings-button" (click)="toggleSettingsMenu()">
+      ⚙️
+    </button>
+
+    <div class="settings-menu" *ngIf="showSettingsMenu">
+      <button class="settings-item" (click)="quitGame()">Quit Game</button>
+    </div>
+  </div>
+
 </div>

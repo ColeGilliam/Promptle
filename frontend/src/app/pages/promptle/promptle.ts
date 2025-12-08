@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { DbGameService, GameData } from '../../services/setup-game';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-promptle',
@@ -20,6 +21,8 @@ export class PromptleComponent implements OnInit {
   correctAnswer: {name: string; values: string[]} = {name: '', values: []};
   selectedGuess = '';
 
+  showSettingsMenu = false;
+
   // Each submitted guess stores both the values and their color indicators
   submittedGuesses: { values: string[]; colors: string[] }[] = [];
 
@@ -31,7 +34,7 @@ export class PromptleComponent implements OnInit {
   gameLoading = false;
   gameError = '';
 
-  constructor(private dbGameService: DbGameService) {}
+  constructor(private dbGameService: DbGameService, private router: Router) {}
 
   ngOnInit() {
     // Load a game for topicId 1 by default (can be dynamic later)
@@ -128,5 +131,13 @@ export class PromptleComponent implements OnInit {
 
     // Clear selection for next guess
     this.selectedGuess = '';
+  }
+
+  toggleSettingsMenu() {
+    this.showSettingsMenu = !this.showSettingsMenu;
+  }
+
+  quitGame() {
+    this.router.navigate(['/']);   // go back to home
   }
 }
