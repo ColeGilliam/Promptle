@@ -2,7 +2,7 @@
   display: flex;
   gap: 15px;
   margin-bottom: 20px;
-  align-items: center;
+  align-items: flex-end;
 }
 
 .guess-input button {
@@ -19,6 +19,7 @@
 
 .guess-select-field {
   min-width: 260px;
+  margin-bottom: 0; 
 }
 
 .game-grid {
