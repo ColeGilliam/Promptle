@@ -6,10 +6,21 @@ import { HttpClientModule } from '@angular/common/http';
 import { DbGameService, GameData } from '../../services/setup-game';
 import { Router } from '@angular/router';
 
+import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatButtonModule } from '@angular/material/button';
+
 @Component({
   selector: 'app-promptle',
   standalone: true,
-  imports: [CommonModule, FormsModule, HttpClientModule],
+  imports: [
+    CommonModule, 
+    FormsModule, 
+    HttpClientModule, 
+    MatIconModule,
+    MatMenuModule,
+    MatButtonModule
+  ],
   templateUrl: './promptle.html',
   styleUrls: ['./promptle.css']
 })
@@ -21,7 +32,7 @@ export class PromptleComponent implements OnInit {
   correctAnswer: {name: string; values: string[]} = {name: '', values: []};
   selectedGuess = '';
 
-  showSettingsMenu = false;
+  //showSettingsMenu = false;
 
   // Each submitted guess stores both the values and their color indicators
   submittedGuesses: { values: string[]; colors: string[] }[] = [];
@@ -133,9 +144,9 @@ export class PromptleComponent implements OnInit {
     this.selectedGuess = '';
   }
 
-  toggleSettingsMenu() {
+  /*toggleSettingsMenu() {
     this.showSettingsMenu = !this.showSettingsMenu;
-  }
+  }*/
 
   quitGame() {
     this.router.navigate(['/']);   // go back to home

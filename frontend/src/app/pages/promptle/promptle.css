@@ -103,7 +103,8 @@ select, button {
   font-weight: bold;
 }
 
-.settings-container {
+/* Menu button! */
+/*.settings-container {
   position: absolute;
   top: 20px;
   right: 20px;
@@ -138,4 +139,38 @@ select, button {
 
 .settings-item:hover {
   background: #e04444;
+}
+  */
+
+.promptle-container {
+  position: relative;  /* anchors buttons */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  font-family: Arial, sans-serif;
+}
+
+.settings-container {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
+.settings-button {
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-button mat-icon {
+  font-size: 26px;
+  line-height: 1;
+  width: 26px;
+  height: 26px;
+  display: block;
 }
