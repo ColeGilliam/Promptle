@@ -1,11 +1,3 @@
-.promptle-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 1rem;
-  font-family: Arial, sans-serif;
-}
-
 .guess-input {
   display: flex;
   gap: 15px;
@@ -13,13 +5,20 @@
   align-items: center;
 }
 
-.guess-select-field {
-  min-width: 260px;
+.guess-input button {
+  border-radius: 4px !important;
+  min-height: 56px;
+  padding: 0 24px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
 }
 
-select, button {
-  padding: 8px 12px;
-  font-size: 1rem;
+.guess-input button:hover:not([disabled]) {
+  filter: brightness(1.05);
+}
+
+.guess-select-field {
+  min-width: 260px;
 }
 
 .game-grid {
