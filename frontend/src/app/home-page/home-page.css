@@ -1,5 +1,9 @@
+body {
+  font-family: 'Roboto', sans-serif;
+}
+
 .logoTitle {
-  margin-top: 67px;
+  margin-top: 20px;
   position: top;
   text-align: center;
 }
@@ -67,3 +71,122 @@ h1 {
   font-size: 14px;
   line-height: 1.4;
 }
+
+/* Top bar container */
+.top-bar {
+  display: flex;
+  align-items: center;
+  padding: 20px 40px;
+  min-height: 64px;
+}
+
+.top-bar-left,
+.top-bar-center,
+.top-bar-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.top-bar-center {
+  justify-content: center;
+}
+
+.top-bar-left {
+  justify-content: flex-start;
+}
+
+.top-bar-right {
+  justify-content: flex-end;
+}
+
+/* Greeting above the logo */
+.user-greeting-inline {
+  font-size: 18px;
+  font-weight: 700;
+  text-align: center;
+
+  background: linear-gradient(135deg, #3b82f6, #6366f1, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+}
+
+/* LOGIN button */
+/*.login-button {
+  background-color: #22c55e;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.login-button:hover {
+  background-color: #16a34a; /* darker green hover */
+/*}
+
+.login-button:active {
+  transform: scale(0.97);
+}*/
+
+/* LOGIN button style */
+.login-button {
+  font-family: inherit;
+  padding: 12px 22px;
+  border-radius: 8px;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+
+  background: linear-gradient(135deg, #7dd3fc, #3b82f6, #1e3a8a);
+  color: white;
+
+  transition: 
+    background 0.3s ease,
+    transform 0.1s ease,
+    box-shadow 0.2s ease;
+}
+
+/* Hover effect*/
+.login-button:hover {
+  background: linear-gradient(135deg, #60a5fa, #2563eb, #1e3a8a);
+  box-shadow: 0 4px 12px rgba(30, 58, 138, 0.3);
+}
+
+/* Click effect */
+.login-button:active {
+  transform: scale(0.96);
+}
+
+/* LOGOUT button */
+.logout-button {
+  font-family: inherit;
+  padding: 12px 22px;
+  border-radius: 8px;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  color: white;
+
+  background: linear-gradient(135deg, #3b82f6, #6366f1, #7c3aed);
+  transition:
+    background 0.3s ease,
+    transform 0.1s ease,
+    box-shadow 0.2s ease;
+}
+
+.logout-button:hover {
+  background: linear-gradient(135deg, #2563eb, #4f46e5, #6d28d9);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.35);
+}
+
+.logout-button:active {
+  transform: scale(0.96);
+}
+

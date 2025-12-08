@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TopicsListService, TopicInfo } from '../services/topics-list';
 import { Router } from '@angular/router';
+import { AuthenticationService } from '../services/authentication.service';
 
 // Angular Material modules
 import { MatCardModule } from '@angular/material/card';
@@ -9,7 +10,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatChipsModule } from '@angular/material/chips';
 import { FormsModule } from '@angular/forms';
-import { MatButton } from '@angular/material/button';
+import { MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'app-home-page',
@@ -21,7 +22,7 @@ import { MatButton } from '@angular/material/button';
     MatFormFieldModule,
     MatSelectModule,
     MatChipsModule,
-    MatButton
+    MatButtonModule
   ],
   templateUrl: './home-page.html',
   styleUrls: ['./home-page.css'],
@@ -31,11 +32,51 @@ export class HomePage implements OnInit {
   allTopics: TopicInfo[] = [];   // this should be an array of TopicInfo
   selectedTopic: TopicInfo | null = null;
 
+  // FAKE LOG IN STATE FOR UI
+  isLoggedIn = false;
+  displayName = 'future username display';
 
-  constructor(private topicsService: TopicsListService, private router: Router) {}
+  constructor(private topicsService: TopicsListService, private router: Router, private auth: AuthenticationService) {}
 
   ngOnInit() {
     this.getTopics();
+    // Subscribe to Auth0's real authentication state
+    this.auth.isAuthenticated$.subscribe((status) => {
+      this.isLoggedIn = status;
+    });
+
+    this.auth.user$.subscribe((user) => {
+      if (user) {
+        this.displayName = user.name ?? '';
+
+        // Send user to backend
+        this.registerUser(user);
+      }
+    });
+  }
+
+  registerUser(user: any) {
+    fetch('http://localhost:3001/api/auth-user', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+          auth0Id: user.sub,
+          email: user.email,
+          name: user.name,
+          picture: user.picture
+        })
+      });
+  }
+
+  // TOGGLES FAKE LOG IN STATE
+  toggleLogin() {
+    if (this.isLoggedIn) {
+      this.auth.logout();
+    } else {
+      this.auth.login();
+    }
   }
 
   getTopics() {
@@ -64,4 +105,3 @@ export class HomePage implements OnInit {
   }
 
 }
-
