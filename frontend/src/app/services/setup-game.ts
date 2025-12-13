@@ -1,3 +1,5 @@
+//Cole Gilliam implemented a chunk of this service off of a depreciated service
+
 // services/db-game.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
@@ -33,11 +35,7 @@ export class DbGameService {
     return this.http.post<GameData>(`${this.apiBaseUrl}/subjects`, body);
   }
 
-  /**
-   * Unified entry point for fetching a game.
-   * - If topic (string) is provided, call AI route.
-   * - Else if topicId is provided, call DB route.
-   */
+
   fetchGame(params: { topic?: string; topicId?: number }): Observable<GameData> {
     if (params.topic && params.topic.trim()) {
       return this.generateAiGame(params.topic.trim());

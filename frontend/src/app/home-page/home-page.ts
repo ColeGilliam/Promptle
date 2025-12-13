@@ -12,6 +12,8 @@ import { MatChipsModule } from '@angular/material/chips';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 
+
+//Cole Gilliam worked on a good part of this section, other's added onto it with their features
 @Component({
   selector: 'app-home-page',
   standalone: true,

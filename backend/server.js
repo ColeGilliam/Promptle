@@ -161,6 +161,7 @@ app.post("/api/subjects", async (req, res) => {
   }
 });
 
+//Not currently in use
 app.get("/api/topics/:topicId/headers", async (req, res) => {
   try {
     const topicId = Number(req.params.topicId);
@@ -183,6 +184,9 @@ app.get("/api/topics/:topicId/headers", async (req, res) => {
   }
 });
 
+//Implemented by Cole Gilliam
+//Use: This endpoint fills the frontend dropdown with all the toipcs from the database
+//Source: Mainly taking insperation from Jorge's earlier code
 app.get("/api/popularTopics/list", async (_req, res) => {
   try {
     const topicList = await topicCollection.find({}).toArray();
@@ -204,6 +208,10 @@ app.get("/api/popularTopics/list", async (_req, res) => {
   }
 });
 
+//Implemented by Cole Gilliam
+//Use: This endpoint genorates all the core logic of the game for the frontend
+//Source: Refering to other code from Jorge and refactoring
+
 //Query Param 
 //EX:
 //localhost:3001/api/game/start?topicId=1
@@ -216,7 +224,6 @@ app.get("/api/game/start", async (req, res) => {
       return res.status(400).json({ error: "Invalid or missing topicId" });
     }
 
-    // --- fetch topic meta: name + headers ---
     const topic = await topicCollection.findOne({ topicId });
 
     if (!topic) {
@@ -230,14 +237,12 @@ app.get("/api/game/start", async (req, res) => {
       return res.status(500).json({ error: "Topic has no headers defined" });
     }
 
-    // --- fetch all guesses for topic ---
     const docs = await guessesCollection.find({ topicId }).toArray();
 
     if (!docs.length) {
       return res.status(404).json({ error: "No guesses found for topic" });
     }
 
-    // --- build the answers array ---
     const answers = docs.map(doc => {
       const values = headers.map(h => {
         const val = doc[h];
@@ -252,10 +257,8 @@ app.get("/api/game/start", async (req, res) => {
       };
     });
 
-    // --- pick a random correct answer ---
     const correctAnswer = answers[Math.floor(Math.random() * answers.length)];
 
-    // --- return normalized JSON matching AI structure ---
     res.json({
       topic: topicName,
       headers,
