@@ -45,14 +45,18 @@ app.post("/api/subjects", async (req, res) => {
   const MAX_COUNT = 100;
   const TARGET_DEFAULT = 20;
 
+  // Cody - Validate topic input
   if (!topic) {
     return res.status(400).json({ error: "Please provide a topic in the request body." });
   }
 
+  // Cody - ensure OpenAI key exists
   if (!openai || !openaiApiKey) {
     return res.status(500).json({ error: "OpenAI API key is missing. Set OPENAI_API_KEY in your environment." });
   }
 
+  // Cody - Code as a template from online, adjusted to be custom
+  // Call OpenAI with prompt to generate subjects
   try {
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -99,6 +103,8 @@ app.post("/api/subjects", async (req, res) => {
       ]
     });
 
+    // Cody - Code as a template from online (with prompt template), adjusted to be custom
+    // Parse and validate OpenAI response
     const raw = completion.choices[0]?.message?.content || "{}";
     let parsed;
     try {
@@ -111,10 +117,12 @@ app.post("/api/subjects", async (req, res) => {
     let headers = Array.isArray(parsed.headers) ? parsed.headers : [];
     let answers = Array.isArray(parsed.answers) ? parsed.answers : [];
 
+    // Cody - Validate parsed response
     if (!headers.length || !answers.length) {
       return res.status(500).json({ error: "AI response was missing headers or answers." });
     }
 
+    // Cody - Validate counts
     if (answers.length < MIN_COUNT) {
       console.error("AI response contained too few subjects:", answers.length);
       return res.status(500).json({ error: `AI returned too few subjects. Need at least ${MIN_COUNT}.` });
@@ -129,6 +137,7 @@ app.post("/api/subjects", async (req, res) => {
       )
     );
 
+    // Cody - Normalize answers
     answers = answers.slice(0, targetCount).map(answer => {
       const values = Array.isArray(answer.values) ? answer.values.slice(0, headers.length) : [];
       const name = answer.name || values[0] || "";
@@ -138,6 +147,7 @@ app.post("/api/subjects", async (req, res) => {
     const correctAnswer = answers[Math.floor(Math.random() * answers.length)];
     const finalTopic = parsed.topic || topic;
 
+    // Cody - Log summary info
     console.info("[AI subjects] summary", {
       topic: finalTopic,
       headersCount: headers.length,
@@ -208,6 +218,7 @@ app.get("/api/popularTopics/list", async (_req, res) => {
   }
 });
 
+<<<<<<< HEAD
 //Implemented by Cole Gilliam
 //Use: This endpoint genorates all the core logic of the game for the frontend
 //Source: Refering to other code from Jorge and refactoring
@@ -215,6 +226,10 @@ app.get("/api/popularTopics/list", async (_req, res) => {
 //Query Param 
 //EX:
 //localhost:3001/api/game/start?topicId=1
+=======
+// Cody - Code partially from online, adjusted
+// Start a new game session
+>>>>>>> e5a5089 (Cody's comments)
 app.get("/api/game/start", async (req, res) => {
   try {
     const topicId = Number(req.query.topicId);
@@ -224,6 +239,10 @@ app.get("/api/game/start", async (req, res) => {
       return res.status(400).json({ error: "Invalid or missing topicId" });
     }
 
+<<<<<<< HEAD
+=======
+    // --- 
+>>>>>>> e5a5089 (Cody's comments)
     const topic = await topicCollection.findOne({ topicId });
 
     if (!topic) {
@@ -237,12 +256,20 @@ app.get("/api/game/start", async (req, res) => {
       return res.status(500).json({ error: "Topic has no headers defined" });
     }
 
+<<<<<<< HEAD
+=======
+    // Fetch all guesses for the topic
+>>>>>>> e5a5089 (Cody's comments)
     const docs = await guessesCollection.find({ topicId }).toArray();
 
     if (!docs.length) {
       return res.status(404).json({ error: "No guesses found for topic" });
     }
 
+<<<<<<< HEAD
+=======
+    // Build answers array
+>>>>>>> e5a5089 (Cody's comments)
     const answers = docs.map(doc => {
       const values = headers.map(h => {
         const val = doc[h];
@@ -257,8 +284,15 @@ app.get("/api/game/start", async (req, res) => {
       };
     });
 
+<<<<<<< HEAD
     const correctAnswer = answers[Math.floor(Math.random() * answers.length)];
 
+=======
+    // Pick a random correct answer if requested
+    const correctAnswer = answers[Math.floor(Math.random() * answers.length)];
+
+    // Return json response
+>>>>>>> e5a5089 (Cody's comments)
     res.json({
       topic: topicName,
       headers,

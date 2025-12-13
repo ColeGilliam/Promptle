@@ -47,5 +47,5 @@ export class DbGameService {
 
     return throwError(() => new Error('Missing topic or topicId'));
   }
-
+  
 }

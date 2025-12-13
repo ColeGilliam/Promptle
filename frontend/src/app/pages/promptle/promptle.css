@@ -38,7 +38,7 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 10px; /* spacing between cells in a column */
+  gap: 10px;
   padding: 10px;
   border-radius: 8px;
 }
@@ -83,7 +83,7 @@
   background-color: #9e9e9e !important; /* Gray */
 }
 
-/* ===== NEW: backend preview styling ===== */
+/* ===== Backend preview styling ===== */
 
 .demo-grid {
   width: 100%;
@@ -100,12 +100,12 @@
   font-weight: 500;
 }
 
-/* backend preview cells so they look a bit different from guesses */
+/* Backend preview cells so they look a bit different from guesses */
 .backend-cell {
   background-color: #f5f5f5;
 }
 
-/* generic error styling for backend load errors */
+/* Error styling for backend load errors */
 .error {
   color: red;
   font-weight: bold;

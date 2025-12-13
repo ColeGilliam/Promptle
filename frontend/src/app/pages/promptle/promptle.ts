@@ -31,7 +31,7 @@ import { MatSelectModule } from '@angular/material/select';
   styleUrls: ['./promptle.css']
 })
 export class PromptleComponent implements OnInit {
-  // === Game state driven by backend ===
+  // Game state driven by backend
   topic = '';
   headers: string[] = [];
   answers: { name: string; values: string[] }[] = [];
@@ -51,8 +51,11 @@ export class PromptleComponent implements OnInit {
   gameLoading = false;
   gameError = '';
 
+  // Inject services
   constructor(private dbGameService: DbGameService, private router: Router, private route: ActivatedRoute) {}
 
+  // On component init, parse query params and load game
+  // Cody - Unified loading
   ngOnInit() {
     this.route.queryParamMap.subscribe(params => {
       const aiTopic = params.get('topic');
@@ -73,9 +76,9 @@ export class PromptleComponent implements OnInit {
     });
   }
 
-    /**
-   * Fetch a game via unified service (AI or DB depending on params)
-   */
+
+  // Fetch a game via unified service (AI or DB depending on params)
+  // Cody - AI fetching
   private loadGame(params: { topic?: string; topicId?: number }) {
     this.gameLoading = true;
     this.gameError = '';
@@ -93,9 +96,7 @@ export class PromptleComponent implements OnInit {
     });
   }
   
-  /**
-   * Apply fetched game data to the component state
-   */
+  // Apply fetched game data to the component state
   private applyGameData(data: GameData) {
     this.topic = data.topic;
     this.headers = data.headers;
@@ -117,7 +118,11 @@ export class PromptleComponent implements OnInit {
     this.selectedGuess = '';
   }
 
+<<<<<<< HEAD
     //Split a string into lowercase word tokens (for partial match scoring)
+=======
+  // Split a string into lowercase word tokens (for partial match scoring)
+>>>>>>> e5a5089 (Cody's comments)
   tokenize(value: string): string[] {
     if (!value) return [];
     return value
