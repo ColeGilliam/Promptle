@@ -1,3 +1,4 @@
+/*Jorge did touch ups on this*/
 .guess-input {
   display: flex;
   gap: 15px;
@@ -5,6 +6,7 @@
   align-items: center;
 }
 
+/* JORGE CERVACIO IZQUIERDO (refactored submit button with Angular Materials)*/
 .guess-input button {
   border-radius: 4px !important;
   min-height: 56px;
@@ -109,45 +111,8 @@
   font-weight: bold;
 }
 
+/* Richard implemented menu button, refined by Jorge*/
 /* Menu button! */
-/*.settings-container {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-}
-
-.settings-button {
-  background: none;
-  border: none;
-  font-size: 32px;
-  cursor: pointer;
-}
-
-.settings-menu {
-  margin-top: 8px;
-  background: white;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-}
-
-.settings-item {
-  border: none;
-  background: #ff4f4f;
-  color: white;
-  padding: 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  text-align: left;
-}
-
-.settings-item:hover {
-  background: #e04444;
-}
-  */
-
 .promptle-container {
   position: relative;  /* anchors buttons */
   display: flex;
