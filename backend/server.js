@@ -218,7 +218,6 @@ app.get("/api/popularTopics/list", async (_req, res) => {
   }
 });
 
-<<<<<<< HEAD
 //Implemented by Cole Gilliam
 //Use: This endpoint genorates all the core logic of the game for the frontend
 //Source: Refering to other code from Jorge and refactoring
@@ -226,10 +225,8 @@ app.get("/api/popularTopics/list", async (_req, res) => {
 //Query Param 
 //EX:
 //localhost:3001/api/game/start?topicId=1
-=======
 // Cody - Code partially from online, adjusted
 // Start a new game session
->>>>>>> e5a5089 (Cody's comments)
 app.get("/api/game/start", async (req, res) => {
   try {
     const topicId = Number(req.query.topicId);
@@ -239,10 +236,7 @@ app.get("/api/game/start", async (req, res) => {
       return res.status(400).json({ error: "Invalid or missing topicId" });
     }
 
-<<<<<<< HEAD
-=======
     // --- 
->>>>>>> e5a5089 (Cody's comments)
     const topic = await topicCollection.findOne({ topicId });
 
     if (!topic) {
@@ -256,20 +250,14 @@ app.get("/api/game/start", async (req, res) => {
       return res.status(500).json({ error: "Topic has no headers defined" });
     }
 
-<<<<<<< HEAD
-=======
     // Fetch all guesses for the topic
->>>>>>> e5a5089 (Cody's comments)
     const docs = await guessesCollection.find({ topicId }).toArray();
 
     if (!docs.length) {
       return res.status(404).json({ error: "No guesses found for topic" });
     }
 
-<<<<<<< HEAD
-=======
     // Build answers array
->>>>>>> e5a5089 (Cody's comments)
     const answers = docs.map(doc => {
       const values = headers.map(h => {
         const val = doc[h];
@@ -284,15 +272,10 @@ app.get("/api/game/start", async (req, res) => {
       };
     });
 
-<<<<<<< HEAD
-    const correctAnswer = answers[Math.floor(Math.random() * answers.length)];
-
-=======
     // Pick a random correct answer if requested
     const correctAnswer = answers[Math.floor(Math.random() * answers.length)];
 
     // Return json response
->>>>>>> e5a5089 (Cody's comments)
     res.json({
       topic: topicName,
       headers,
@@ -334,6 +317,7 @@ async function startServer() {
       console.log(`Server running at http://localhost:${port}`);
     });
 
+    //Richard implemented API for auth0 connection to mongodb for user db storage
     app.post('/api/auth-user', async (req, res) => {
       const { auth0Id, email, name} = req.body;
 
