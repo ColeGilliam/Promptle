@@ -1,3 +1,4 @@
+//Richard Nguyen created this service for Auth0 login
 import { Injectable } from '@angular/core';
 import { AuthService as Auth0Service, User } from '@auth0/auth0-angular';
 import { Observable } from 'rxjs';

@@ -11,6 +11,7 @@ import { provideAuth0 } from '@auth0/auth0-angular';
 import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
+  //Richard added auth0 dev keys (not harmful for demo and developing purposes)
   providers: [
     provideAuth0({
       domain: 'dev-k7ccyuzmbitffkjn.us.auth0.com',

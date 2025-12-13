@@ -35,7 +35,7 @@ export class HomePage implements OnInit {
   selectedTopic: TopicInfo | null = null;
   customTopic = '';
 
-  // FAKE LOG IN STATE FOR UI
+  //Richard implemented lines 38-83 for auth0 login button on home page.
   isLoggedIn = false;
   displayName = 'future username display';
 
@@ -43,7 +43,6 @@ export class HomePage implements OnInit {
 
   ngOnInit() {
     this.getTopics();
-    // Subscribe to Auth0's real authentication state
     this.auth.isAuthenticated$.subscribe((status) => {
       this.isLoggedIn = status;
     });
@@ -73,7 +72,6 @@ export class HomePage implements OnInit {
       });
   }
 
-  // TOGGLES FAKE LOG IN STATE
   toggleLogin() {
     if (this.isLoggedIn) {
       this.auth.logout();

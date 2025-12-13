@@ -52,6 +52,7 @@
   height: 40px;
 }
 
+/* Richard refactored guess cell rows to line up and ability to scroll inside large cells*/
 .guess-cell {
   border: 1px solid #ccc;
   border-radius: 6px;

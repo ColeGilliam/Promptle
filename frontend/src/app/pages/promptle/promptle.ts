@@ -118,11 +118,7 @@ export class PromptleComponent implements OnInit {
     this.selectedGuess = '';
   }
 
-<<<<<<< HEAD
-    //Split a string into lowercase word tokens (for partial match scoring)
-=======
   // Split a string into lowercase word tokens (for partial match scoring)
->>>>>>> e5a5089 (Cody's comments)
   tokenize(value: string): string[] {
     if (!value) return [];
     return value
