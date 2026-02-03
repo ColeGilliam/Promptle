@@ -98,6 +98,9 @@ h1 {
 
 .top-bar-right {
   justify-content: flex-end;
+  position: absolute;
+  top: 20px; /* Distance from the top edge */
+  right: 30px; /* Distance from the right edge */
 }
 
 /* Greeting above the logo */
@@ -111,27 +114,6 @@ h1 {
   -webkit-text-fill-color: transparent;
 
 }
-
-/* LOGIN button */
-/*.login-button {
-  background-color: #22c55e;
-  color: white;
-  padding: 12px 20px;
-  border-radius: 8px;
-  border: none;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.1s ease;
-}
-
-.login-button:hover {
-  background-color: #16a34a; /* darker green hover */
-/*}
-
-.login-button:active {
-  transform: scale(0.97);
-}*/
 
 /* LOGIN button style */
 .login-button {

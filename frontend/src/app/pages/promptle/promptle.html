@@ -4,7 +4,9 @@
   </h1>
 
   <!-- Loading / errors -->
-  <div *ngIf="gameLoading">Loading game data...</div>
+  <div *ngIf="gameLoading" class="loading-container">
+    <img src="loading.gif" alt="Loading" />
+  </div>
   <div *ngIf="gameError" class="error">{{ gameError }}</div>
 
   <!-- Backend preview (single correct answer row) -->

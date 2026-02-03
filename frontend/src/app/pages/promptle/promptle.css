@@ -180,3 +180,19 @@
   height: 26px;
   display: block;
 }
+
+.loading-container {
+  margin-top: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.loading-container img {
+  width: 200px;
+}
+
+.loading-container p {
+  margin-top: 12px;
+  text-align: center;
+}
