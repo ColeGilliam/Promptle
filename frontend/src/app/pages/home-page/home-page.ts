@@ -12,6 +12,8 @@ import { MatChipsModule } from '@angular/material/chips';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 
+import { ToggleMode } from '../../shared/ui/toggle-mode/toggle-mode';
+
 @Component({
   selector: 'app-home-page',
   standalone: true,
@@ -22,7 +24,8 @@ import { MatButtonModule } from '@angular/material/button';
     MatFormFieldModule,
     MatSelectModule,
     MatChipsModule,
-    MatButtonModule
+    MatButtonModule,
+    ToggleMode
   ],
   templateUrl: './home-page.html',
   styleUrls: ['./home-page.css'],
@@ -33,6 +36,11 @@ export class HomePage implements OnInit {
   selectedTopic: TopicInfo | null = null;
   customTopic = '';
 
+  isSinglePlayerMode = true;
+  multiplayer = false; 
+  onModeChange(isSingle: boolean) {
+    console.log('Mode changed to: ', isSingle ? 'Singleplayer' : 'Multiplayer');
+  }
   // FAKE LOG IN STATE FOR UI
   isLoggedIn = false;
   displayName = 'future username display';
@@ -40,6 +48,7 @@ export class HomePage implements OnInit {
   constructor(private topicsService: TopicsListService, private router: Router, private auth: AuthenticationService) { }
 
   ngOnInit() {
+
     this.getTopics();
     // Subscribe to Auth0's real authentication state
     this.auth.isAuthenticated$.subscribe((status) => {

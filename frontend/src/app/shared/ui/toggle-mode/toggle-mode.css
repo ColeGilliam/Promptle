@@ -1,0 +1,64 @@
+.toggle-container {
+  display: inline-block;
+  user-select: none;
+  cursor: pointer;
+
+  &.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.switch-track {
+  position: relative;
+  width: 80px;               
+  height: 40px;
+  background: #374151;       
+  border-radius: 9999px;
+  overflow: hidden;          
+  transition: background 0.25s ease;
+}
+
+.icon {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 24px;           
+  color: #9ca3af;            
+  transition: all 0.25s ease;
+  pointer-events: none;
+
+  &.single { left: 14px; }
+  &.multi  { right: 14px; }
+
+  &.active {
+    color: white;            
+    transform: translateY(-50%) scale(1.15);  
+  }
+}
+
+.switch-knob {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 32px;
+  height: 32px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  transition: transform 0.25s ease;
+  opacity: 0.1;
+
+  &.multiplayer {
+    transform: translateX(40px);   
+  }
+}
+
+
+.switch-track[aria-checked="true"] {
+  background: linear-gradient(to right, #3b82f6 50%, #374151 50%);
+}
+
+.switch-track[aria-checked="false"] {
+  background: linear-gradient(to left, #3b82f6 50%, #374151 50%);
+}

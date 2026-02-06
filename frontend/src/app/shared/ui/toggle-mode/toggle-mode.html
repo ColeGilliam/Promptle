@@ -1,0 +1,16 @@
+<label class="toggle-container" [class.disabled]="disabled">
+  <div class="switch-track" (click)="toggle()" role="switch"
+       [attr.aria-checked]="isSingleplayer"
+       [attr.aria-disabled]="disabled"
+       tabindex="0"
+       (keyup.enter)="toggle()"
+       (keyup.space)="toggle()">
+
+    <!-- Icons positioned absolutely inside the track -->
+    <span class="icon single" [class.active]="isSingleplayer">👤</span>
+    <span class="icon multi"   [class.active]="!isSingleplayer">👥</span>
+
+    <!-- The sliding knob that moves over the icons -->
+    <div class="switch-knob" [class.multiplayer]="!isSingleplayer"></div>
+  </div>
+</label>
