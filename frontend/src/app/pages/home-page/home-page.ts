@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TopicsListService, TopicInfo } from '../services/topics-list';
+import { TopicsListService, TopicInfo } from '../../services/topics-list';
 import { Router } from '@angular/router';
-import { AuthenticationService } from '../services/authentication.service';
+import { AuthenticationService } from '../../services/authentication.service';
 
 // Angular Material modules
 import { MatCardModule } from '@angular/material/card';
@@ -37,7 +37,7 @@ export class HomePage implements OnInit {
   isLoggedIn = false;
   displayName = 'future username display';
 
-  constructor(private topicsService: TopicsListService, private router: Router, private auth: AuthenticationService) {}
+  constructor(private topicsService: TopicsListService, private router: Router, private auth: AuthenticationService) { }
 
   ngOnInit() {
     this.getTopics();
@@ -63,12 +63,12 @@ export class HomePage implements OnInit {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-          auth0Id: user.sub,
-          email: user.email,
-          name: user.name,
-          picture: user.picture
-        })
-      });
+        auth0Id: user.sub,
+        email: user.email,
+        name: user.name,
+        picture: user.picture
+      })
+    });
   }
 
   // TOGGLES FAKE LOG IN STATE
@@ -95,8 +95,8 @@ export class HomePage implements OnInit {
     });
   }
 
-  startGame(){
-    if(!this.selectedTopic) return;
+  startGame() {
+    if (!this.selectedTopic) return;
 
     this.router.navigate(['/game'], {
       queryParams: {
