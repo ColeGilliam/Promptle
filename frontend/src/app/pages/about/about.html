@@ -1,0 +1,46 @@
+<mat-toolbar class="topbar" color="primary">
+  <button mat-button routerLink="/" aria-label="Go to homepage">Home</button>
+  <span class="spacer"></span>
+  <button mat-icon-button aria-label="Toggle light or dark mode">
+    <mat-icon>brightness_6</mat-icon>
+  </button>
+  <button mat-icon-button [matMenuTriggerFor]="mainMenu" aria-label="Open menu">
+    <mat-icon>menu</mat-icon>
+  </button>
+</mat-toolbar>
+
+<mat-menu #mainMenu="matMenu">
+  <button mat-menu-item aria-label="Login">Login</button>
+</mat-menu>
+
+<div class="logo-banner">
+  <img src="PromptleLogoTransparent.png" alt="Promptle logo">
+</div>
+
+<section class="info-bubble slider" aria-label="Project overview">
+  <div class="slider-body">
+    <button mat-icon-button aria-label="Previous section" (click)="prevSlide()">
+      <mat-icon>chevron_left</mat-icon>
+    </button>
+
+    <div class="slider-text" aria-live="polite">
+      <p class="placeholder-copy">{{ slides[currentIndex] }}</p>
+    </div>
+
+    <button mat-icon-button aria-label="Next section" (click)="nextSlide()">
+      <mat-icon>chevron_right</mat-icon>
+    </button>
+  </div>
+
+  <div class="slider-dots" role="tablist" aria-label="Slide selectors">
+    <button
+      *ngFor="let slide of slides; index as i"
+      mat-icon-button
+      class="dot"
+      [class.active]="i === currentIndex"
+      aria-label="Go to slide {{ i + 1 }}"
+      (click)="goToSlide(i)">
+      <span class="visually-hidden">Slide {{ i + 1 }}</span>
+    </button>
+  </div>
+</section>
