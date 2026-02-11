@@ -1,174 +1,69 @@
-body {
-  font-family: 'Roboto', sans-serif;
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
-.logoTitle {
-  margin-top: 20px;
-  position: top;
-  text-align: center;
-}
-img {
-  width: 200px;
-  margin-top: 0px;
-  text-align: center;
+.spacer {
+  flex: 1 1 auto;
 }
 
-.topic-selection {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 40px 20px;
-  font-family: sans-serif;
-}
-
-h1 {
-  text-align: center;
-  font-size: 32px;
-  margin-bottom: 0px;
-}
-
-
-.columns {
+.logo-banner {
   display: flex;
-  gap: 60px;
-  align-items: flex-start;
-  flex-wrap: wrap;
+  justify-content: center;
+  padding: 0;
 }
 
-.column {
-  flex: 1;
-  min-width: 350px;
+.logo-banner img {
+  max-width: 200px;
+  height: auto;
 }
 
-.column h2 {
-  margin-bottom: 16px;
-  font-size: 24px;
-}
-
-.topic-field,
-.text-input {
+.about-card {
+  margin: 12px auto 32px;
   width: 100%;
-  margin-bottom: 16px;
+  background: #0d2b52;
+  color: #fff;
+  border-radius: 0;
+  padding: 32px;
 }
 
-.topic-field .mat-mdc-text-field-wrapper {
-  border-radius: 8px;
+.about-card__text {
+  margin: 0;
+  text-align: justify;
+  font-size: 15px;
+  line-height: 1.5;
 }
 
-.text-input {
-  padding: 12px 14px;
-  border: 1px solid #cccccc;
-  border-radius: 8px;
-  font-size: 16px;
+.about-link {
+  color: #b3c8ff;
+  margin-left: 8px;
+  text-decoration: underline;
 }
 
-.text-input:focus {
-  outline: none;
-  border-color: #4f46e5;
-}
-
-.subtext {
-  color: #555;
-  font-size: 14px;
-  line-height: 1.4;
-}
-
-/* Top bar container */
-.top-bar {
+.auth-actions {
+  margin-top: 8px;
   display: flex;
-  align-items: center;
-  padding: 20px 40px;
-  min-height: 64px;
-}
-
-.top-bar-left,
-.top-bar-center,
-.top-bar-right {
-  flex: 1;
-  display: flex;
-  align-items: center;
-}
-
-.top-bar-center {
   justify-content: center;
 }
 
-.top-bar-left {
-  justify-content: flex-start;
+.auth-btn {
+  color: #777;
 }
 
-.top-bar-right {
-  justify-content: flex-end;
-  position: absolute;
-  top: 20px; /* Distance from the top edge */
-  right: 30px; /* Distance from the right edge */
+.play-actions {
+  margin-top: 40px;
+  display: flex;
+  gap: 36px;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
-/* Greeting above the logo */
-.user-greeting-inline {
-  font-size: 18px;
-  font-weight: 700;
-  text-align: center;
-
-  background: linear-gradient(135deg, #3b82f6, #6366f1, #8b5cf6);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-
-}
-
-/* LOGIN button style */
-.login-button {
-  font-family: inherit;
-  padding: 12px 22px;
-  border-radius: 8px;
+.play-btn {
+  min-width: 200px;
+  padding: 12px 20px;
+  color: #fff !important;
+  background: linear-gradient(90deg, #25d7ff, #4a7bff);
   border: none;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-
-  background: linear-gradient(135deg, #7dd3fc, #3b82f6, #1e3a8a);
-  color: white;
-
-  transition: 
-    background 0.3s ease,
-    transform 0.1s ease,
-    box-shadow 0.2s ease;
-}
-
-/* Hover effect*/
-.login-button:hover {
-  background: linear-gradient(135deg, #60a5fa, #2563eb, #1e3a8a);
-  box-shadow: 0 4px 12px rgba(30, 58, 138, 0.3);
-}
-
-/* Click effect */
-.login-button:active {
-  transform: scale(0.96);
-}
-
-/* LOGOUT button */
-.logout-button {
-  font-family: inherit;
-  padding: 12px 22px;
-  border-radius: 8px;
-  border: none;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  color: white;
-
-  background: linear-gradient(135deg, #3b82f6, #6366f1, #7c3aed);
-  transition:
-    background 0.3s ease,
-    transform 0.1s ease,
-    box-shadow 0.2s ease;
-}
-
-.logout-button:hover {
-  background: linear-gradient(135deg, #2563eb, #4f46e5, #6d28d9);
-  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.35);
-}
-
-.logout-button:active {
-  transform: scale(0.96);
 }
 

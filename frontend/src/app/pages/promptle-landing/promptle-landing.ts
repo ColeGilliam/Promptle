@@ -1,24 +1,19 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TopicsListService, TopicInfo } from '../services/topics-list';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { RouterModule } from '@angular/router';
-import { AuthenticationService } from '../services/authentication.service';
+import { TopicsListService, TopicInfo } from '../../services/topics-list';
+import { AuthenticationService } from '../../services/authentication.service';
 
 // Angular Material modules
 import { MatCardModule } from '@angular/material/card';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatChipsModule } from '@angular/material/chips';
-import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatDividerModule } from '@angular/material/divider';
 
 @Component({
-  selector: 'app-home-page',
+  selector: 'app-promptle-landing',
   standalone: true,
   imports: [
     CommonModule,
@@ -27,19 +22,14 @@ import { MatDividerModule } from '@angular/material/divider';
     MatFormFieldModule,
     MatSelectModule,
     MatChipsModule,
-    MatButtonModule,
-    MatToolbarModule,
-    MatIconModule,
-    MatMenuModule,
-    MatDividerModule,
-    RouterModule
+    MatButtonModule
   ],
-  templateUrl: './home-page.html',
-  styleUrls: ['./home-page.css'],
+  templateUrl: './promptle-landing.html',
+  styleUrls: ['./promptle-landing.css'],
 })
-export class HomePage implements OnInit {
+export class PromptleLandingComponent implements OnInit {
   topicNames: string[] = [];
-  allTopics: TopicInfo[] = [];   // this should be an array of TopicInfo
+  allTopics: TopicInfo[] = [];
   selectedTopic: TopicInfo | null = null;
   customTopic = '';
 
