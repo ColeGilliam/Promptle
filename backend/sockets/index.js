@@ -16,7 +16,7 @@ export function setupSocket(server) {
     // Simple echo example (you can remove later)
     socket.on('chat message', (message) => {
       console.log('Received message:', message);
-      socket.emit('chat message', `Server echo: ${message}`);
+      //socket.emit('chat message', `Server echo: ${message}`);
     });
     // ───────────────────────────────────────────────
 

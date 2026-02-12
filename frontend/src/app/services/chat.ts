@@ -42,7 +42,7 @@ export class Chat {
   this.socket.emit('chat message', { room: room.trim(), text });
 
   // Optimistic: show own message
-  this.messageSubject.next({ text, isOwn: true });
+  //this.messageSubject.next({ text, isOwn: true });
 }
   getMessages(): Observable<{text: string; isOwn?: boolean}> {
     return this.messageSubject.asObservable();
