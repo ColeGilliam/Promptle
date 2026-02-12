@@ -1,18 +1,132 @@
-body {
-  margin: 0;
+/* chat-room.component.css */
+
+.chat-container {
   display: flex;
-  justify-content: center;
   flex-direction: column;
-  height: 100vh;
-  width: 90%;
-  max-width: 1200px;
+  height: 80vh;
+  max-width: 600px;
+  margin: 20px auto;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f9f9f9;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
-#message-container {
-  border: 1px solid black;
-  flex-grow: 1;
+
+.header {
+  padding: 12px 16px;
+  background: #0084ff;
+  color: white;
+  text-align: center;
+}
+
+.messages-container {
+  flex: 1;
+  padding: 16px;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
-#message-container div {
-  background-color: #ccc;
-  padding: 5px
+
+.message {
+  max-width: 75%;
+  padding: 10px 14px;
+  border-radius: 18px;
+  line-height: 1.4;
+  position: relative;
+}
+
+.own {
+  align-self: flex-end;
+  background: #0084ff;
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.other {
+  align-self: flex-start;
+  background: #e5e5ea;
+  color: #000;
+  border-bottom-left-radius: 4px;
+}
+
+.time {
+  font-size: 0.68rem;
+  opacity: 0.7;
+  margin-top: 4px;
+  text-align: right;
+}
+
+.no-messages {
+  text-align: center;
+  color: #888;
+  margin-top: 40px;
+  font-style: italic;
+}
+
+.input-area {
+  display: flex;
+  padding: 12px;
+  border-top: 1px solid #ddd;
+  background: white;
+  gap: 8px;
+}
+
+input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid #ccc;
+  border-radius: 24px;
+  font-size: 1rem;
+  outline: none;
+}
+
+input:focus {
+  border-color: #0084ff;
+  box-shadow: 0 0 0 2px rgba(0, 132, 255, 0.2);
+}
+
+button {
+  padding: 0 20px;
+  background: #0084ff;
+  color: white;
+  border: none;
+  border-radius: 24px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+button:hover:not(:disabled) {
+  background: #0066cc;
+}
+
+button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.join-area {
+  padding: 20px;
+  text-align: center;
+  background: #f0f0f0;
+}
+
+.join-area input {
+  padding: 10px 16px;
+  width: 70%;
+  max-width: 300px;
+  margin-right: 8px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+.join-area button {
+  padding: 10px 20px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
