@@ -1,0 +1,31 @@
+<mat-toolbar class="topbar" color="primary">
+  <button mat-button routerLink="/" aria-label="Go to homepage">Home</button>
+  <span class="spacer"></span>
+  <div *ngIf="isLoggedIn" class="user-nav-section">
+    <span class="nav-username">{{ dbUsername || 'User' }}</span>
+    <img [src]="dbProfilePic || 'assets/default-avatar.png'" class="nav-avatar">
+  </div>
+  <button mat-icon-button aria-label="Toggle light or dark mode">
+    <mat-icon>brightness_6</mat-icon>
+  </button>
+  <button mat-icon-button [matMenuTriggerFor]="mainMenu" aria-label="Open menu">
+    <mat-icon>menu</mat-icon>
+  </button>
+</mat-toolbar>
+
+<mat-menu #mainMenu="matMenu">
+  <!-- Is not logged in-->
+  <button button *ngIf="!isLoggedIn" class="login-button" (click)="toggleLogin()" mat-menu-item aria-label="Login">
+    Login
+  </button>
+
+  <!-- Profile button only if logged in-->
+  <button *ngIf="isLoggedIn" class="profile-button" mat-menu-item aria-label="Profile" routerLink="/profile"> 
+    Profile
+  </button>
+
+  <!-- Is logged in -->
+  <button button *ngIf="isLoggedIn" class="logout-button" (click)="toggleLogin()" mat-menu-item aria-label="Logout">
+    Logout
+  </button>
+</mat-menu>
