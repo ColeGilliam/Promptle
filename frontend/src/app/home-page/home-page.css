@@ -29,10 +29,14 @@
 }
 
 .about-card__text {
-  margin: 0;
+  margin: 0 0 12px;
   text-align: justify;
   font-size: 15px;
   line-height: 1.5;
+}
+
+.about-card__text:last-child {
+  margin-bottom: 0;
 }
 
 .about-link {
@@ -49,6 +53,21 @@
 
 .auth-btn {
   color: #777;
+}
+
+.cta-divider {
+  margin: 20px auto;
+  width: 70%;
+  border-color: #b7c3d4;
+}
+
+.gamemode-title {
+  text-align: center;
+  color: #4a607a;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  font-size: 1.1rem;
+  margin-bottom: 12px;
 }
 
 .play-actions {
