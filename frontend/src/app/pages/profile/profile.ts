@@ -147,6 +147,11 @@ export class ProfileComponent implements OnInit {
               alert('Profile updated!');
               this.dbProfilePic = this.selectedImageBase64;
               this.selectedImageBase64 = ''; 
+
+              this.auth.setMongoUser({
+                username: this.dbUsername,
+                profilePic: this.dbProfilePic
+            });
             },
             error: (err) => console.error(err)
           });

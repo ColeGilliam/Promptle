@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { RouterModule } from '@angular/router';
 import { AuthenticationService } from '../services/authentication.service';
 import { HttpClient } from '@angular/common/http';
+import { NavbarComponent } from '../components/navbar/navbar';
 
 // Angular Material modules
 import { MatCardModule } from '@angular/material/card';
@@ -34,7 +35,8 @@ import { MatDividerModule } from '@angular/material/divider';
     MatIconModule,
     MatMenuModule,
     MatDividerModule,
-    RouterModule
+    RouterModule,
+    NavbarComponent
   ],
   templateUrl: './home-page.html',
   styleUrls: ['./home-page.css'],

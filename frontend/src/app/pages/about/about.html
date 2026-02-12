@@ -1,3 +1,6 @@
+<app-navbar></app-navbar>
+
+<!--
 <mat-toolbar class="topbar" color="primary">
   <button mat-button routerLink="/" aria-label="Go to homepage">Home</button>
   <span class="spacer"></span>
@@ -10,22 +13,22 @@
 </mat-toolbar>
 
 <mat-menu #mainMenu="matMenu">
-  <!-- Is not logged in-->
+  
   <button button *ngIf="!isLoggedIn" class="login-button" (click)="toggleLogin()" mat-menu-item aria-label="Login">
     Login
   </button>
 
-  <!-- Profile button only if logged in-->
+  
   <button *ngIf="isLoggedIn" class="profile-button" mat-menu-item aria-label="Profile" routerLink="/profile"> 
     Profile
   </button>
 
-  <!-- Is logged in -->
+  
   <button button *ngIf="isLoggedIn" class="logout-button" (click)="toggleLogin()" mat-menu-item aria-label="Logout">
     Logout
   </button>
 </mat-menu>
-
+-->
 <div class="logo-banner">
   <img src="PromptleLogoTransparent.png" alt="Promptle logo">
 </div>

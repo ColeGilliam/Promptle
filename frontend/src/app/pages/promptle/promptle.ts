@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { DbGameService, GameData } from '../../services/setup-game';
 import { ActivatedRoute, Router } from '@angular/router';
+import { NavbarComponent } from '../../components/navbar/navbar';
 
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -23,7 +24,8 @@ import { MatSelectModule } from '@angular/material/select';
     MatMenuModule,
     MatButtonModule,
     MatFormFieldModule,
-    MatSelectModule
+    MatSelectModule,
+    NavbarComponent
   ],
   templateUrl: './promptle.html',
   styleUrls: ['./promptle.css']

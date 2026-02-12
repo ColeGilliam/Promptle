@@ -13,6 +13,7 @@ import { RouterModule } from '@angular/router';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../../services/authentication.service';
 import { HttpClient } from '@angular/common/http';
+import { NavbarComponent } from '../../components/navbar/navbar';
 
 @Component({
   selector: 'app-about',
@@ -28,7 +29,8 @@ import { HttpClient } from '@angular/common/http';
     MatButtonModule,
     MatMenuModule,
     MatToolbarModule,
-    MatIconModule
+    MatIconModule,
+    NavbarComponent
   ],
   templateUrl: './about.html',
   styleUrls: ['./about.css'],

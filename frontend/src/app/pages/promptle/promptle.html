@@ -1,3 +1,5 @@
+<app-navbar></app-navbar>
+
 <div class="promptle-container">
   <h1 style="text-align: center;">
     Promptle <br><br> {{ topic }}
@@ -73,24 +75,5 @@
 </div>
 -->
 
-<div class="settings-container">
-    <button
-      mat-icon-button
-      class="settings-button"
-      [matMenuTriggerFor]="settingsMenu"
-      aria-label="Game settings"
-    >
-      <mat-icon>settings</mat-icon>
-    </button>
 
-    <mat-menu #settingsMenu="matMenu">
-      <button mat-menu-item (click)="quitGame()">
-        <mat-icon>exit_to_app</mat-icon>
-        <span>Quit Game</span>
-      </button>
-
-    
-    </mat-menu>
-  </div>
-</div>
 

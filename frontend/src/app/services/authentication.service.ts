@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { AuthService as Auth0Service, User } from '@auth0/auth0-angular';
 import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -9,7 +10,7 @@ import { HttpClient } from '@angular/common/http';
 export class AuthenticationService {
 
   private apiUrl = 'http://localhost:3001/api'; 
-
+  public mongoUser$ = new BehaviorSubject<any>(null);
   constructor(
     private auth0: Auth0Service,
     private http: HttpClient
@@ -47,5 +48,8 @@ export class AuthenticationService {
 
   get user$(): Observable<User | null | undefined> {
     return this.auth0.user$;
+  }
+  setMongoUser(data: any) {
+    this.mongoUser$.next(data);
   }
 }

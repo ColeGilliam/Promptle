@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TopicsListService, TopicInfo } from '../../services/topics-list';
 import { AuthenticationService } from '../../services/authentication.service';
+import { NavbarComponent } from '../../components/navbar/navbar';
 
 // Angular Material modules
 import { MatCardModule } from '@angular/material/card';
@@ -22,7 +23,8 @@ import { MatButtonModule } from '@angular/material/button';
     MatFormFieldModule,
     MatSelectModule,
     MatChipsModule,
-    MatButtonModule
+    MatButtonModule,
+    NavbarComponent
   ],
   templateUrl: './promptle-landing.html',
   styleUrls: ['./promptle-landing.css'],
@@ -112,6 +114,5 @@ export class PromptleLandingComponent implements OnInit {
       queryParams: { topic }
     });
   }
-  
 
 }
