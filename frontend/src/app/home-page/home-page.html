@@ -9,7 +9,15 @@
 </mat-toolbar>
 
 <mat-menu #homeMenu="matMenu">
-  <button mat-menu-item aria-label="Login placeholder">Login</button>
+  <!-- Is not logged in-->
+  <button button *ngIf="!isLoggedIn" class="login-button" (click)="toggleLogin()" mat-menu-item aria-label="Login">
+    Login
+  </button>
+
+  <!-- Is logged in -->
+  <button button *ngIf="isLoggedIn" class="logout-button" (click)="toggleLogin()" mat-menu-item aria-label="Login">
+    Logout
+  </button>
 </mat-menu>
 
 <div class="logo-banner">

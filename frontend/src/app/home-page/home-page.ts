@@ -45,7 +45,6 @@ export class HomePage implements OnInit {
 
   // FAKE LOG IN STATE FOR UI
   isLoggedIn = false;
-  displayName = 'future username display';
 
   constructor(private topicsService: TopicsListService, private router: Router, private auth: AuthenticationService) {}
 
@@ -58,7 +57,6 @@ export class HomePage implements OnInit {
 
     this.auth.user$.subscribe((user) => {
       if (user) {
-        this.displayName = user.name ?? '';
 
         // Send user to backend
         this.registerUser(user);
