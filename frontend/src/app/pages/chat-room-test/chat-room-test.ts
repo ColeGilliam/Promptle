@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Chat } from '../../services/chat';
 import { Subscription } from 'rxjs';
+import { NavbarComponent } from '../../components/navbar/navbar';
 
 interface Message {
   text: string;
@@ -12,7 +13,7 @@ interface Message {
 
 @Component({
   selector: 'app-chat-room-test',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, NavbarComponent],
   templateUrl: './chat-room-test.html',
   styleUrl: './chat-room-test.css',
 })

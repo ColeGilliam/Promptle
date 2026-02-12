@@ -12,6 +12,9 @@ import { MatChipsModule } from '@angular/material/chips';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 
+import { NavbarComponent } from '../../components/navbar/navbar';
+import { ToggleMode } from "../../shared/ui/toggle-mode/toggle-mode";
+
 
 @Component({
   selector: 'app-home-page',
@@ -23,8 +26,10 @@ import { MatButtonModule } from '@angular/material/button';
     MatFormFieldModule,
     MatSelectModule,
     MatChipsModule,
-    MatButtonModule
-  ],
+    MatButtonModule,
+    NavbarComponent,
+    ToggleMode
+],
   templateUrl: './home-page.html',
   styleUrls: ['./home-page.css'],
 })
