@@ -4,6 +4,7 @@ import { generateSubjects } from '../controllers/subjectController.js';
 import { getHeaders, getPopularTopics } from '../controllers/topicController.js';
 import { startGame } from '../controllers/gameController.js';
 import { authUser, deleteUserAccount } from '../controllers/authController.js';
+import { getProfile, updateProfile } from '../controllers/userController.js';
 
 const router = express.Router();
 
@@ -16,5 +17,7 @@ router.get('/api/popularTopics/list', getPopularTopics);
 router.get('/api/game/start', startGame);
 router.post('/api/auth-user', authUser);
 router.delete('/api/delete-account/:auth0Id', deleteUserAccount);
+router.get('/api/profile/:auth0Id', getProfile);
+router.put('/api/update-profile', updateProfile);
 
 export default router;

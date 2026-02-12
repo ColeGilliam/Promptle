@@ -12,6 +12,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { RouterModule } from '@angular/router';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../../services/authentication.service';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-about',
@@ -39,7 +40,7 @@ export class AboutComponent implements OnInit{
     'THIRD SLIDE text found in about.ts inside src/app/pages/about'
   ];
   isLoggedIn = false;
-  constructor(private router: Router, private auth: AuthenticationService) {}
+  constructor(private router: Router, private http: HttpClient, private auth: AuthenticationService) {}
 
   currentIndex = 0;
 
@@ -71,18 +72,16 @@ export class AboutComponent implements OnInit{
   }
 
   registerUser(user: any) {
-    fetch('http://localhost:3001/api/auth-user', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-          auth0Id: user.sub,
-          email: user.email,
-          name: user.name,
-          picture: user.picture
-        })
-      });
+    const payload = {
+        auth0Id: user.sub,
+        email: user.email,
+        name: user.name
+    };
+
+    this.http.post('http://localhost:3001/api/auth-user', payload).subscribe({
+        next: (res) => console.log('Registration/Login Sync Success:', res),
+        error: (err) => console.error('Registration/Login Sync Failed:', err)
+    });
   }
 
   // TOGGLES FAKE LOG IN STATE

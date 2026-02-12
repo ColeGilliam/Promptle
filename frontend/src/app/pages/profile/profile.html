@@ -26,10 +26,38 @@
   </button>
 </mat-menu>
 
-<div>
-    <button class="delete-button" (click)="deleteAccount()">
+<div class="profile-container" *ngIf="isLoggedIn">
+  <mat-card class="profile-card">
+    <mat-card-header>
+      <mat-card-title>Your Profile</mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="avatar-section">
+        <img [src]="selectedImageBase64 || dbProfilePic || 'https://via.placeholder.com/150'" 
+             class="profile-avatar" alt="User Avatar">
+        
+        <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" hidden>
+        <button mat-stroked-button (click)="fileInput.click()">
+          <mat-icon>upload</mat-icon> Upload Picture
+        </button>
+      </div>
+
+      <mat-form-field appearance="fill" class="full-width">
+        <mat-label>Display Username</mat-label>
+        <input matInput [(ngModel)]="dbUsername" placeholder="Enter custom username">
+      </mat-form-field>
+    </mat-card-content>
+
+    <mat-card-actions class="actions">
+      <button mat-raised-button color="primary" (click)="saveProfile()">
+        Save Changes
+      </button>
+      <button mat-button color="warn" (click)="deleteAccount()">
         Delete Account
-    </button>
+      </button>
+    </mat-card-actions>
+  </mat-card>
 </div>
 
 

@@ -4,6 +4,7 @@ import { TopicsListService, TopicInfo } from '../services/topics-list';
 import { Router } from '@angular/router';
 import { RouterModule } from '@angular/router';
 import { AuthenticationService } from '../services/authentication.service';
+import { HttpClient } from '@angular/common/http';
 
 // Angular Material modules
 import { MatCardModule } from '@angular/material/card';
@@ -16,6 +17,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
+
 
 @Component({
   selector: 'app-home-page',
@@ -46,7 +48,7 @@ export class HomePage implements OnInit {
   // FAKE LOG IN STATE FOR UI
   isLoggedIn = false;
 
-  constructor(private topicsService: TopicsListService, private router: Router, private auth: AuthenticationService) {}
+  constructor(private topicsService: TopicsListService, private http: HttpClient, private router: Router, private auth: AuthenticationService) {}
 
   ngOnInit() {
     this.getTopics();
@@ -65,18 +67,16 @@ export class HomePage implements OnInit {
   }
 
   registerUser(user: any) {
-    fetch('http://localhost:3001/api/auth-user', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-          auth0Id: user.sub,
-          email: user.email,
-          name: user.name,
-          picture: user.picture
-        })
-      });
+    const payload = {
+        auth0Id: user.sub,
+        email: user.email,
+        name: user.name
+    };
+
+    this.http.post('http://localhost:3001/api/auth-user', payload).subscribe({
+        next: (res) => console.log('Registration/Login Sync Success:', res),
+        error: (err) => console.error('Registration/Login Sync Failed:', err)
+    });
   }
 
   // TOGGLES FAKE LOG IN STATE

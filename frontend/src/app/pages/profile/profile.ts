@@ -12,7 +12,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { RouterModule } from '@angular/router';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../../services/authentication.service';
+import { ProfileService } from '../../services/profile.service';
 import { take } from 'rxjs';
+import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-profile',
@@ -28,7 +31,8 @@ import { take } from 'rxjs';
     MatButtonModule,
     MatMenuModule,
     MatToolbarModule,
-    MatIconModule
+    MatIconModule,
+    FormsModule
   ],
   templateUrl: './profile.html',
   styleUrls: ['./profile.css'],
@@ -36,7 +40,11 @@ import { take } from 'rxjs';
 export class ProfileComponent implements OnInit {
 
     isLoggedIn = false;
-    constructor(private router: Router, private auth: AuthenticationService) {}
+    dbUsername: string = '';
+    dbProfilePic: string = '';
+    selectedImageBase64: string = ''; 
+    loading: boolean = true;
+    constructor(private router: Router, private http: HttpClient, private auth: AuthenticationService, private profile: ProfileService) {}
 
     ngOnInit() {
     // Subscribe to Auth0's real authentication state
@@ -51,22 +59,30 @@ export class ProfileComponent implements OnInit {
         // Send user to backend
         this.registerUser(user);
       }
+      if (user?.sub) {
+        // Just call the service!
+        this.profile.getProfile(user.sub).subscribe({
+          next: (mongoUser) => {
+            this.dbUsername = mongoUser.username || '';
+            this.dbProfilePic = mongoUser.profilePic || '';
+            this.loading = false;
+          }
+        });
+      }
     });
   }
 
   registerUser(user: any) {
-    fetch('http://localhost:3001/api/auth-user', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-          auth0Id: user.sub,
-          email: user.email,
-          name: user.name,
-          picture: user.picture
-        })
-      });
+    const payload = {
+        auth0Id: user.sub,
+        email: user.email,
+        name: user.name
+    };
+
+    this.http.post('http://localhost:3001/api/auth-user', payload).subscribe({
+        next: (res) => console.log('Registration/Login Sync Success:', res),
+        error: (err) => console.error('Registration/Login Sync Failed:', err)
+    });
   }
 
   // TOGGLES FAKE LOG IN STATE
@@ -90,5 +106,67 @@ export class ProfileComponent implements OnInit {
         console.error("User ID not found. Are you logged in?");
       }
     });
+  }
+
+  onFileSelected(event: any) {
+    const file = event.target.files[0]; // Get the selected file
+    
+    if (file) {
+      // Check if the file is an image
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file.');
+        return;
+      }
+
+      const reader = new FileReader();
+      
+      // This runs once the file is finished being read
+      reader.onload = () => {
+        // This is the long string that represents the image
+        this.selectedImageBase64 = reader.result as string; 
+      };
+
+      // Start reading the file as a DataURL (Base64)
+      reader.readAsDataURL(file);
+    }
+  }
+
+  saveProfile() {
+    this.auth.user$.pipe(take(1)).subscribe(user => {
+      if (user && user.sub) {
+        const payload = {
+          auth0Id: user.sub,
+          username: this.dbUsername,
+          // If selectedImageBase64 is empty, keep the old dbProfilePic
+          profilePic: this.selectedImageBase64 || this.dbProfilePic 
+        };
+        console.log("Sending payload:", payload);
+        this.http.put('http://localhost:3001/api/update-profile', payload)
+          .subscribe({
+            next: () => {
+              alert('Profile updated!');
+              this.dbProfilePic = this.selectedImageBase64;
+              this.selectedImageBase64 = ''; 
+            },
+            error: (err) => console.error(err)
+          });
+      }
+    });
+  }
+  fetchMongoProfile(auth0Id: string) {
+    this.http.get(`http://localhost:3001/api/profile/${auth0Id}`)
+      .subscribe({
+        next: (mongoUser: any) => {
+          if (mongoUser) {
+            this.dbUsername = mongoUser.username || '';
+            this.dbProfilePic = mongoUser.profilePic || '';
+          }
+          this.loading = false;
+        },
+        error: (err: any) => {
+          console.error("Error fetching custom profile:", err);
+          this.loading = false;
+        }
+      });
   }
 }
