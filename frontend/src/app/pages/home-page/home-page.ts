@@ -12,7 +12,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 
-import { NavbarComponent } from '../../components/navbar/navbar';
+import { NavbarComponent } from '../../shared/components/navbar/navbar';
 import { ToggleMode } from "../../shared/ui/toggle-mode/toggle-mode";
 
 
@@ -29,7 +29,7 @@ import { ToggleMode } from "../../shared/ui/toggle-mode/toggle-mode";
     MatButtonModule,
     NavbarComponent,
     ToggleMode
-],
+  ],
   templateUrl: './home-page.html',
   styleUrls: ['./home-page.css'],
 })
@@ -40,7 +40,7 @@ export class HomePage implements OnInit {
   customTopic = '';
 
   isSinglePlayerMode = true;
-  multiplayer = false; 
+  multiplayer = false;
   onModeChange(isSingle: boolean) {
     console.log('Mode changed to: ', isSingle ? 'Singleplayer' : 'Multiplayer');
   }
@@ -126,7 +126,7 @@ export class HomePage implements OnInit {
     });
   }
 
-  joinChatRoom(){
+  joinChatRoom() {
     this.router.navigate(['/chat']);
   }
 }

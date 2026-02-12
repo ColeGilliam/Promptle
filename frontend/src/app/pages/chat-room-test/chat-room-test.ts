@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Chat } from '../../services/chat';
 import { Subscription } from 'rxjs';
-import { NavbarComponent } from '../../components/navbar/navbar';
+import { NavbarComponent } from '../../shared/components/navbar/navbar';
 
 interface Message {
   text: string;

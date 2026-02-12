@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { DbGameService, GameData } from '../../services/setup-game';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NavbarComponent } from '../../components/navbar/navbar';
+import { NavbarComponent } from '../../shared/components/navbar/navbar';
 import { AuthenticationService } from '../../services/authentication.service';
 import { take } from 'rxjs';
 import { HttpClient } from '@angular/common/http';

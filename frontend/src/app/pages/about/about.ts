@@ -13,7 +13,7 @@ import { RouterModule } from '@angular/router';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../../services/authentication.service';
 import { HttpClient } from '@angular/common/http';
-import { NavbarComponent } from '../../components/navbar/navbar';
+import { NavbarComponent } from '../../shared/components/navbar/navbar';
 
 @Component({
   selector: 'app-about',
