@@ -48,7 +48,6 @@ export class PromptleLandingComponent implements OnInit {
 
     this.auth.user$.subscribe((user) => {
       if (user) {
-        this.displayName = user.name ?? '';
 
         // Send user to backend
         this.registerUser(user);
@@ -113,5 +112,6 @@ export class PromptleLandingComponent implements OnInit {
       queryParams: { topic }
     });
   }
+  
 
 }

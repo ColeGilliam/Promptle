@@ -14,6 +14,11 @@
     Login
   </button>
 
+  <!-- Profile button only if logged in-->
+  <button *ngIf="isLoggedIn" class="profile-button" mat-menu-item aria-label="Profile" routerLink="/profile"> 
+    Profile
+  </button>
+
   <!-- Is logged in -->
   <button button *ngIf="isLoggedIn" class="logout-button" (click)="toggleLogin()" mat-menu-item aria-label="Login">
     Logout

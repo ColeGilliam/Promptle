@@ -1,23 +1,5 @@
 <!-- TOP BAR -->
 <header class="top-bar">
-  <!-- If NOT logged in -->
-  <div class="top-bar-right">
-    <button *ngIf="!isLoggedIn" class="login-button" (click)="toggleLogin()">
-      LOGIN
-    </button>
-
-    <!-- If logged in -->
-    <button *ngIf="isLoggedIn" class="logout-button" (click)="toggleLogin()">
-      LOGOUT
-    </button>
-  </div>
-
- <div class="top-bar-center">
-  <span *ngIf="isLoggedIn" class="user-greeting-inline">
-    Hello! {{ displayName }}
-  </span>
-</div>
-
  <!-- Right spacer -->
   <div class="top-bar-right"></div>
 </header>
