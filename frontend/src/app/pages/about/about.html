@@ -1,5 +1,4 @@
 <mat-toolbar class="topbar" color="primary">
-  <button mat-button routerLink="/" aria-label="Go to homepage">Home</button>
   <span class="spacer"></span>
   <button mat-icon-button aria-label="Toggle light or dark mode">
     <mat-icon>brightness_6</mat-icon>
@@ -10,6 +9,7 @@
 </mat-toolbar>
 
 <mat-menu #mainMenu="matMenu">
+  <button mat-menu-item routerLink="/" aria-label="Go to homepage">Home</button>
   <button mat-menu-item aria-label="Login">Login</button>
 </mat-menu>
 
