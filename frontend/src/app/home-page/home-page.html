@@ -28,6 +28,20 @@
 </div>
 
 <div class="play-actions" aria-label="Game mode selection">
-  <button mat-raised-button color="primary" class="rect-btn play-btn" aria-label="Start quick play matchmaking">Quick Play</button>
+  <div class="quickplay-group">
+    <button
+      mat-raised-button
+      color="primary"
+      class="rect-btn play-btn"
+      [matMenuTriggerFor]="quickPlayMenu"
+      #quickPlayTrigger="matMenuTrigger"
+      aria-label="Quick Play options">
+      Quick Play
+    </button>
+    <mat-menu #quickPlayMenu="matMenu">
+      <button mat-menu-item aria-label="Quick Play online">Online</button>
+      <button mat-menu-item aria-label="Quick Play solo" routerLink="/landing">Solo</button>
+    </mat-menu>
+  </div>
   <button mat-raised-button color="accent" class="rect-btn play-btn" aria-label="Create or join a room">Create / Join Room</button>
 </div>

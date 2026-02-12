@@ -22,7 +22,7 @@
 .about-card {
   margin: 12px auto 32px;
   width: 100%;
-  background: #0d2b52;
+  background: #697e98;
   color: #fff;
   border-radius: 0;
   padding: 32px;
@@ -59,11 +59,21 @@
   flex-wrap: wrap;
 }
 
+.quickplay-group {
+  display: flex;
+  align-items: stretch;
+}
+
 .play-btn {
   min-width: 200px;
   padding: 12px 20px;
   color: #fff !important;
   background: linear-gradient(90deg, #25d7ff, #4a7bff);
   border: none;
+  transition: transform 0.12s ease, box-shadow 0.15s ease;
 }
 
+.play-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+}
