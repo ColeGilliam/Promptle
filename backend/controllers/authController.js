@@ -62,10 +62,8 @@ export async function deleteUserAccount(req, res) {
   }
 
   try {
-    // 1. Delete from Auth0 via Management API
     await auth0Manager.users.delete(auth0Id);
 
-    // 2. Delete from your MongoDB
     const result = await usersCollection.deleteOne({ auth0Id });
 
     if (result.deletedCount === 0) {
@@ -76,5 +74,23 @@ export async function deleteUserAccount(req, res) {
   } catch (err) {
     console.error('Error in delete-user:', err);
     res.status(500).json({ error: 'Failed to fully delete account' });
+  }
+}
+
+export async function incrementWin(req, res) {
+  const usersCollection = getCachedUsersCollection();
+  const { auth0Id } = req.body;
+
+  if (!auth0Id) return res.status(400).json({ error: 'Missing auth0Id' });
+
+  try {
+    const result = await usersCollection.updateOne(
+      { auth0Id },
+      { $inc: { wins: 1 } } // Increment field by 1
+    );
+    res.json({ success: true, message: 'Win counted' });
+  } catch (err) {
+    console.error('Error incrementing win:', err);
+    res.status(500).json({ error: 'Server error' });
   }
 }

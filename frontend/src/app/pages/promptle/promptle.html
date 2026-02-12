@@ -74,6 +74,12 @@
 
 </div>
 -->
-
+<div class="win-overlay" *ngIf="isGameOver">
+  <div class="win-card">
+    <h2>🏆 Victory!</h2>
+    <p>The correct answer was <strong>{{ correctAnswer.name }}</strong></p>
+    <button mat-raised-button color="primary" (click)="quitGame()">Return Home</button>
+  </div>
+</div>
 
 

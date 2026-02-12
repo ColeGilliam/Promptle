@@ -3,8 +3,9 @@ import express from 'express';
 import { generateSubjects } from '../controllers/subjectController.js';
 import { getHeaders, getPopularTopics } from '../controllers/topicController.js';
 import { startGame } from '../controllers/gameController.js';
-import { authUser, deleteUserAccount } from '../controllers/authController.js';
+import { authUser, deleteUserAccount, incrementWin } from '../controllers/authController.js';
 import { getProfile, updateProfile } from '../controllers/userController.js';
+
 
 const router = express.Router();
 
@@ -19,5 +20,6 @@ router.post('/api/auth-user', authUser);
 router.delete('/api/delete-account/:auth0Id', deleteUserAccount);
 router.get('/api/profile/:auth0Id', getProfile);
 router.put('/api/update-profile', updateProfile);
+router.post('/api/increment-win', incrementWin);
 
 export default router;

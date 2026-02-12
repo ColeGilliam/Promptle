@@ -44,6 +44,7 @@ export class ProfileComponent implements OnInit {
     dbProfilePic: string = '';
     selectedImageBase64: string = ''; 
     loading: boolean = true;
+    winCount = 0;
     constructor(private router: Router, private http: HttpClient, private auth: AuthenticationService, private profile: ProfileService) {}
 
     ngOnInit() {
@@ -60,7 +61,7 @@ export class ProfileComponent implements OnInit {
         this.registerUser(user);
       }
       if (user?.sub) {
-        // Just call the service!
+        this.fetchMongoProfile(user.sub);
         this.profile.getProfile(user.sub).subscribe({
           next: (mongoUser) => {
             this.dbUsername = mongoUser.username || '';
@@ -95,7 +96,6 @@ export class ProfileComponent implements OnInit {
   }
 
   deleteAccount() {
-    // We take(1) so we don't stay subscribed to the user object forever
     this.auth.user$.pipe(take(1)).subscribe(user => {
       if (user && user.sub) {
         const confirmDelete = confirm("Are you sure? This will permanently remove your data.");
@@ -165,6 +165,7 @@ export class ProfileComponent implements OnInit {
           if (mongoUser) {
             this.dbUsername = mongoUser.username || '';
             this.dbProfilePic = mongoUser.profilePic || '';
+            this.winCount = mongoUser.wins || 0;
           }
           this.loading = false;
         },

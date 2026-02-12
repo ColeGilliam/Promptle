@@ -14,7 +14,6 @@ export async function getProfile(req, res) {
   try {
     const user = await usersCollection.findOne({ auth0Id });
     if (!user) return res.status(404).json({ error: 'User not found' });
-    
     res.json(user);
   } catch (err) {
     res.status(500).json({ error: 'Error fetching profile' });
@@ -28,7 +27,7 @@ export async function updateProfile(req, res) {
 
   try {
     const result = await usersCollection.updateOne(
-      { auth0Id: auth0Id }, // Ensure this field name matches your MongoDB exactly
+      { auth0Id: auth0Id }, 
         { 
             $set: { 
             username: username, 
@@ -36,10 +35,10 @@ export async function updateProfile(req, res) {
             updatedAt: new Date() 
             } 
         },
-      { upsert: true } // This creates the record if it doesn't exist!
+      { upsert: true } 
     );
 
-    console.log("Update Result:", result); // Look at your terminal for this!
+    console.log("Update Result:", result);
     res.json({ message: 'Success' });
     } catch (err) {
     console.error('Database Error:', err);
