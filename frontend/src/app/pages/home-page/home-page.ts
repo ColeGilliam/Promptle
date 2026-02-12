@@ -12,7 +12,6 @@ import { MatChipsModule } from '@angular/material/chips';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 
-import { ToggleMode } from '../../shared/ui/toggle-mode/toggle-mode';
 
 @Component({
   selector: 'app-home-page',
@@ -24,8 +23,7 @@ import { ToggleMode } from '../../shared/ui/toggle-mode/toggle-mode';
     MatFormFieldModule,
     MatSelectModule,
     MatChipsModule,
-    MatButtonModule,
-    ToggleMode
+    MatButtonModule
   ],
   templateUrl: './home-page.html',
   styleUrls: ['./home-page.css'],
@@ -123,4 +121,7 @@ export class HomePage implements OnInit {
     });
   }
 
+  joinChatRoom(){
+    this.router.navigate(['/chat']);
+  }
 }
