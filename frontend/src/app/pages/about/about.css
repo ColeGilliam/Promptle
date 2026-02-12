@@ -1,0 +1,82 @@
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.placeholder-copy {
+  padding: 16px;
+}
+
+.logo-banner {
+  display: flex;
+  justify-content: center;
+  padding: 0px;
+}
+
+.logo-banner img {
+  max-width: 200px;
+  height: auto;
+}
+
+.info-bubble {
+  background: #e1e4e8;
+  color: #515355;
+  border-radius: 16px;
+  padding: 24px;
+  margin: 16px auto;
+  max-width: 980px;
+}
+
+.placeholder-copy {
+  padding: 0;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.slider-body {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.slider-text {
+  flex: 1;
+  min-height: 72px;
+}
+
+.slider-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid #515355;
+  background: transparent;
+  opacity: 0.6;
+}
+
+.dot.active {
+  background: #515355;
+  opacity: 1;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}

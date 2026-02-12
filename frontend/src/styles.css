@@ -3,5 +3,30 @@
 /* IMPORTANT: ANGULAR MATERIAL STYLES IN HERE */
 
 html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+body { margin: 0; 
+    font-family: Roboto, "Helvetica Neue", sans-serif; 
+}
 
+:root {
+  --rect-btn-radius: 8px; /* change once to control all rectangular buttons */
+}
+
+.rect-btn {
+  border-radius: var(--rect-btn-radius);    /* Closer to 0 = squarer */
+  padding: 12px 20px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+/* Ensure Angular Material MDC buttons honor the square shape */
+.rect-btn.mat-mdc-raised-button,
+.rect-btn.mat-mdc-unelevated-button,
+.rect-btn.mat-mdc-outlined-button,
+.rect-btn.mat-mdc-button {
+  --mdc-protected-button-container-shape: var(--rect-btn-radius);
+  --mdc-filled-button-container-shape: var(--rect-btn-radius);
+  --mdc-outlined-button-container-shape: var(--rect-btn-radius);
+  --mdc-text-button-container-shape: var(--rect-btn-radius);
+  border-radius: var(--rect-btn-radius);
+}

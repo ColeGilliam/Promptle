@@ -5,6 +5,10 @@ import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { DbGameService, GameData } from '../../services/setup-game';
 import { ActivatedRoute, Router } from '@angular/router';
+import { NavbarComponent } from '../../components/navbar/navbar';
+import { AuthenticationService } from '../../services/authentication.service';
+import { take } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
 
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -23,7 +27,8 @@ import { MatSelectModule } from '@angular/material/select';
     MatMenuModule,
     MatButtonModule,
     MatFormFieldModule,
-    MatSelectModule
+    MatSelectModule,
+    NavbarComponent
   ],
   templateUrl: './promptle.html',
   styleUrls: ['./promptle.css']
@@ -35,6 +40,7 @@ export class PromptleComponent implements OnInit {
   answers: { name: string; values: string[] }[] = [];
   correctAnswer: {name: string; values: string[]} = {name: '', values: []};
   selectedGuess = '';
+  isGameOver = false;
 
   //showSettingsMenu = false;
 
@@ -49,7 +55,7 @@ export class PromptleComponent implements OnInit {
   gameLoading = false;
   gameError = '';
 
-  constructor(private dbGameService: DbGameService, private router: Router, private route: ActivatedRoute) {}
+  constructor(private dbGameService: DbGameService, private router: Router, private route: ActivatedRoute, private auth: AuthenticationService, private http: HttpClient) {}
 
   ngOnInit() {
     this.route.queryParamMap.subscribe(params => {
@@ -124,9 +130,24 @@ export class PromptleComponent implements OnInit {
       .filter(Boolean);
   }
 
+  private handleWin() {
+    this.isGameOver = true;
+
+    // Update stats if logged in
+    this.auth.user$.pipe(take(1)).subscribe(user => {
+      if (user?.sub) {
+        this.http.post('http://localhost:3001/api/increment-win', { auth0Id: user.sub })
+          .subscribe({
+            next: () => console.log('Stat updated!'),
+            error: (err) => console.error('Failed to update stats', err)
+          });
+      }
+    });
+  }
+
   // Submit a guess and calculate colors for feedback
   onSubmitGuess() {
-    if (!this.selectedGuess) return;
+    if (!this.selectedGuess || this.isGameOver) return;
 
     const guessed = this.answers.find(a => a.name === this.selectedGuess);
     const correct = this.answers.find(a => a.name === this.correctAnswer.name);
@@ -155,8 +176,12 @@ export class PromptleComponent implements OnInit {
     // Store the result
     this.submittedGuesses.push({
       values: guessed.values,
-      colors
+      colors: colors
     });
+
+    if (this.selectedGuess === this.correctAnswer.name) {
+      this.handleWin(); 
+    }
 
     // Clear selection for next guess
     this.selectedGuess = '';
