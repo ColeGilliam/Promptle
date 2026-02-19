@@ -15,7 +15,7 @@
 
 <mat-menu #mainMenu="matMenu">
   <!-- Is not logged in-->
-  <button button *ngIf="!isLoggedIn" class="login-button" (click)="toggleLogin()" mat-menu-item aria-label="Login">
+  <button *ngIf="!isLoggedIn" class="login-button" (click)="toggleLogin()" mat-menu-item aria-label="Login">
     Login
   </button>
 
@@ -25,7 +25,7 @@
   </button>
 
   <!-- Is logged in -->
-  <button button *ngIf="isLoggedIn" class="logout-button" (click)="toggleLogin()" mat-menu-item aria-label="Logout">
+  <button *ngIf="isLoggedIn" class="logout-button" (click)="toggleLogin()" mat-menu-item aria-label="Logout">
     Logout
   </button>
 </mat-menu>

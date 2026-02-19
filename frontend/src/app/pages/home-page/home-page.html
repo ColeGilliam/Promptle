@@ -5,19 +5,30 @@
 </div>
 
 
-<!-- TEST CHAT ROOM -->
- <div style="text-align: center; margin-top: 20px;">
- <button matButton="filled" (click)="joinChatRoom()">Join Chat Room</button>
-</div>
-
 <!-- Toggle multiplayer single player -->
  <div style="text-align: center; margin-top: 20px;">
-  <app-toggle-mode></app-toggle-mode>
+  <app-toggle-mode [(isSingleplayer)]="isSinglePlayerMode"></app-toggle-mode>
  </div>
 
-<div class="topic-selection">
+<!-- Multiplayer actions: show Join/Create when in multiplayer mode -->
+ <div style="text-align: center; margin-top: 20px;">
+  <ng-container *ngIf="!isSinglePlayerMode; else singleplayerActions">
+    <button matButton="filled" (click)="joinChatRoom()">Join Chat Room</button>
+    <button matButton="filled" (click)="createRoom()">Create Room</button>
+  </ng-container>
+  <ng-template #singleplayerActions></ng-template>
+</div>
+
+<div class="topic-selection" *ngIf="isSinglePlayerMode && !showLoadConfirm">
 
   <div class="columns">
+
+    <!-- Singleplayer quick actions: Load or New -->
+    <div style="text-align: center; margin-bottom: 16px; width:100%;">
+      <button matButton="filled" (click)="onLoadClicked()" [disabled]="!hasSavedGame">LOAD GAME</button>
+      <button matButton="outlined" (click)="newGame()">NEW GAME</button>
+    </div>
+
 
     <!-- LEFT -->
     <div class="column">
@@ -62,5 +73,18 @@
       (click)="startAiGame()">GENERATE AI GAME</button>
     </div>
 
+  </div>
+</div>
+
+<!-- Inline confirmation shown when user clicks LOAD and a saved game exists -->
+<div *ngIf="showLoadConfirm" style="text-align:center; margin-top:20px; padding:16px; border:1px solid #ddd; border-radius:8px; max-width:600px; margin-left:auto; margin-right:auto; background:#fff;">
+  <h3>Saved game found</h3>
+  <p *ngIf="savedGameTopic">Topic: <strong>{{ savedGameTopic }}</strong></p>
+  <p *ngIf="savedGameSavedAt" style="color:#666; font-size:0.9em;">Saved: {{ savedGameSavedAt }}</p>
+  <div style="margin-top:12px;">
+    <button matButton="filled" (click)="continueSaved()">Continue Saved Game</button>
+    <button matButton="outlined" (click)="cancelLoadConfirm()" style="margin-left:8px;">Cancel</button>
+    <button matButton="text" (click)="cancelLoadConfirm(); newGame();" style="margin-left:8px;">Start New Game</button>
+    <button matButton="filled" color="warn" (click)="deleteSavedConfirm()" style="margin-left:8px;">Delete Saved Game</button>
   </div>
 </div>

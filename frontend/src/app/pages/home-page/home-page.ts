@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { TopicsListService, TopicInfo } from '../../services/topics-list';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../../services/authentication.service';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { take } from 'rxjs';
 
 // Angular Material modules
 import { MatCardModule } from '@angular/material/card';
@@ -22,6 +24,7 @@ import { ToggleMode } from "../../shared/ui/toggle-mode/toggle-mode";
   imports: [
     CommonModule,
     FormsModule,
+    HttpClientModule,
     MatCardModule,
     MatFormFieldModule,
     MatSelectModule,
@@ -44,14 +47,144 @@ export class HomePage implements OnInit {
   onModeChange(isSingle: boolean) {
     console.log('Mode changed to: ', isSingle ? 'Singleplayer' : 'Multiplayer');
   }
+
+  // UI state for load-confirmation overlay
+  showLoadConfirm = false;
+
+  // Cached saved-game metadata shown in confirmation
+  savedGameTopic: string | null = null;
+  savedGameSavedAt: string | null = null;
+
+  // Whether a saved singleplayer game exists in localStorage
+  get hasSavedGame(): boolean {
+    return !!this.savedGameTopic;
+  }
+
+  ngAfterViewInit() {
+    this.refreshSavedGameState();
+  }
+
+  refreshSavedGameState() {
+    // If user is logged in, query server for their saved game. Otherwise read localStorage.
+    this.auth.user$.pipe(take(1)).subscribe(user => {
+      if (user && user.sub) {
+        this.http.get<any>(`http://localhost:3001/api/load-game/${encodeURIComponent(user.sub)}`).subscribe({
+          next: (payload) => {
+            this.savedGameTopic = payload?.topic ?? null;
+            this.savedGameSavedAt = payload?.savedAt ? new Date(payload.savedAt).toLocaleString() : null;
+          },
+          error: () => {
+            // No server-side saved game for this logged-in user. Do NOT fall back to localStorage.
+            this.savedGameTopic = null;
+            this.savedGameSavedAt = null;
+          }
+        });
+      } else {
+        this.readLocalSavedMetadata();
+      }
+    });
+  }
+
+  private readLocalSavedMetadata() {
+    try {
+      const raw = localStorage.getItem('promptle_saved_game');
+      if (!raw) {
+        this.savedGameTopic = null;
+        this.savedGameSavedAt = null;
+        return;
+      }
+      const payload = JSON.parse(raw);
+      this.savedGameTopic = payload?.topic ?? null;
+      this.savedGameSavedAt = payload?.savedAt ? new Date(payload.savedAt).toLocaleString() : null;
+    } catch (e) {
+      console.error('Failed to read saved game metadata', e);
+      this.savedGameTopic = null;
+      this.savedGameSavedAt = null;
+    }
+  }
+
+  /** Show an inline confirmation for loading the saved game. */
+  onLoadClicked() {
+    this.refreshSavedGameState();
+    if (this.hasSavedGame) {
+      this.showLoadConfirm = true;
+    } else {
+      // If no save, just navigate directly to game (behaviour preserved)
+      this.router.navigate(['/game']);
+    }
+  }
+
+  cancelLoadConfirm() {
+    this.showLoadConfirm = false;
+  }
+
+  continueSaved() {
+    this.showLoadConfirm = false;
+    this.router.navigate(['/game'], { queryParams: { loadSaved: 'true' } });
+  }
+
+  /** Ask user to confirm deletion, then delete saved game for logged-in user or localStorage for anonymous users */
+  deleteSavedConfirm() {
+    const ok = confirm('Delete saved game? This cannot be undone.');
+    if (!ok) return;
+    this.deleteSavedGame();
+  }
+
+  deleteSavedGame() {
+    // If logged in, call backend delete endpoint; otherwise remove localStorage key
+    this.auth.user$.pipe(take(1)).subscribe(user => {
+      if (user && user.sub) {
+        this.http.delete(`http://localhost:3001/api/delete-saved-game/${encodeURIComponent(user.sub)}`).subscribe({
+          next: () => {
+            alert('Saved game deleted from your account.');
+            this.showLoadConfirm = false;
+            this.refreshSavedGameState();
+          },
+          error: (err) => {
+            console.error('Failed to delete saved game on server', err);
+            alert('Failed to delete saved game on server.');
+          }
+        });
+      } else {
+        try {
+          localStorage.removeItem('promptle_saved_game');
+          alert('Local saved game deleted.');
+          this.showLoadConfirm = false;
+          this.refreshSavedGameState();
+        } catch (e) {
+          console.error('Failed to delete local saved game', e);
+          alert('Failed to delete local saved game.');
+        }
+      }
+    });
+  }
+
+  loadSavedGame() {
+    // Backwards-compatible: directly navigate to load saved game
+    this.router.navigate(['/game'], { queryParams: { loadSaved: 'true' } });
+  }
+
+  newGame() {
+    // Start a new game but DO NOT delete the saved game from storage.
+    // This keeps the "Load Game" option available even after starting a new game.
+    // Optionally refresh saved metadata in case user wants to load later.
+    this.refreshSavedGameState();
+    console.log('Starting a new game (saved game preserved)');
+  }
+
+  createRoom() {
+    // Navigate to chat page; use query param to indicate room creation intent
+    this.router.navigate(['/chat'], { queryParams: { create: 'true' } });
+  }
   // FAKE LOG IN STATE FOR UI
   isLoggedIn = false;
   displayName = 'future username display';
 
-  constructor(private topicsService: TopicsListService, private router: Router, private auth: AuthenticationService) { }
+  constructor(private topicsService: TopicsListService, private router: Router, private auth: AuthenticationService, private http: HttpClient) { }
 
   ngOnInit() {
 
+    this.refreshSavedGameState();
     this.getTopics();
     // Subscribe to Auth0's real authentication state
     this.auth.isAuthenticated$.subscribe((status) => {
