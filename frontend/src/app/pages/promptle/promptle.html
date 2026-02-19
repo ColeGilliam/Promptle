@@ -48,6 +48,7 @@
   
   <!-- Save progress button -->
   <button matButton="outlined" (click)="saveGame()" [disabled]="!answers.length">SAVE</button>
+  <button matButton="text" (click)="restartGame()" [disabled]="!answers.length" style="margin-left:8px;">RESTART</button>
   <span *ngIf="savedTimestamp" style="margin-left:8px; font-size:0.9em; color: #666;">Saved: {{ savedTimestamp }}</span>
 </div>
 
@@ -82,7 +83,10 @@
   <div class="win-card">
     <h2>🏆 Victory!</h2>
     <p>The correct answer was <strong>{{ correctAnswer.name }}</strong></p>
-    <button mat-raised-button color="primary" (click)="quitGame()">Return Home</button>
+    <div style="display:flex; gap:8px; justify-content:center; margin-top:12px;">
+      <button mat-raised-button color="primary" (click)="quitGame()">Return Home</button>
+      <button mat-stroked-button color="accent" (click)="restartGame()">Play Again (Different Answer)</button>
+    </div>
   </div>
 </div>
 

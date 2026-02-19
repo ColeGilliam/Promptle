@@ -200,6 +200,52 @@ export class PromptleComponent implements OnInit {
     }
   }
 
+  /**
+   * Restart the current game by selecting a different correct answer randomly
+   * and resetting guesses. If there is only one possible answer, this is a no-op.
+   */
+  restartGame() {
+    if (!this.answers || this.answers.length === 0) return;
+
+    // If only one answer, can't pick a different one
+    if (this.answers.length === 1) {
+      // Reset guesses but keep the same correct answer
+      this.submittedGuesses = [];
+      this.selectedGuess = '';
+      this.isGameOver = false;
+      return;
+    }
+
+    // Find indices of answers that are not the current correct answer
+    const candidates = this.answers
+      .map((a, idx) => ({ a, idx }))
+      .filter(x => x.a.name !== this.correctAnswer.name);
+
+    if (!candidates.length) {
+      // All answers match current correct (unlikely) — just reset guesses
+      this.submittedGuesses = [];
+      this.selectedGuess = '';
+      this.isGameOver = false;
+      return;
+    }
+
+    // Pick a random candidate
+    const pick = candidates[Math.floor(Math.random() * candidates.length)];
+    const newCorrect = pick.a;
+
+    this.correctAnswer = { name: newCorrect.name, values: [...newCorrect.values] };
+
+    // Update backend preview row
+    this.backendHeaders = [...this.headers];
+    this.backendRow = [...newCorrect.values];
+
+    // Reset gameplay state
+    this.submittedGuesses = [];
+    this.selectedGuess = '';
+    this.isGameOver = false;
+    this.gameError = '';
+  }
+
     /**
    * Fetch a game via unified service (AI or DB depending on params)
    */
