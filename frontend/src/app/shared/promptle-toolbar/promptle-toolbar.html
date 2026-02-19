@@ -1,0 +1,26 @@
+<mat-toolbar class="app-toolbar" color="primary">
+  <button mat-icon-button routerLink="/" aria-label="Go to homepage">
+    <mat-icon>home</mat-icon>
+  </button>
+
+  <span class="app-toolbar__spacer"></span>
+
+  <button mat-icon-button aria-label="Toggle light or dark mode (placeholder)">
+    <mat-icon>brightness_6</mat-icon>
+  </button>
+
+  <button mat-icon-button [matMenuTriggerFor]="mainMenu" aria-label="Open menu">
+    <mat-icon>menu</mat-icon>
+  </button>
+</mat-toolbar>
+
+<mat-menu #mainMenu="matMenu">
+  <button mat-menu-item routerLink="/" aria-label="Go to homepage">
+    <mat-icon>home</mat-icon>
+    <span>Home</span>
+  </button>
+  <button mat-menu-item aria-label="Login">
+    <mat-icon>login</mat-icon>
+    <span>Login</span>
+  </button>
+</mat-menu>

@@ -5,27 +5,23 @@ import { MatCardModule } from '@angular/material/card';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
-import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
-import { RouterModule } from '@angular/router';
+import { PromptleToolbarComponent } from '../../shared/promptle-toolbar/promptle-toolbar';
 
 @Component({
   selector: 'app-about',
   standalone: true,
   imports: [
     CommonModule,
-    RouterModule,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
     MatExpansionModule,
     MatButtonModule,
-    MatMenuModule,
-    MatToolbarModule,
-    MatIconModule
+    MatIconModule,
+    PromptleToolbarComponent
   ],
   templateUrl: './about.html',
   styleUrls: ['./about.css'],

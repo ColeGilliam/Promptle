@@ -1,17 +1,4 @@
-<mat-toolbar class="topbar" color="primary">
-  <span class="spacer"></span>
-  <button mat-icon-button aria-label="Toggle light or dark mode">
-    <mat-icon>brightness_6</mat-icon>
-  </button>
-  <button mat-icon-button [matMenuTriggerFor]="mainMenu" aria-label="Open menu">
-    <mat-icon>menu</mat-icon>
-  </button>
-</mat-toolbar>
-
-<mat-menu #mainMenu="matMenu">
-  <button mat-menu-item routerLink="/" aria-label="Go to homepage">Home</button>
-  <button mat-menu-item aria-label="Login">Login</button>
-</mat-menu>
+<app-promptle-toolbar></app-promptle-toolbar>
 
 <div class="logo-banner">
   <img src="PromptleLogoTransparent.png" alt="Promptle logo">

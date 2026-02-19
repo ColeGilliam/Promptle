@@ -11,10 +11,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatButtonModule } from '@angular/material/button';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
-import { RouterModule } from '@angular/router';
+import { PromptleToolbarComponent } from '../../shared/promptle-toolbar/promptle-toolbar';
 
 @Component({
   selector: 'app-promptle-landing',
@@ -27,10 +24,7 @@ import { RouterModule } from '@angular/router';
     MatSelectModule,
     MatChipsModule,
     MatButtonModule,
-    MatToolbarModule,
-    MatIconModule,
-    MatMenuModule,
-    RouterModule
+    PromptleToolbarComponent
   ],
   templateUrl: './promptle-landing.html',
   styleUrls: ['./promptle-landing.css'],
