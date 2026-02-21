@@ -1,0 +1,28 @@
+<div>
+  <mat-toolbar color="primary">
+    <button mat-icon-button routerLink="">
+      <mat-icon>home</mat-icon>
+    </button>
+
+    <span style="flex: 1 1 auto;"> </span>
+
+    <button mat-icon-button>
+      <mat-icon>brightness_6</mat-icon>
+    </button>
+
+    <button mat-icon-button [matMenuTriggerFor]="mainMenu">
+      <mat-icon>menu</mat-icon>
+    </button>
+
+    <mat-menu #mainMenu="matMenu">
+      <button mat-menu-item routerLink="">
+        <mat-icon>home</mat-icon>
+        <span>Home</span>
+      </button>
+      <button mat-menu-item>
+        <mat-icon>login</mat-icon>
+        <span>Login</span>
+      </button>
+    </mat-menu>
+  </mat-toolbar>
+</div>

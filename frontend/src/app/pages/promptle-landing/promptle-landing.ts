@@ -11,7 +11,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatButtonModule } from '@angular/material/button';
-import { PromptleToolbarComponent } from '../../shared/promptle-toolbar/promptle-toolbar';
+import { PromptleToolbarComponent } from '../../shared/promptle-toolbar/toolbar/promptle-toolbar';
 
 @Component({
   selector: 'app-promptle-landing',

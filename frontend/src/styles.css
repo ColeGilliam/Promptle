@@ -31,15 +31,3 @@ body { margin: 0;
   border-radius: var(--rect-btn-radius);
 }
 
-/* Shared toolbar used across non-home pages */
-.app-toolbar {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  display: flex;
-  gap: 4px;
-}
-
-.app-toolbar__spacer {
-  flex: 1 1 auto;
-}
