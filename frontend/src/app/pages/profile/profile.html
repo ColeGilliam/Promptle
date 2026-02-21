@@ -1,0 +1,78 @@
+<mat-toolbar class="topbar" color="primary">
+  <button mat-button routerLink="/" aria-label="Go to homepage">Home</button>
+  <span class="spacer"></span>
+  <div *ngIf="isLoggedIn" class="user-nav-section">
+    <span class="nav-username">{{ dbUsername || 'User' }}</span>
+    <img [src]="dbProfilePic || 'assets/default-avatar.png'" class="nav-avatar">
+  </div>
+  <button mat-icon-button aria-label="Toggle light or dark mode">
+    <mat-icon>brightness_6</mat-icon>
+  </button>
+  <button mat-icon-button [matMenuTriggerFor]="mainMenu" aria-label="Open menu">
+    <mat-icon>menu</mat-icon>
+  </button>
+</mat-toolbar>
+
+<mat-menu #mainMenu="matMenu">
+  <!-- Is not logged in-->
+  <button button *ngIf="!isLoggedIn" class="login-button" (click)="toggleLogin()" mat-menu-item aria-label="Login">
+    Login
+  </button>
+
+  <!-- Profile button only if logged in-->
+  <button *ngIf="isLoggedIn" class="profile-button" mat-menu-item aria-label="Profile" routerLink="/profile"> 
+    Profile
+  </button>
+
+  <!-- Is logged in -->
+  <button button *ngIf="isLoggedIn" class="logout-button" (click)="toggleLogin()" mat-menu-item aria-label="Logout">
+    Logout
+  </button>
+</mat-menu>
+
+<div class="profile-container" *ngIf="isLoggedIn">
+  <mat-card class="profile-card">
+    <mat-card-header>
+      <mat-card-title>Your Profile</mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="avatar-section">
+        <img [src]="selectedImageBase64 || dbProfilePic || 'https://via.placeholder.com/150'" 
+             class="profile-avatar" alt="User Avatar">
+        
+        <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" hidden>
+        <button mat-stroked-button (click)="fileInput.click()">
+          <mat-icon>upload</mat-icon> Upload Picture
+        </button>
+      </div>
+
+      <mat-form-field appearance="fill" class="full-width">
+        <mat-label>Display Username</mat-label>
+        <input matInput [(ngModel)]="dbUsername" placeholder="Enter custom username">
+      </mat-form-field>
+    </mat-card-content>
+
+    <mat-card-actions class="actions">
+      <button mat-raised-button color="primary" (click)="saveProfile()">
+        Save Changes
+      </button>
+      <button mat-button color="warn" (click)="deleteAccount()">
+        Delete Account
+      </button>
+    </mat-card-actions>
+  </mat-card>
+  <div class="stats-section">
+    <h3>Player Stats</h3>
+    <div class="stat-badge">
+        
+        <span>Total Wins: <strong>{{ winCount }}</strong></span>
+    </div>
+</div>
+</div>
+
+
+
+
+
+

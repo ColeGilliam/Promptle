@@ -1,0 +1,51 @@
+<app-navbar></app-navbar>
+<div class="chat-container">
+
+  <div class="header">
+    <h2>Chat Room: {{ currentRoom || 'Not joined' }}</h2>
+  </div>
+
+  <!-- Join form – shown only before joining -->
+  <div class="join-area" *ngIf="!hasJoined">
+    <input
+      [(ngModel)]="roomName"
+      placeholder="Enter room name (e.g. lobby, friends)"
+      (keyup.enter)="joinRoom()"
+      autofocus
+      type="text"
+    />
+    <button (click)="joinRoom()" [disabled]="!roomName.trim()">
+      Join Room
+    </button>
+  </div>
+
+  <!-- Chat area – shown only after joining -->
+  <ng-container *ngIf="hasJoined">
+    <div class="messages-container" #messagesContainer>
+      <div *ngFor="let msg of messages"
+           class="message"
+           [ngClass]="{ 'own-message': msg.isOwn, 'other-message': !msg.isOwn }">
+        {{ msg.text }}
+      </div>
+
+      <div class="no-messages" *ngIf="messages.length === 0">
+        No messages yet. Start the conversation!
+      </div>
+    </div>
+
+    <div class="input-area">
+      <input
+        [(ngModel)]="currentMessage"
+        placeholder="Type a message..."
+        (keyup.enter)="sendMessage(); $event.preventDefault()"
+        autofocus
+        type="text"
+      />
+      <button (click)="sendMessage()"
+              [disabled]="!currentMessage.trim()">
+        Send
+      </button>
+    </div>
+  </ng-container>
+
+</div>

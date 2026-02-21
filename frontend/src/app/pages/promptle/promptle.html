@@ -1,4 +1,4 @@
-<app-promptle-toolbar></app-promptle-toolbar>
+<app-navbar></app-navbar>
 
 <div class="promptle-container">
   <h1 style="text-align: center;">
@@ -45,6 +45,11 @@
   >
     SUBMIT
   </button>
+  
+  <!-- Save progress button -->
+  <button matButton="outlined" (click)="saveGame()" [disabled]="!answers.length">SAVE</button>
+  <button matButton="text" (click)="restartGame()" [disabled]="!answers.length" style="margin-left:8px;">RESTART</button>
+  <span *ngIf="savedTimestamp" style="margin-left:8px; font-size:0.9em; color: #666;">Saved: {{ savedTimestamp }}</span>
 </div>
 
   <!-- Game Grid -->
@@ -74,24 +79,13 @@
 
 </div>
 -->
-
-<div class="settings-container">
-    <button
-      mat-icon-button
-      class="settings-button"
-      [matMenuTriggerFor]="settingsMenu"
-      aria-label="Game settings"
-    >
-      <mat-icon>settings</mat-icon>
-    </button>
-
-    <mat-menu #settingsMenu="matMenu">
-      <button mat-menu-item (click)="quitGame()">
-        <mat-icon>exit_to_app</mat-icon>
-        <span>Quit Game</span>
-      </button>
-
-    
-    </mat-menu>
+<div class="win-overlay" *ngIf="isGameOver">
+  <div class="win-card">
+    <h2>🏆 Victory!</h2>
+    <p>The correct answer was <strong>{{ correctAnswer.name }}</strong></p>
+    <div style="display:flex; gap:8px; justify-content:center; margin-top:12px;">
+      <button mat-raised-button color="primary" (click)="quitGame()">Return Home</button>
+      <button mat-stroked-button color="accent" (click)="restartGame()">Play Again (Different Answer)</button>
+    </div>
   </div>
 </div>

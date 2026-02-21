@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { PromptleLandingComponent } from './promptle-landing';
+import { ChatRoomTest } from './chat-room-test';
 
-describe('PromptleLandingComponent', () => {
-  let component: PromptleLandingComponent;
-  let fixture: ComponentFixture<PromptleLandingComponent>;
+describe('ChatRoomTest', () => {
+  let component: ChatRoomTest;
+  let fixture: ComponentFixture<ChatRoomTest>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [PromptleLandingComponent]
+      imports: [ChatRoomTest]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(PromptleLandingComponent);
+    fixture = TestBed.createComponent(ChatRoomTest);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

@@ -1,0 +1,90 @@
+<app-navbar></app-navbar>
+<!--PROMPTLE LOGO-->
+<div class="logoTitle">
+  <img src="PromptleLogoTransparent.png">
+</div>
+
+
+<!-- Toggle multiplayer single player -->
+ <div style="text-align: center; margin-top: 20px;">
+  <app-toggle-mode [(isSingleplayer)]="isSinglePlayerMode"></app-toggle-mode>
+ </div>
+
+<!-- Multiplayer actions: show Join/Create when in multiplayer mode -->
+ <div style="text-align: center; margin-top: 20px;">
+  <ng-container *ngIf="!isSinglePlayerMode; else singleplayerActions">
+    <button matButton="filled" (click)="joinChatRoom()">Join Chat Room</button>
+    <button matButton="filled" (click)="createRoom()">Create Room</button>
+  </ng-container>
+  <ng-template #singleplayerActions></ng-template>
+</div>
+
+<div class="topic-selection" *ngIf="isSinglePlayerMode && !showLoadConfirm">
+
+  <div class="columns">
+
+    <!-- Singleplayer quick actions: Load or New -->
+    <div style="text-align: center; margin-bottom: 16px; width:100%;">
+      <button matButton="filled" (click)="onLoadClicked()" [disabled]="!hasSavedGame">LOAD GAME</button>
+      <button matButton="outlined" (click)="newGame()">NEW GAME</button>
+    </div>
+
+
+    <!-- LEFT -->
+    <div class="column">
+      <h2>Choose from Popular Topics</h2>
+
+      <mat-form-field appearance="fill" class="topic-field">
+        <mat-label>Select a topic</mat-label>
+        <mat-select [(value)]="selectedTopic">
+          <mat-option *ngFor="let topic of allTopics" [value]="topic">
+            {{ topic.topicName }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <p class="subtext">
+        This list will generate a game with no down time
+        as it pulls from the MongoDB database
+      </p>
+
+      <button matButton="filled"
+      [disabled]="!selectedTopic"
+      (click)="startGame()">GENERATE</button>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="column">
+      <h2>Create Unique</h2>
+
+      <input
+        type="text"
+        class="text-input"
+        placeholder="Enter any topic (e.g., Solar System, K-Pop groups)"
+        [(ngModel)]="customTopic"
+      >
+
+      <p class="subtext">
+        Uses AI to generate a new Promptle on the fly
+      </p>
+
+      <button matButton="filled"
+      [disabled]="!customTopic.trim()"
+      (click)="startAiGame()">GENERATE AI GAME</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Inline confirmation shown when user clicks LOAD and a saved game exists -->
+<div *ngIf="showLoadConfirm" style="text-align:center; margin-top:20px; padding:16px; border:1px solid #ddd; border-radius:8px; max-width:600px; margin-left:auto; margin-right:auto; background:#fff;">
+  <h3>Saved game found</h3>
+  <p *ngIf="savedGameTopic">Topic: <strong>{{ savedGameTopic }}</strong></p>
+  <p *ngIf="savedGameSavedAt" style="color:#666; font-size:0.9em;">Saved: {{ savedGameSavedAt }}</p>
+  <div style="margin-top:12px;">
+    <button matButton="filled" (click)="continueSaved()">Continue Saved Game</button>
+    <button matButton="outlined" (click)="cancelLoadConfirm()" style="margin-left:8px;">Cancel</button>
+    <button matButton="text" (click)="cancelLoadConfirm(); newGame();" style="margin-left:8px;">Start New Game</button>
+    <button matButton="filled" color="warn" (click)="deleteSavedConfirm()" style="margin-left:8px;">Delete Saved Game</button>
+  </div>
+</div>
