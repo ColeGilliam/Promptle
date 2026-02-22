@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
-import { PromptleToolbarComponent } from '../../shared/promptle-toolbar/toolbar/promptle-toolbar';
+import { NavbarComponent } from '../../shared/components/navbar/navbar';
 
 @Component({
   selector: 'app-testing',
-  imports: [PromptleToolbarComponent],
+  imports: [NavbarComponent],
   templateUrl: './testing.html',
   styleUrl: './testing.css',
 })

@@ -5,13 +5,16 @@ import { MatCardModule } from '@angular/material/card';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
+import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterModule } from '@angular/router';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../../services/authentication.service';
 import { HttpClient } from '@angular/common/http';
 import { NavbarComponent } from '../../shared/components/navbar/navbar';
+import { PageSeparatorComponent } from '../../shared/ui/page-separator/page-separator';
 
 @Component({
   selector: 'app-about',
@@ -27,7 +30,8 @@ import { NavbarComponent } from '../../shared/components/navbar/navbar';
     MatMenuModule,
     MatToolbarModule,
     MatIconModule,
-    NavbarComponent
+    NavbarComponent,
+    PageSeparatorComponent
   ],
   templateUrl: './about.html',
   styleUrls: ['./about.css'],

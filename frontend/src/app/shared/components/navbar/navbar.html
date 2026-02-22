@@ -1,31 +1,44 @@
-<mat-toolbar class="topbar" color="primary">
-  <button mat-button routerLink="/" aria-label="Go to homepage">Home</button>
+<mat-toolbar class="topbar mat-elevation-z8" color="primary">
+  <button mat-icon-button routerLink="/" aria-label="Go to homepage">
+    <mat-icon>home</mat-icon>
+  </button>
+
   <span class="spacer"></span>
+
   <div *ngIf="isLoggedIn" class="user-nav-section">
     <span class="nav-username">{{ dbUsername || 'User' }}</span>
     <img [src]="dbProfilePic || 'assets/default-avatar.png'" class="nav-avatar">
   </div>
+
   <button mat-icon-button aria-label="Toggle light or dark mode">
     <mat-icon>brightness_6</mat-icon>
   </button>
+  
   <button mat-icon-button [matMenuTriggerFor]="mainMenu" aria-label="Open menu">
     <mat-icon>menu</mat-icon>
   </button>
 </mat-toolbar>
 
 <mat-menu #mainMenu="matMenu">
+  <button mat-menu-item routerLink="">
+      <mat-icon>home</mat-icon>
+      <span>Home</span>
+    </button>
   <!-- Is not logged in-->
-  <button *ngIf="!isLoggedIn" class="login-button" (click)="toggleLogin()" mat-menu-item aria-label="Login">
+  <button mat-menu-item *ngIf="!isLoggedIn" class="login-button" (click)="toggleLogin()" mat-menu-item aria-label="Login">
+    <mat-icon>login</mat-icon>
     Login
   </button>
 
   <!-- Profile button only if logged in-->
-  <button *ngIf="isLoggedIn" class="profile-button" mat-menu-item aria-label="Profile" routerLink="/profile"> 
+  <button *ngIf="isLoggedIn" class="profile-button" mat-menu-item aria-label="Profile" routerLink="/profile">
+    <mat-icon>face</mat-icon>
     Profile
   </button>
 
   <!-- Is logged in -->
   <button *ngIf="isLoggedIn" class="logout-button" (click)="toggleLogin()" mat-menu-item aria-label="Logout">
+     <mat-icon>logout</mat-icon>
     Logout
   </button>
 </mat-menu>
