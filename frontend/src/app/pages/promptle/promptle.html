@@ -1,13 +1,21 @@
 <app-navbar></app-navbar>
 <div *ngIf="isMultiplayer" class="multiplayer-info">
   <h3>Room: {{ currentRoom || 'Connecting...' }}</h3>
+
   <h4>Players ({{ players.length }}):</h4>
-  <ul>
-    <li *ngFor="let player of players">
-      {{ player.name }} 
+
+  <ul *ngIf="players.length > 0; else noPlayers">
+    <li *ngFor="let player of players; let i = index">
+      {{ player.name || 'Unknown' }}
       <span *ngIf="player.guesses !== undefined">({{ player.guesses }} guesses)</span>
     </li>
   </ul>
+
+  <ng-template #noPlayers>
+    <p style="color: #888; font-style: italic;">
+      Waiting for players... (open this link in another tab to test)
+    </p>
+  </ng-template>
 </div>
 
 <div class="promptle-container">
@@ -37,41 +45,33 @@
   </div>
 
   <!-- Guess Input -->
-<div class="guess-input" *ngIf="answers.length">
-  <mat-form-field appearance="fill" class="guess-select-field">
-    <mat-label>Select a Guess</mat-label>
-    <mat-select [(ngModel)]="selectedGuess">
-      <mat-option *ngFor="let answer of answers" [value]="answer.name">
-        {{ answer.name }}
-      </mat-option>
-    </mat-select>
-  </mat-form-field>
+  <div class="guess-input" *ngIf="answers.length">
+    <mat-form-field appearance="fill" class="guess-select-field">
+      <mat-label>Select a Guess</mat-label>
+      <mat-select [(ngModel)]="selectedGuess">
+        <mat-option *ngFor="let answer of answers" [value]="answer.name">
+          {{ answer.name }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
 
 
-  <button
-    matButton="filled"
-    [disabled]="!selectedGuess"
-    (click)="onSubmitGuess()"
-  >
-    SUBMIT
-  </button>
-</div>
+    <button matButton="filled" [disabled]="!selectedGuess" (click)="onSubmitGuess()">
+      SUBMIT
+    </button>
+  </div>
 
   <!-- Game Grid -->
   <div class="game-grid" *ngIf="headers.length">
     <div class="column" *ngFor="let header of headers; let i = index">
       <div class="header">{{ header }}</div>
 
-      <div
-        class="guess-cell"
-        *ngFor="let guess of submittedGuesses"
-        [style.background-color]="guess.colors[i]"
-      >
+      <div class="guess-cell" *ngFor="let guess of submittedGuesses" [style.background-color]="guess.colors[i]">
         {{ guess.values[i] }}
       </div>
     </div>
   </div>
-<!-- 
+  <!-- 
   <div class="settings-container">
     <button class="settings-button" (click)="toggleSettingsMenu()">
       ⚙️
@@ -84,12 +84,10 @@
 
 </div>
 -->
-<div class="win-overlay" *ngIf="isGameOver">
-  <div class="win-card">
-    <h2>🏆 Victory!</h2>
-    <p>The correct answer was <strong>{{ correctAnswer.name }}</strong></p>
-    <button mat-raised-button color="primary" (click)="quitGame()">Return Home</button>
+  <div class="win-overlay" *ngIf="isGameOver">
+    <div class="win-card">
+      <h2>🏆 Victory!</h2>
+      <p>The correct answer was <strong>{{ correctAnswer.name }}</strong></p>
+      <button mat-raised-button color="primary" (click)="quitGame()">Return Home</button>
+    </div>
   </div>
-</div>
-
-

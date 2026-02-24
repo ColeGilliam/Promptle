@@ -1,72 +1,93 @@
+// sockets/index.js
 import { Server } from "socket.io";
 
 export function setupSocket(server) {
   const io = new Server(server, {
     cors: {
-      origin: 'http://localhost:4200',  // change to "*" temporarily if you still have connection issues
+      origin: 'http://localhost:4200',  // your Angular frontend
       methods: ['GET', 'POST'],
+      credentials: true
     },
-    allowEIO3: true,  // keep only while testing with older clients / tools
+    allowEIO3: true,  // keep for compatibility during testing
   });
 
   io.on('connection', (socket) => {
-    console.log('A user connected:', socket.id);
+    console.log('[BACKEND] Player connected:', socket.id);
 
-    // ───────────────────────────────────────────────
-    // Simple echo example (you can remove later)
-    socket.on('chat message', (message) => {
-      console.log('Received message:', message);
-      //socket.emit('chat message', `Server echo: ${message}`);
-    });
-    // ───────────────────────────────────────────────
-
-    // Join room handler
-    socket.on('join room', (roomName) => {
-      if (typeof roomName !== 'string' || roomName.trim() === '') {
-        return socket.emit('error', 'Invalid room name');
+    // ────────────────────────────────────────────────
+    // JOIN ROOM - this is what your frontend emits
+    // ────────────────────────────────────────────────
+    socket.on('join-room', ({ roomId, playerName }) => {
+      if (!roomId || typeof roomId !== 'string' || roomId.trim() === '') {
+        socket.emit('error', 'Invalid room ID');
+        return;
       }
 
-      const cleanRoom = roomName.trim().toLowerCase();
+      const cleanRoom = roomId.trim();  // keep case-sensitive for now
 
       socket.join(cleanRoom);
-      console.log(`User ${socket.id} joined room: ${cleanRoom}`);
 
-      socket.emit('joined room', cleanRoom);
+      console.log(`[BACKEND] ${playerName || 'Guest'} joined room ${cleanRoom} (socket ${socket.id})`);
 
-      // Announce to others in the room (optional)
-      socket.to(cleanRoom).emit('notification', `User ${socket.id} has joined the room`);
+      // Get all sockets in this room
+      const roomSockets = io.sockets.adapter.rooms.get(cleanRoom) || new Set();
+
+      // Build player list (simple: id + name)
+      const players = Array.from(roomSockets).map((clientId) => {
+        return {
+          id: clientId,
+          name: playerName || `Player ${clientId.slice(0, 4)}`
+        };
+      });
+
+      console.log(`[BACKEND] Current players in ${cleanRoom}:`, players);
+
+      // Broadcast updated player list to EVERYONE in the room
+      io.to(cleanRoom).emit('players-updated', { roomId: cleanRoom, players });
+
+      // Confirm to the joining user
+      socket.emit('joined-room', { roomId: cleanRoom, message: `Joined ${cleanRoom}` });
     });
 
-    // Room-aware chat message handler
+    // ────────────────────────────────────────────────
+    // Your existing chat handlers (kept & cleaned)
+    // ────────────────────────────────────────────────
     socket.on('chat message', (data) => {
-      let room, message;
+      let room = 'general';
+      let message = '';
 
       if (typeof data === 'string') {
-        // backward compatibility: plain string → use default room
         message = data;
-        room = 'general';
       } else if (data && data.room && data.text) {
         room = data.room.trim().toLowerCase();
         message = data.text.trim();
-      } else {
-        return socket.emit('error', 'Invalid message format');
       }
 
       if (!message) return;
 
-      console.log(`Message in room "${room}": ${message} (from ${socket.id})`);
+      console.log(`[BACKEND] Message in room "${room}": ${message} (from ${socket.id})`);
 
-      // Send to everyone in the room EXCEPT the sender
-      socket.to(room).emit('chat message', message);
+      io.to(room).emit('chat message', message);  // send to all in room (including sender)
+    });
 
-      // Also send back to sender (so they see their own message immediately)
-      socket.emit('chat message', message);
+    // ────────────────────────────────────────────────
+    // Disconnect handling
+    // ────────────────────────────────────────────────
+    socket.on('disconnect', () => {
+      console.log('[BACKEND] Player disconnected:', socket.id);
+
+      // Optional: broadcast to rooms they were in
+      socket.rooms.forEach((room) => {
+        if (room !== socket.id) {
+          io.to(room).emit('notification', `User ${socket.id} left the room`);
+        }
+      });
     });
   });
 
-  // Global engine-level error logging (this is fine outside connection handler)
+  // Global connection error logging
   io.engine.on("connection_error", (err) => {
-    console.log("Engine connection error:", err.req?.url, err.code, err.message);
+    console.log("[BACKEND] Engine connection error:", err.req?.url, err.code, err.message);
   });
 
   return io;

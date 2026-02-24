@@ -1,5 +1,5 @@
 // promptle.component.ts
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
@@ -60,7 +60,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
   //─────────────────────────────────────
   currentRoom = '';
   isMultiplayer = false;
-  players: { id: string; name: string; guesses?: number }[] = [];   // will come from service
+  players: { id: string; name: string; guesses?: number }[] = [];
 
   private roomStateSub?: Subscription;
 
@@ -70,94 +70,120 @@ export class PromptleComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private auth: AuthenticationService,
     private http: HttpClient,
-    private multiplayerService: MultiplayerService   // ← added here
+    private multiplayerService: MultiplayerService,
+    private cdr: ChangeDetectorRef  // ← added for forcing UI updates
   ) { }
 
   ngOnInit() {
-    this.route.queryParamMap.subscribe(params => {
-      const aiTopic   = params.get('topic')?.trim();
-      const topicIdParam = params.get('id');
-      const room      = params.get('room')?.trim();
+    // Subscribe early so we catch all updates
+    this.subscribeToRoomUpdates();
 
-      // ────────────────────────────────────────────────
-      // MULTIPLAYER MODE (room present in URL)
-      // ────────────────────────────────────────────────
+    this.route.queryParamMap.subscribe(params => {
+      const aiTopic = params.get('topic')?.trim();
+      const topicIdParam = params.get('id');
+      const room = params.get('room')?.trim();
+
+      console.log('[Promptle] URL params:', { aiTopic, topicId: topicIdParam, room });
+
       if (room && room.length > 0) {
+        console.log('[Promptle] Multiplayer mode activated with room:', room);
         this.currentRoom = room;
         this.isMultiplayer = true;
 
         // Join socket with real username
         this.auth.user$.pipe(take(1)).subscribe(user => {
           const username = user?.name || user?.email?.split('@')[0] || 'Guest';
+          console.log('[Promptle] Joining socket as:', username);
           this.multiplayerService.joinRoom(room, username);
         });
 
-        this.subscribeToRoomUpdates();
+        // Load game using room code
+        this.loadGame({ room });
 
-        // Load game using room code (string) as identifier
-        this.loadGame({ room });  // ← now calls fetchGameByRoom
         return;
       }
 
-      // ────────────────────────────────────────────────
-      // SINGLE PLAYER MODE
-      // ────────────────────────────────────────────────
+      // Single-player paths
+      console.log('[Promptle] Single-player mode');
       this.isMultiplayer = false;
       this.multiplayerService.leaveRoom();
 
       if (aiTopic) {
-        this.loadGame({ topic: aiTopic });  // AI generation
+        console.log('[Promptle] Loading AI topic:', aiTopic);
+        this.loadGame({ topic: aiTopic });
         return;
       }
 
       if (topicIdParam) {
         const topicId = Number(topicIdParam);
         if (!isNaN(topicId)) {
-          this.loadGame({ topicId });  // DB topic
+          console.log('[Promptle] Loading DB topicId:', topicId);
+          this.loadGame({ topicId });
           return;
         }
       }
 
       this.gameError = 'No valid topic, game ID, or room provided.';
+      console.log('[Promptle] No valid params');
     });
   }
 
   private subscribeToRoomUpdates() {
+    if (this.roomStateSub) {
+      this.roomStateSub.unsubscribe();
+    }
+
     this.roomStateSub = this.multiplayerService.roomState$.subscribe(state => {
+      console.log('[Promptle] Room state update received:', state);
+
       if (state) {
-        this.players = state.players;
+        this.players = [...state.players];  // new array reference
         this.currentRoom = state.roomId;
-        console.log('Room updated — players:', this.players);
+        console.log('[Promptle] Players updated:', this.players.length, this.players.map(p => p.name));
       } else {
         this.players = [];
         this.currentRoom = '';
+        console.log('[Promptle] Room state cleared');
       }
+
+      // Force Angular to re-render
+      this.cdr.detectChanges();
     });
   }
 
-  /**
-   * Fetch a game via unified service (AI or DB depending on params)
-   */
   private loadGame(options: { topic?: string; topicId?: number; room?: string }) {
     this.gameLoading = true;
     this.gameError = '';
 
+    console.log('[Promptle] Loading game with options:', options);
+
     this.dbGameService.fetchGame(options).subscribe({
       next: (data: GameData) => {
+        console.log('[Promptle] Game data loaded:', data);
         this.applyGameData(data);
         this.gameLoading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error('Error loading game data:', err);
+        console.error('[Promptle] Load game error:', err);
         this.gameError = err?.error?.error ?? err?.message ?? 'Failed to load game data';
         this.gameLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }
 
-  /**
-   * Apply fetched game data to the component state
-   */
+  get playerNamesDisplay(): string {
+    if (!this.players || this.players.length === 0) {
+      return 'empty';
+    }
+    return this.players.map(p => p.name || 'Unknown').join(', ');
+  }
+
+  //─────────────────────────────────────
+  // === Apply data, guess logic, win, quit, destroy ===
+  //─────────────────────────────────────
+
   private applyGameData(data: GameData) {
     this.topic = data.topic;
     this.headers = data.headers;
@@ -175,11 +201,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
 
     this.submittedGuesses = [];
     this.selectedGuess = '';
+    this.cdr.detectChanges();
   }
-
-  //─────────────────────────────────────
-  // === Guess & Scoring Logic ===
-  //─────────────────────────────────────
 
   tokenize(value: string): string[] {
     if (!value) return [];
@@ -218,6 +241,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
     }
 
     this.selectedGuess = '';
+    this.cdr.detectChanges();
   }
 
   private handleWin() {
@@ -231,15 +255,13 @@ export class PromptleComponent implements OnInit, OnDestroy {
           });
       }
     });
+    this.cdr.detectChanges();
   }
 
   quitGame() {
     this.router.navigate(['/']);
   }
 
-  //─────────────────────────────────────
-  // === Lifecycle Cleanup ===
-  //─────────────────────────────────────
   ngOnDestroy() {
     if (this.roomStateSub) {
       this.roomStateSub.unsubscribe();
