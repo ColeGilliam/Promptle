@@ -8,7 +8,7 @@ export interface GameData {
   topic: string;
   headers: string[];
   answers: { name: string; values: string[] }[];
-  correctAnswer: {name: string; values: string[]};
+  correctAnswer: { name: string; values: string[] };
 }
 
 @Injectable({ providedIn: 'root' })
@@ -17,37 +17,53 @@ export class DbGameService {
 
   constructor(private http: HttpClient) {}
 
-  // Database-backed game fetch
+  // Database-backed game fetch (numeric topicId)
   fetchGameByTopic(topicId: number): Observable<GameData> {
     return this.http.get<GameData>(
       `${this.apiBaseUrl}/game/start?topicId=${topicId}`
     );
   }
 
-  // AI game generation
+  // AI game generation (string topic)
   generateAiGame(topic: string, options?: { minCategories?: number; maxCategories?: number }): Observable<GameData> {
-    const body: any = { topic };
+    const body: any = { topic: topic.trim() };
     if (options?.minCategories !== undefined) body.minCategories = options.minCategories;
     if (options?.maxCategories !== undefined) body.maxCategories = options.maxCategories;
 
     return this.http.post<GameData>(`${this.apiBaseUrl}/subjects`, body);
   }
 
-  /**
-   * Unified entry point for fetching a game.
-   * - If topic (string) is provided, call AI route.
-   * - Else if topicId is provided, call DB route.
-   */
-  fetchGame(params: { topic?: string; topicId?: number }): Observable<GameData> {
-    if (params.topic && params.topic.trim()) {
-      return this.generateAiGame(params.topic.trim());
-    }
-
-    if (Number.isFinite(params.topicId)) {
-      return this.fetchGameByTopic(Number(params.topicId));
-    }
-
-    return throwError(() => new Error('Missing topic or topicId'));
+  // Multiplayer game fetch (string room code)
+  fetchGameByRoom(room: string): Observable<GameData> {
+    return this.http.get<GameData>(
+      `${this.apiBaseUrl}/game/start?room=${encodeURIComponent(room)}`
+    );
   }
 
+  /**
+   * Unified entry point for fetching a game.
+   * - topic (string) → AI generation (/subjects)
+   * - topicId (number) → DB topic (/game/start?topicId=...)
+   * - room (string) → multiplayer saved game (/game/start?room=...)
+   */
+  fetchGame(params: {
+  topic?: string;
+  topicId?: number;
+  room?: string;
+}): Observable<GameData> {
+  if (params.topic && params.topic.trim()) {
+    return this.generateAiGame(params.topic.trim());
+  }
+
+  if (params.room && params.room.trim()) {
+    return this.fetchGameByRoom(params.room.trim());
+  }
+
+  // Type guard: only proceed if topicId is defined and finite
+  if (params.topicId !== undefined && Number.isFinite(params.topicId)) {
+    return this.fetchGameByTopic(params.topicId);  // now TS knows it's number
+  }
+
+  return throwError(() => new Error('Missing valid topic, topicId, or room'));
+}
 }

@@ -1,4 +1,14 @@
 <app-navbar></app-navbar>
+<div *ngIf="isMultiplayer" class="multiplayer-info">
+  <h3>Room: {{ currentRoom || 'Connecting...' }}</h3>
+  <h4>Players ({{ players.length }}):</h4>
+  <ul>
+    <li *ngFor="let player of players">
+      {{ player.name }} 
+      <span *ngIf="player.guesses !== undefined">({{ player.guesses }} guesses)</span>
+    </li>
+  </ul>
+</div>
 
 <div class="promptle-container">
   <h1 style="text-align: center;">

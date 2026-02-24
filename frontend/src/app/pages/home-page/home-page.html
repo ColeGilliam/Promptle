@@ -1,25 +1,32 @@
 <app-navbar></app-navbar>
-<!--PROMPTLE LOGO-->
+
+<!-- PROMPTLE LOGO -->
 <div class="logoTitle">
   <img src="PromptleLogoTransparent.png">
 </div>
 
-
-<!-- TEST CHAT ROOM -->
- <div style="text-align: center; margin-top: 20px;">
- <button matButton="filled" (click)="joinChatRoom()">Join Chat Room</button>
+<!-- TEST CHAT ROOM (optional – keep or remove) -->
+<div style="text-align: center; margin-top: 20px;">
+  <button matButton="filled" (click)="joinChatRoom()">Join Chat Room</button>
 </div>
 
-<!-- Toggle multiplayer single player -->
- <div style="text-align: center; margin-top: 20px;">
-  <app-toggle-mode></app-toggle-mode>
- </div>
+<!-- Toggle multiplayer / single player -->
+<div style="text-align: center; margin-top: 20px;">
+  <app-toggle-mode
+    [isSingleplayer]="!isMultiplayer"
+    (isSingleplayerChange)="onModeChange($event)"
+  ></app-toggle-mode>
+</div>
+
+<!-- Current mode indicator (very helpful during testing) -->
+<div style="text-align: center; margin: 12px 0; font-weight: bold; color: #444;">
+  Current mode: {{ isMultiplayer ? 'MULTIPLAYER 👥' : 'SINGLE PLAYER 👤' }}
+</div>
 
 <div class="topic-selection">
-
   <div class="columns">
 
-    <!-- LEFT -->
+    <!-- LEFT: Popular Topics -->
     <div class="column">
       <h2>Choose from Popular Topics</h2>
 
@@ -37,12 +44,14 @@
         as it pulls from the MongoDB database
       </p>
 
-      <button matButton="filled"
-      [disabled]="!selectedTopic"
-      (click)="startGame()">GENERATE</button>
+      <button mat-raised-button color="primary"
+              [disabled]="!selectedTopic"
+              (click)="startGame()">
+        {{ isMultiplayer ? 'CREATE MULTIPLAYER ROOM' : 'PLAY THIS TOPIC' }}
+      </button>
     </div>
 
-    <!-- RIGHT -->
+    <!-- RIGHT: Create Unique (AI) -->
     <div class="column">
       <h2>Create Unique</h2>
 
@@ -57,9 +66,11 @@
         Uses AI to generate a new Promptle on the fly
       </p>
 
-      <button matButton="filled"
-      [disabled]="!customTopic.trim()"
-      (click)="startAiGame()">GENERATE AI GAME</button>
+      <button mat-raised-button color="accent"
+              [disabled]="!customTopic.trim()"
+              (click)="startAiGame()">
+        {{ isMultiplayer ? 'CREATE MULTIPLAYER AI ROOM' : 'GENERATE AI GAME' }}
+      </button>
     </div>
 
   </div>
