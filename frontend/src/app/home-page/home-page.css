@@ -8,15 +8,43 @@
   flex: 1 1 auto;
 }
 
-.logo-banner {
-  display: flex;
-  justify-content: center;
-  padding: 0;
+.headline-card {
+  margin: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
 
-.logo-banner img {
-  max-width: 200px;
+.headline-card__content {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 28px;
+  padding: 40px 64px 20px;
+}
+
+.headline-card__logo {
+  width: min(350px, 42vw);
   height: auto;
+}
+
+.headline-card__copy {
+  max-width: 720px;
+}
+
+.headline-card__title {
+  margin-top: 0px;
+  color: #2d3c52;
+  font-size: clamp(1.6rem, 2.8vw, 2.8rem);
+  font-weight: 800;
+  line-height: 1.12;
+}
+
+.headline-card__subtitle {
+  margin: 10px 0 0;
+  color: #455a78;
+  font-size: clamp(1rem, 1.25vw, 1.2rem);
+  line-height: 1.45;
 }
 
 .about-card {
@@ -51,8 +79,9 @@
   justify-content: center;
 }
 
-.auth-btn {
-  color: #777;
+.auth-actions--headline {
+  margin-top: 24px;
+  justify-content: flex-start;
 }
 
 .cta-divider {

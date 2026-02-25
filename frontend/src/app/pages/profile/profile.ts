@@ -40,14 +40,17 @@ import { HttpClient } from '@angular/common/http';
 export class ProfileComponent implements OnInit {
 
     isLoggedIn = false;
+    isDarkTheme = false;
     dbUsername: string = '';
     dbProfilePic: string = '';
     selectedImageBase64: string = ''; 
     loading: boolean = true;
     winCount = 0;
+    private readonly themeStorageKey = 'promptle-theme';
     constructor(private router: Router, private http: HttpClient, private auth: AuthenticationService, private profile: ProfileService) {}
 
     ngOnInit() {
+    this.initializeTheme();
     // Subscribe to Auth0's real authentication state
     this.auth.isAuthenticated$.subscribe((status) => {
       this.isLoggedIn = status;
@@ -93,6 +96,24 @@ export class ProfileComponent implements OnInit {
     } else {
       this.auth.login();
     }
+  }
+
+  toggleTheme(): void {
+    this.isDarkTheme = !this.isDarkTheme;
+    this.applyTheme(this.isDarkTheme);
+    localStorage.setItem(this.themeStorageKey, this.isDarkTheme ? 'dark' : 'light');
+  }
+
+  private initializeTheme(): void {
+    const savedTheme = localStorage.getItem(this.themeStorageKey);
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    this.isDarkTheme = savedTheme ? savedTheme === 'dark' : prefersDark;
+    this.applyTheme(this.isDarkTheme);
+  }
+
+  private applyTheme(isDark: boolean): void {
+    document.body.classList.toggle('dark', isDark);
   }
 
   deleteAccount() {

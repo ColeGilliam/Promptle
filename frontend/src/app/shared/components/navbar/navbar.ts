@@ -26,12 +26,15 @@ import { HttpClient } from '@angular/common/http';
 })
 export class NavbarComponent implements OnInit {
   isLoggedIn = false;
+  isDarkTheme = false;
   dbUsername = '';
   dbProfilePic = '';
+  private readonly themeStorageKey = 'promptle-theme';
 
   constructor(public auth: AuthenticationService, private http: HttpClient) {}
 
   ngOnInit() {
+    this.initializeTheme();
     this.auth.isAuthenticated$.subscribe(status => this.isLoggedIn = status);
     this.auth.user$.subscribe(user => {
       if (user?.sub) {
@@ -43,6 +46,25 @@ export class NavbarComponent implements OnInit {
       }
     });
   }
+
+  toggleTheme(): void {
+    this.isDarkTheme = !this.isDarkTheme;
+    this.applyTheme(this.isDarkTheme);
+    localStorage.setItem(this.themeStorageKey, this.isDarkTheme ? 'dark' : 'light');
+  }
+
+  private initializeTheme(): void {
+    const savedTheme = localStorage.getItem(this.themeStorageKey);
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    this.isDarkTheme = savedTheme ? savedTheme === 'dark' : prefersDark;
+    this.applyTheme(this.isDarkTheme);
+  }
+
+  private applyTheme(isDark: boolean): void {
+    document.body.classList.toggle('dark', isDark);
+  }
+
   toggleLogin() {
     if (this.isLoggedIn) {
       this.auth.logout();

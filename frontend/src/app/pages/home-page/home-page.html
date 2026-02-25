@@ -24,9 +24,9 @@
   <div class="columns">
 
     <!-- Singleplayer quick actions: Load or New -->
-    <div style="text-align: center; margin-bottom: 16px; width:100%;">
-      <button matButton="filled" (click)="onLoadClicked()" [disabled]="!hasSavedGame">LOAD GAME</button>
-      <button matButton="outlined" (click)="newGame()">NEW GAME</button>
+    <div style="display:flex; justify-content:center; gap:24px; flex-wrap:wrap; margin-bottom:16px; width:100%;">
+      <button mat-raised-button class="rect-btn promp1-btn" (click)="onLoadClicked()" [disabled]="!hasSavedGame">LOAD GAME</button>
+      <button mat-raised-button class="rect-btn promp1-btn" (click)="newGame()">NEW GAME</button>
     </div>
 
 

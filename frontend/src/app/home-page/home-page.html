@@ -1,8 +1,23 @@
 <app-navbar></app-navbar>
 
-<div class="logo-banner">
-  <img src="PromptleLogoTransparent.png" alt="Promptle logo">
-</div>
+<mat-card class="headline-card" aria-label="Promptle headline">
+  <mat-card-content class="headline-card__content">
+    <img class="headline-card__logo" src="PromptleLogoTransparent.png" alt="Promptle logo">
+    <div class="headline-card__copy">
+      <h1 class="headline-card__title">An AI twist on the guessing-game genre.</h1>
+      <p class="headline-card__subtitle">
+        Create your guessing game with no boundaries except your imagination.
+      </p>
+      <div class="auth-actions auth-actions--headline">
+        <button mat-raised-button 
+        class="rect-btn promp1-btn" 
+        aria-label="Sign in or sign up">
+        Sign In / Sign Up
+      </button>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>
 
 <mat-card class="about-card" aria-label="About section placeholder">
   <p class="about-card__text">
@@ -13,10 +28,6 @@
     <a routerLink="/about" class="about-link">Learn more here!.</a>
   </p>
 </mat-card>
-
-<div class="auth-actions">
-  <button mat-raised-button class="rect-btn auth-btn" aria-label="Sign in or sign up">Sign In / Sign Up</button>
-</div>
 
 <mat-divider class="cta-divider"></mat-divider>
 

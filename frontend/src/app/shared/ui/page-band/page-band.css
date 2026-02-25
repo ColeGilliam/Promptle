@@ -1,0 +1,45 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.page-band {
+  width: 100%;
+  margin: 0;
+  border-radius: 0;
+  background:
+    radial-gradient(120% 170% at 50% 0%, rgba(82, 110, 150, 0.2) 0%, rgba(82, 110, 150, 0.08) 42%, rgba(82, 110, 150, 0) 80%),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.55));
+}
+
+.page-band__content {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 18px 20px;
+  color: #2f3e52;
+}
+
+:host(.band-size-1) .page-band__content {
+  max-width: 520px;
+  padding: 4px 8px;
+}
+
+:host(.band-size-2) .page-band__content {
+  max-width: 760px;
+  padding: 14px 14px;
+}
+
+:host(.band-size-3) .page-band__content {
+  max-width: 1040px;
+  padding: 30px 24px;
+}
+
+:host(.band-size-4) .page-band__content {
+  max-width: 1360px;
+  padding: 56px 34px;
+}
+
+:host(.band-size-5) .page-band__content {
+  max-width: 1760px;
+  padding: 88px 44px;
+}

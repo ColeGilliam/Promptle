@@ -5,8 +5,12 @@
     <span class="nav-username">{{ dbUsername || 'User' }}</span>
     <img [src]="dbProfilePic || 'assets/default-avatar.png'" class="nav-avatar">
   </div>
-  <button mat-icon-button aria-label="Toggle light or dark mode">
-    <mat-icon>brightness_6</mat-icon>
+  <button
+    mat-icon-button
+    (click)="toggleTheme()"
+    [attr.aria-label]="isDarkTheme ? 'Switch to light mode' : 'Switch to dark mode'"
+  >
+    <mat-icon>{{ isDarkTheme ? 'light_mode' : 'dark_mode' }}</mat-icon>
   </button>
   <button mat-icon-button [matMenuTriggerFor]="mainMenu" aria-label="Open menu">
     <mat-icon>menu</mat-icon>
@@ -70,7 +74,6 @@
     </div>
 </div>
 </div>
-
 
 
 

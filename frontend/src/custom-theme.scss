@@ -8,6 +8,13 @@
 
 @include mat.elevation-classes();
 
+:root {
+  --promp1-from: #25d7ff;
+  --promp1-to: #4a7bff;
+  --promp1-hover-from: #1ecaf2;
+  --promp1-hover-to: #3f6ef0;
+}
+
 
 html {
   @include mat.theme((
@@ -35,4 +42,44 @@ body {
 
   // Reset the user agent margin.
   margin: 0;
+}
+
+body.dark {
+  color-scheme: dark;
+  background-color: var(--mat-sys-surface);
+  --promp1-from: #1e3a8a;
+  --promp1-to: #4c1d95;
+  --promp1-hover-from: #172554;
+  --promp1-hover-to: #3b0764;
+}
+
+/* Shared Promptle button skin: color + hover only (no size/padding rules). */
+.promp1-btn.mat-mdc-raised-button,
+.promp1-btn.mat-mdc-unelevated-button,
+.promp1-btn.mat-mdc-outlined-button,
+.promp1-btn.mat-mdc-button {
+  color: #fff !important;
+  background: linear-gradient(90deg, var(--promp1-from), var(--promp1-to)) !important;
+  border: none;
+  transition: transform 0.12s ease, box-shadow 0.15s ease, background 0.2s ease;
+}
+
+.promp1-btn.mat-mdc-raised-button:hover:not(:disabled),
+.promp1-btn.mat-mdc-unelevated-button:hover:not(:disabled),
+.promp1-btn.mat-mdc-outlined-button:hover:not(:disabled),
+.promp1-btn.mat-mdc-button:hover:not(:disabled) {
+  background: linear-gradient(90deg, var(--promp1-hover-from), var(--promp1-hover-to)) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+}
+
+.promp1-btn.mat-mdc-raised-button:disabled,
+.promp1-btn.mat-mdc-unelevated-button:disabled,
+.promp1-btn.mat-mdc-outlined-button:disabled,
+.promp1-btn.mat-mdc-button:disabled,
+.promp1-btn.mat-mdc-button-disabled {
+  color: rgba(255, 255, 255, 0.65) !important;
+  background: linear-gradient(90deg, #6b7280, #4b5563) !important;
+  box-shadow: none !important;
+  transform: none !important;
 }
