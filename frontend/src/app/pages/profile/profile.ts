@@ -83,7 +83,7 @@ export class ProfileComponent implements OnInit {
         name: user.name
     };
 
-    this.http.post('http://localhost:3001/api/auth-user', payload).subscribe({
+    this.http.post('/api/auth-user', payload).subscribe({
         next: (res) => console.log('Registration/Login Sync Success:', res),
         error: (err) => console.error('Registration/Login Sync Failed:', err)
     });
@@ -162,7 +162,7 @@ export class ProfileComponent implements OnInit {
           profilePic: this.selectedImageBase64 || this.dbProfilePic 
         };
         console.log("Sending payload:", payload);
-        this.http.put('http://localhost:3001/api/update-profile', payload)
+        this.http.put('/api/update-profile', payload)
           .subscribe({
             next: () => {
               alert('Profile updated!');
@@ -180,7 +180,7 @@ export class ProfileComponent implements OnInit {
     });
   }
   fetchMongoProfile(auth0Id: string) {
-    this.http.get(`http://localhost:3001/api/profile/${auth0Id}`)
+    this.http.get(`/api/profile/${auth0Id}`)
       .subscribe({
         next: (mongoUser: any) => {
           if (mongoUser) {

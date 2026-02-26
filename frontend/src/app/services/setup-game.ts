@@ -13,7 +13,7 @@ export interface GameData {
 
 @Injectable({ providedIn: 'root' })
 export class DbGameService {
-  private readonly apiBaseUrl = 'http://localhost:3001/api';
+  private readonly apiBaseUrl = '/api';
 
   constructor(private http: HttpClient) {}
 

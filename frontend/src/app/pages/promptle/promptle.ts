@@ -71,7 +71,7 @@ export class PromptleComponent implements OnInit {
         // Try to load from server if logged in, otherwise localStorage
         this.auth.user$.pipe(take(1)).subscribe(user => {
           if (user && user.sub) {
-                this.http.get<any>(`http://localhost:3001/api/load-game/${encodeURIComponent(user.sub)}`).subscribe({
+                this.http.get<any>(`/api/load-game/${encodeURIComponent(user.sub)}`).subscribe({
                   next: (payload) => {
                     if (payload && payload.topic) {
                       this.applySavedPayload(payload);
@@ -128,7 +128,7 @@ export class PromptleComponent implements OnInit {
     this.auth.user$.pipe(take(1)).subscribe(user => {
       const savedAtStr = new Date(payload.savedAt).toLocaleString();
       if (user && user.sub) {
-        this.http.post('http://localhost:3001/api/save-game', { auth0Id: user.sub, game: payload }).subscribe({
+        this.http.post('/api/save-game', { auth0Id: user.sub, game: payload }).subscribe({
           next: () => {
             this.savedTimestamp = savedAtStr;
             console.log('Game saved to server');
@@ -305,7 +305,7 @@ export class PromptleComponent implements OnInit {
     // Update stats if logged in
     this.auth.user$.pipe(take(1)).subscribe(user => {
       if (user?.sub) {
-        this.http.post('http://localhost:3001/api/increment-win', { auth0Id: user.sub })
+        this.http.post('/api/increment-win', { auth0Id: user.sub })
           .subscribe({
             next: () => console.log('Stat updated!'),
             error: (err) => console.error('Failed to update stats', err)

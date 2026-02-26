@@ -68,7 +68,7 @@ export class HomePage implements OnInit {
     // If user is logged in, query server for their saved game. Otherwise read localStorage.
     this.auth.user$.pipe(take(1)).subscribe(user => {
       if (user && user.sub) {
-        this.http.get<any>(`http://localhost:3001/api/load-game/${encodeURIComponent(user.sub)}`).subscribe({
+        this.http.get<any>(`/api/load-game/${encodeURIComponent(user.sub)}`).subscribe({
           next: (payload) => {
             this.savedGameTopic = payload?.topic ?? null;
             this.savedGameSavedAt = payload?.savedAt ? new Date(payload.savedAt).toLocaleString() : null;
@@ -134,7 +134,7 @@ export class HomePage implements OnInit {
     // If logged in, call backend delete endpoint; otherwise remove localStorage key
     this.auth.user$.pipe(take(1)).subscribe(user => {
       if (user && user.sub) {
-        this.http.delete(`http://localhost:3001/api/delete-saved-game/${encodeURIComponent(user.sub)}`).subscribe({
+        this.http.delete(`/api/delete-saved-game/${encodeURIComponent(user.sub)}`).subscribe({
           next: () => {
             alert('Saved game deleted from your account.');
             this.showLoadConfirm = false;
@@ -202,7 +202,7 @@ export class HomePage implements OnInit {
   }
 
   registerUser(user: any) {
-    fetch('http://localhost:3001/api/auth-user', {
+    fetch('/api/auth-user', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
