@@ -13,6 +13,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatChipsModule } from '@angular/material/chips';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatInputModule } from '@angular/material/input';
 
 import { NavbarComponent } from '../../shared/components/navbar/navbar';
 import { SwitchMode } from '../../shared/ui/switch-mode/switch-mode';
@@ -27,6 +28,7 @@ import { SwitchMode } from '../../shared/ui/switch-mode/switch-mode';
     HttpClientModule,
     MatCardModule,
     MatFormFieldModule,
+    MatInputModule,
     MatSelectModule,
     MatChipsModule,
     MatButtonModule,
