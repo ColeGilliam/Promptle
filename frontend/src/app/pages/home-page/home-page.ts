@@ -15,7 +15,7 @@ import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 
 import { NavbarComponent } from '../../shared/components/navbar/navbar';
-import { ToggleMode } from "../../shared/ui/toggle-mode/toggle-mode";
+import { SwitchMode } from '../../shared/ui/switch-mode/switch-mode';
 
 
 @Component({
@@ -31,7 +31,7 @@ import { ToggleMode } from "../../shared/ui/toggle-mode/toggle-mode";
     MatChipsModule,
     MatButtonModule,
     NavbarComponent,
-    ToggleMode
+    SwitchMode
   ],
   templateUrl: './home-page.html',
   styleUrls: ['./home-page.css'],
