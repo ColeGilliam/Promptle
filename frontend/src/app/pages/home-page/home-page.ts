@@ -17,6 +17,7 @@ import { MatInputModule } from '@angular/material/input';
 
 import { NavbarComponent } from '../../shared/components/navbar/navbar';
 import { SwitchMode } from '../../shared/ui/switch-mode/switch-mode';
+import { BottomHeaderComponent } from '../../shared/ui/bottom-header/bottom-header';
 
 
 @Component({
@@ -33,7 +34,8 @@ import { SwitchMode } from '../../shared/ui/switch-mode/switch-mode';
     MatChipsModule,
     MatButtonModule,
     NavbarComponent,
-    SwitchMode
+    SwitchMode,
+    BottomHeaderComponent
   ],
   templateUrl: './home-page.html',
   styleUrls: ['./home-page.css'],

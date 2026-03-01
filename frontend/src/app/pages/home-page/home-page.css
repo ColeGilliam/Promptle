@@ -2,6 +2,10 @@ body {
   font-family: 'Roboto', sans-serif;
 }
 
+.home-main {
+  min-height: clamp(430px, 58vh, 760px);
+}
+
 .logoTitle {
   margin-top: 12px;
   position: top;
@@ -46,6 +50,10 @@ h1 {
 
 .option-card {
   border-radius: 12px;
+  /*border: 1px solid rgba(60, 145, 241, 0.42);*/
+  /*border-color: rgba(60, 145, 241, 0.42);*/
+  box-shadow: 0 0 20px rgba(60, 145, 241, 0.42);
+  margin-bottom: clamp(28px, 5vh, 64px);
 }
 
 .option-card mat-card-content {
@@ -59,10 +67,20 @@ h1 {
 .topic-field {
   width: 100%;
   margin-bottom: 12px;
+  --topic-focus-color: #3c91f1;
+  --mat-form-field-filled-focus-label-text-color: var(--topic-focus-color);
+  --mat-form-field-filled-focus-active-indicator-color: var(--topic-focus-color);
+  --mat-form-field-filled-caret-color: var(--topic-focus-color);
+  --mat-select-focused-arrow-color: var(--topic-focus-color);
 }
 
 .topic-field .mat-mdc-text-field-wrapper {
   border-radius: 8px;
+}
+
+.topic-field .mat-mdc-input-element {
+  font-size: 16px;
+  font-weight: 500;
 }
 
 .subtext {
@@ -72,8 +90,17 @@ h1 {
   margin: 0 0 8px;
 }
 
-body.dark .option-card {
-  background: rgba(30, 41, 59, 0.72);
+:host-context(.dark) .option-card {
+  border-color: rgba(139, 92, 246, 0.42);
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.42);
+}
+
+:host-context(.dark) .topic-field {
+  --topic-focus-color: #7671fc;
+  --mat-form-field-filled-focus-label-text-color: var(--topic-focus-color);
+  --mat-form-field-filled-focus-active-indicator-color: var(--topic-focus-color);
+  --mat-form-field-filled-caret-color: var(--topic-focus-color);
+  --mat-select-focused-arrow-color: var(--topic-focus-color);
 }
 
 /* Top bar container */
@@ -192,4 +219,10 @@ body.dark .option-card {
 
 .logout-button:active {
   transform: scale(0.96);
+}
+
+@media (max-width: 860px) {
+  .home-main {
+    min-height: clamp(320px, 48vh, 560px);
+  }
 }
