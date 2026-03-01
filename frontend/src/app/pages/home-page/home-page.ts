@@ -14,6 +14,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 
 import { NavbarComponent } from '../../shared/components/navbar/navbar';
 import { SwitchMode } from '../../shared/ui/switch-mode/switch-mode';
@@ -35,7 +36,8 @@ import { BottomHeaderComponent } from '../../shared/ui/bottom-header/bottom-head
     MatButtonModule,
     NavbarComponent,
     SwitchMode,
-    BottomHeaderComponent
+    BottomHeaderComponent,
+    MatAutocompleteModule
   ],
   templateUrl: './home-page.html',
   styleUrls: ['./home-page.css'],
@@ -44,6 +46,8 @@ export class HomePage implements OnInit {
   topicNames: string[] = [];
   allTopics: TopicInfo[] = [];   // this should be an array of TopicInfo
   selectedTopic: TopicInfo | null = null;
+  selectedTopicQuery = '';
+  filteredTopics: TopicInfo[] = [];
   customTopic = '';
 
   isSinglePlayerMode = true;
@@ -237,11 +241,45 @@ export class HomePage implements OnInit {
         this.allTopics = data;
 
         this.topicNames = data.map(t => t.topicName);
+        this.filterTopics(this.selectedTopicQuery);
 
         const topicIds = data.map(t => t.topicId);
       },
       error: (err) => console.error(err)
     });
+  }
+
+  onTopicQueryChange(query: string) {
+    this.selectedTopicQuery = query;
+    this.filterTopics(query);
+
+    const normalized = query.trim().toLowerCase();
+    if (!normalized) {
+      this.selectedTopic = null;
+      return;
+    }
+
+    this.selectedTopic =
+      this.allTopics.find(topic => topic.topicName.toLowerCase() === normalized) ?? null;
+  }
+
+  onTopicOptionSelected(topicName: string) {
+    this.selectedTopic =
+      this.allTopics.find(topic => topic.topicName === topicName) ?? null;
+    this.selectedTopicQuery = topicName;
+    this.filterTopics(topicName);
+  }
+
+  private filterTopics(query: string) {
+    const normalized = query.trim().toLowerCase();
+    if (!normalized) {
+      this.filteredTopics = [...this.allTopics];
+      return;
+    }
+
+    this.filteredTopics = this.allTopics.filter(topic =>
+      topic.topicName.toLowerCase().includes(normalized)
+    );
   }
 
   startGame() {

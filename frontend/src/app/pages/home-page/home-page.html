@@ -39,11 +39,25 @@
 
             <mat-form-field appearance="fill" class="topic-field">
               <mat-label>Select a topic</mat-label>
-              <mat-select [(value)]="selectedTopic">
-                <mat-option *ngFor="let topic of allTopics" [value]="topic">
+              <input
+                type="text"
+                matInput
+                [matAutocomplete]="topicAuto"
+                [(ngModel)]="selectedTopicQuery"
+                (ngModelChange)="onTopicQueryChange($event)"
+                placeholder="Start typing a topic"
+              >
+              <mat-autocomplete
+                #topicAuto="matAutocomplete"
+                (optionSelected)="onTopicOptionSelected($event.option.value)"
+              >
+                <mat-option *ngFor="let topic of filteredTopics" [value]="topic.topicName">
                   {{ topic.topicName }}
                 </mat-option>
-              </mat-select>
+                <mat-option *ngIf="filteredTopics.length === 0" disabled>
+                  No topics found
+                </mat-option>
+              </mat-autocomplete>
             </mat-form-field>
 
             <p class="subtext">
