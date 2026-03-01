@@ -2,8 +2,12 @@ body {
   font-family: 'Roboto', sans-serif;
 }
 
+.home-main {
+  min-height: clamp(430px, 58vh, 760px);
+}
+
 .logoTitle {
-  margin-top: 20px;
+  margin-top: 12px;
   position: top;
   text-align: center;
 }
@@ -16,7 +20,7 @@ img {
 .topic-selection {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 40px 20px;
+  padding: 24px 20px;
   font-family: sans-serif;
 }
 
@@ -29,7 +33,7 @@ h1 {
 
 .columns {
   display: flex;
-  gap: 60px;
+  gap: 32px;
   align-items: flex-start;
   flex-wrap: wrap;
 }
@@ -40,36 +44,63 @@ h1 {
 }
 
 .column h2 {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   font-size: 24px;
 }
 
-.topic-field,
-.text-input {
+.option-card {
+  border-radius: 12px;
+  /*border: 1px solid rgba(60, 145, 241, 0.42);*/
+  /*border-color: rgba(60, 145, 241, 0.42);*/
+  box-shadow: 0 0 20px rgba(60, 145, 241, 0.42);
+  margin-bottom: clamp(28px, 5vh, 64px);
+}
+
+.option-card mat-card-content {
+  padding: 20px;
+}
+
+.option-card button[matButton] {
+  margin-top: 8px;
+}
+
+.topic-field {
   width: 100%;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
+  --topic-focus-color: #3c91f1;
+  --mat-form-field-filled-focus-label-text-color: var(--topic-focus-color);
+  --mat-form-field-filled-focus-active-indicator-color: var(--topic-focus-color);
+  --mat-form-field-filled-caret-color: var(--topic-focus-color);
+  --mat-select-focused-arrow-color: var(--topic-focus-color);
 }
 
 .topic-field .mat-mdc-text-field-wrapper {
   border-radius: 8px;
 }
 
-.text-input {
-  padding: 12px 14px;
-  border: 1px solid #cccccc;
-  border-radius: 8px;
+.topic-field .mat-mdc-input-element {
   font-size: 16px;
-}
-
-.text-input:focus {
-  outline: none;
-  border-color: #4f46e5;
+  font-weight: 500;
 }
 
 .subtext {
   color: #555;
   font-size: 14px;
   line-height: 1.4;
+  margin: 0 0 8px;
+}
+
+:host-context(.dark) .option-card {
+  border-color: rgba(139, 92, 246, 0.42);
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.42);
+}
+
+:host-context(.dark) .topic-field {
+  --topic-focus-color: #7671fc;
+  --mat-form-field-filled-focus-label-text-color: var(--topic-focus-color);
+  --mat-form-field-filled-focus-active-indicator-color: var(--topic-focus-color);
+  --mat-form-field-filled-caret-color: var(--topic-focus-color);
+  --mat-select-focused-arrow-color: var(--topic-focus-color);
 }
 
 /* Top bar container */
@@ -188,4 +219,10 @@ h1 {
 
 .logout-button:active {
   transform: scale(0.96);
+}
+
+@media (max-width: 860px) {
+  .home-main {
+    min-height: clamp(320px, 48vh, 560px);
+  }
 }

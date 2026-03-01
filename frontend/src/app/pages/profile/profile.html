@@ -1,18 +1,18 @@
 <mat-toolbar class="topbar" color="primary">
-  <button mat-button routerLink="/" aria-label="Go to homepage">Home</button>
+  <button matButton="text" routerLink="/" aria-label="Go to homepage">Home</button>
   <span class="spacer"></span>
   <div *ngIf="isLoggedIn" class="user-nav-section">
     <span class="nav-username">{{ dbUsername || 'User' }}</span>
     <img [src]="dbProfilePic || 'assets/default-avatar.png'" class="nav-avatar">
   </div>
   <button
-    mat-icon-button
+    matIconButton
     (click)="toggleTheme()"
     [attr.aria-label]="isDarkTheme ? 'Switch to light mode' : 'Switch to dark mode'"
   >
     <mat-icon>{{ isDarkTheme ? 'light_mode' : 'dark_mode' }}</mat-icon>
   </button>
-  <button mat-icon-button [matMenuTriggerFor]="mainMenu" aria-label="Open menu">
+  <button matIconButton [matMenuTriggerFor]="mainMenu" aria-label="Open menu">
     <mat-icon>menu</mat-icon>
   </button>
 </mat-toolbar>
@@ -46,7 +46,7 @@
              class="profile-avatar" alt="User Avatar">
         
         <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" hidden>
-        <button mat-stroked-button (click)="fileInput.click()">
+        <button matButton="outlined" (click)="fileInput.click()">
           <mat-icon>upload</mat-icon> Upload Picture
         </button>
       </div>
@@ -58,10 +58,10 @@
     </mat-card-content>
 
     <mat-card-actions class="actions">
-      <button mat-raised-button color="primary" (click)="saveProfile()">
+      <button matButton="elevated" color="primary" (click)="saveProfile()">
         Save Changes
       </button>
-      <button mat-button color="warn" (click)="deleteAccount()">
+      <button matButton="text" color="warn" (click)="deleteAccount()">
         Delete Account
       </button>
     </mat-card-actions>
@@ -74,8 +74,6 @@
     </div>
 </div>
 </div>
-
-
 
 
 

@@ -13,9 +13,11 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatChipsModule } from '@angular/material/chips';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatInputModule } from '@angular/material/input';
 
 import { NavbarComponent } from '../../shared/components/navbar/navbar';
-import { ToggleMode } from "../../shared/ui/toggle-mode/toggle-mode";
+import { SwitchMode } from '../../shared/ui/switch-mode/switch-mode';
+import { BottomHeaderComponent } from '../../shared/ui/bottom-header/bottom-header';
 
 
 @Component({
@@ -27,11 +29,13 @@ import { ToggleMode } from "../../shared/ui/toggle-mode/toggle-mode";
     HttpClientModule,
     MatCardModule,
     MatFormFieldModule,
+    MatInputModule,
     MatSelectModule,
     MatChipsModule,
     MatButtonModule,
     NavbarComponent,
-    ToggleMode
+    SwitchMode,
+    BottomHeaderComponent
   ],
   templateUrl: './home-page.html',
   styleUrls: ['./home-page.css'],

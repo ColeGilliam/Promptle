@@ -84,8 +84,8 @@
     <h2>🏆 Victory!</h2>
     <p>The correct answer was <strong>{{ correctAnswer.name }}</strong></p>
     <div style="display:flex; gap:8px; justify-content:center; margin-top:12px;">
-      <button mat-raised-button color="primary" (click)="quitGame()">Return Home</button>
-      <button mat-stroked-button color="accent" (click)="restartGame()">Play Again (Different Answer)</button>
+      <button matButton="elevated" color="primary" (click)="quitGame()">Return Home</button>
+      <button matButton="outlined" color="accent" (click)="restartGame()">Play Again (Different Answer)</button>
     </div>
   </div>
 </div>

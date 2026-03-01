@@ -13,6 +13,13 @@
   --promp1-to: #4a7bff;
   --promp1-hover-from: #1ecaf2;
   --promp1-hover-to: #3f6ef0;
+  --promp2-bg: #3c91f1;
+  --promp2-hover-bg: #2d7fd9;
+  --promp2-fg: #ffffff;
+  --promp2-border: #000000;
+  --promp2-disabled-bg: #8fb6e2;
+  --promp2-disabled-fg: rgba(255, 255, 255, 0.72);
+  --promp2-disabled-border: rgba(0, 0, 0, 0.45);
 }
 
 
@@ -25,6 +32,13 @@ html {
     typography: Roboto,
     density: 0,
   ));
+
+  /*Background color for scrolling*/
+  background-color: #161616;
+
+  /* App primary role used by components with color="primary". */
+  --mat-sys-primary: #2b5fb8;
+  --mat-sys-on-primary: #ffffff;
 }
 
 body {
@@ -51,9 +65,29 @@ body.dark {
   --promp1-to: #4c1d95;
   --promp1-hover-from: #172554;
   --promp1-hover-to: #3b0764;
+  --promp2-bg: #6b46c1;
+  --promp2-hover-bg: #5b3cad;
+  --promp2-fg: #f5f2ff;
+  --promp2-border: #b7bfce;
+  --promp2-disabled-bg: #3f3466;
+  --promp2-disabled-fg: rgba(245, 242, 255, 0.62);
+  --promp2-disabled-border: rgba(183, 191, 206, 0.45);
 }
 
-/* Shared Promptle button skin: color + hover only (no size/padding rules). */
+/* Navbar mini-fab colors controlled by Angular Material */
+.topbar .mat-mdc-mini-fab {
+  --mat-fab-small-container-color: #294389;
+  --mat-fab-small-foreground-color: #b8d7ff;
+  --mat-fab-small-state-layer-color: #dbeafe;
+}
+
+body.dark .topbar .mat-mdc-mini-fab {
+  --mat-fab-small-container-color: #312e81;
+  --mat-fab-small-foreground-color: #e9e8ff;
+  --mat-fab-small-state-layer-color: #e9e8ff;
+}
+
+/* Promptle button skin: color + hover */
 .promp1-btn.mat-mdc-raised-button,
 .promp1-btn.mat-mdc-unelevated-button,
 .promp1-btn.mat-mdc-outlined-button,
@@ -70,7 +104,14 @@ body.dark {
 .promp1-btn.mat-mdc-button:hover:not(:disabled) {
   background: linear-gradient(90deg, var(--promp1-hover-from), var(--promp1-hover-to)) !important;
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 0px 20px rgba(54, 220, 246, 0.95);
+}
+
+body.dark .promp1-btn.mat-mdc-raised-button:hover:not(:disabled),
+body.dark .promp1-btn.mat-mdc-unelevated-button:hover:not(:disabled),
+body.dark .promp1-btn.mat-mdc-outlined-button:hover:not(:disabled),
+body.dark .promp1-btn.mat-mdc-button:hover:not(:disabled) {
+  box-shadow: 0 0 22px rgba(124, 58, 237, 0.5);
 }
 
 .promp1-btn.mat-mdc-raised-button:disabled,
@@ -82,4 +123,66 @@ body.dark {
   background: linear-gradient(90deg, #6b7280, #4b5563) !important;
   box-shadow: none !important;
   transform: none !important;
+}
+
+/* Promptle button skin: solid style + hover */
+.promp2-btn.mat-mdc-raised-button,
+.promp2-btn.mat-mdc-unelevated-button,
+.promp2-btn.mat-mdc-outlined-button,
+.promp2-btn.mat-mdc-button {
+  color: var(--promp2-fg) !important;
+  background: var(--promp2-bg) !important;
+  border: 1px solid var(--promp2-border) !important;
+  transition: transform 0.12s ease, box-shadow 0.15s ease, background 0.2s ease;
+}
+
+.promp2-btn.mat-mdc-raised-button:hover:not(:disabled),
+.promp2-btn.mat-mdc-unelevated-button:hover:not(:disabled),
+.promp2-btn.mat-mdc-outlined-button:hover:not(:disabled),
+.promp2-btn.mat-mdc-button:hover:not(:disabled) {
+  background: var(--promp2-hover-bg) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.14);
+}
+
+.promp2-btn.mat-mdc-raised-button:disabled,
+.promp2-btn.mat-mdc-unelevated-button:disabled,
+.promp2-btn.mat-mdc-outlined-button:disabled,
+.promp2-btn.mat-mdc-button:disabled,
+.promp2-btn.mat-mdc-button-disabled {
+  color: var(--promp2-disabled-fg) !important;
+  background: var(--promp2-disabled-bg) !important;
+  border-color: var(--promp2-disabled-border) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* Reused the same promp1 palette for Material button-toggle groups. */
+.promp1-btn.mat-button-toggle-group,
+.promp1-btn.mat-button-toggle-standalone {
+  border: 1px solid #000000;
+  background: rgba(248, 250, 252, 0.85);
+}
+
+.promp1-btn .mat-button-toggle {
+  color: #475569;
+}
+
+.promp1-btn .mat-button-toggle-checked {
+  color: #fff;
+  background: linear-gradient(90deg, var(--promp1-from), var(--promp1-to)) !important;
+}
+
+.promp1-btn .mat-button-toggle-checked:hover:not(.mat-button-toggle-disabled) {
+  background: linear-gradient(90deg, var(--promp1-hover-from), var(--promp1-hover-to)) !important;
+}
+
+body.dark .promp1-btn.mat-button-toggle-group,
+body.dark .promp1-btn.mat-button-toggle-standalone {
+  border-color: #b7bfce;
+  background: rgba(15, 23, 42, 0.55);
+}
+
+body.dark .promp1-btn .mat-button-toggle {
+  color: #cbd5e1;
 }

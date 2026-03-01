@@ -1,5 +1,5 @@
-<mat-toolbar class="topbar mat-elevation-z8" color="primary">
-  <button mat-icon-button routerLink="/" aria-label="Go to homepage">
+<mat-toolbar class="topbar">
+  <button matMiniFab routerLink="/" aria-label="Go to homepage">
     <mat-icon>home</mat-icon>
   </button>
 
@@ -10,17 +10,19 @@
     <img [src]="dbProfilePic || 'assets/default-avatar.png'" class="nav-avatar">
   </div>
 
-  <button
-    mat-icon-button
-    (click)="toggleTheme()"
-    [attr.aria-label]="isDarkTheme ? 'Switch to light mode' : 'Switch to dark mode'"
-  >
-    <mat-icon>{{ isDarkTheme ? 'light_mode' : 'dark_mode' }}</mat-icon>
-  </button>
-  
-  <button mat-icon-button [matMenuTriggerFor]="mainMenu" aria-label="Open menu">
-    <mat-icon>menu</mat-icon>
-  </button>
+  <div class="actions">
+    <button
+      matMiniFab
+      (click)="toggleTheme()"
+      [attr.aria-label]="isDarkTheme ? 'Switch to light mode' : 'Switch to dark mode'"
+    >
+      <mat-icon>{{ isDarkTheme ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    </button>
+    
+    <button matMiniFab [matMenuTriggerFor]="mainMenu" aria-label="Open menu">
+      <mat-icon>menu</mat-icon>
+    </button>
+  </div>
 </mat-toolbar>
 
 <mat-menu #mainMenu="matMenu">

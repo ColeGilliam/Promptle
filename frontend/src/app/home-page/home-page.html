@@ -9,7 +9,7 @@
         Create your guessing game with no boundaries except your imagination.
       </p>
       <div class="auth-actions auth-actions--headline">
-        <button mat-raised-button 
+        <button matButton="elevated" 
         class="rect-btn promp1-btn" 
         aria-label="Sign in or sign up">
         Sign In / Sign Up
@@ -36,7 +36,7 @@
 <div class="play-actions" aria-label="Game mode selection">
   <div class="quickplay-group">
     <button
-      mat-raised-button
+      matButton="elevated"
       color="primary"
       class="rect-btn play-btn"
       [matMenuTriggerFor]="quickPlayMenu"
@@ -49,5 +49,5 @@
       <button mat-menu-item aria-label="Quick Play solo" routerLink="/landing">Solo</button>
     </mat-menu>
   </div>
-  <button mat-raised-button color="accent" class="rect-btn play-btn" aria-label="Create or join a room">Create / Join Room</button>
+  <button matButton="elevated" color="accent" class="rect-btn play-btn" aria-label="Create or join a room">Create / Join Room</button>
 </div>
