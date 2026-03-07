@@ -18,7 +18,7 @@ interface RoomState {
 export class MultiplayerService {
 
   private socket: Socket | null = null;
-  private readonly url = 'http://localhost:3001';  // confirmed correct
+  
 
   private roomStateSubject = new BehaviorSubject<RoomState | null>(null);
   public roomState$: Observable<RoomState | null> = this.roomStateSubject.asObservable();
@@ -36,12 +36,13 @@ export class MultiplayerService {
 
     console.log('[Service] Creating new socket connection');
 
-    this.socket = io(this.url, {
-      autoConnect: true,
+    this.socket = io({
+      // DO NOT put 'http://localhost:3001' here. 
+      // Leaving it empty forces it to use the current domain (promptle.unr.dev)
+      path: '/socket.io/',
+      transports: ['polling', 'websocket'], 
       reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-      transports: ['websocket', 'polling'],  // allow both
+      reconnectionAttempts: 5
     });
 
     this.socket.on('connect', () => {

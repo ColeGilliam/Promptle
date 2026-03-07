@@ -7,16 +7,17 @@ import {io, Socket} from 'socket.io-client';
 })
 export class Chat {
   private socket: Socket;
-  private url = 'http://localhost:3001';
 
   private messageSubject = new Subject<{text: string; isOwn?: boolean}>();
 
   constructor() {
-    this.socket = io(this.url, {
-      autoConnect: true,
+    this.socket = io({
+      // DO NOT put 'http://localhost:3001' here. 
+      // Leaving it empty forces it to use the current domain (promptle.unr.dev)
+      path: '/socket.io/',
+      transports: ['polling', 'websocket'], 
       reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
+      reconnectionAttempts: 5
     });
 
     this.socket.on('chat message', (msg: string) => {

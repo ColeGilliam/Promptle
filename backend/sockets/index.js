@@ -4,7 +4,8 @@ import { Server } from "socket.io";
 export function setupSocket(server) {
   const io = new Server(server, {
     cors: {
-      origin: 'http://localhost:4200',  // your Angular frontend
+      origin: ['http://localhost:8080',       // local dev
+      'https://promptle.unr.dev' ],  // your Angular frontend
       methods: ['GET', 'POST'],
       credentials: true
     },
