@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "devStart": "nodemon server.js"
+    "devStart": "nodemon server.js",
+    "test": "MONGODB_URI=mongodb://localhost:27017/promptle-test OPENAI_API_KEY=test-key NODE_ENV=test node --test"
   },
   "keywords": [],
   "author": "",
