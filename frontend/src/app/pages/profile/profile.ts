@@ -40,14 +40,17 @@ import { HttpClient } from '@angular/common/http';
 export class ProfileComponent implements OnInit {
 
     isLoggedIn = false;
+    isDarkTheme = false;
     dbUsername: string = '';
     dbProfilePic: string = '';
     selectedImageBase64: string = ''; 
     loading: boolean = true;
     winCount = 0;
+    private readonly themeStorageKey = 'promptle-theme';
     constructor(private router: Router, private http: HttpClient, private auth: AuthenticationService, private profile: ProfileService) {}
 
     ngOnInit() {
+    this.initializeTheme();
     // Subscribe to Auth0's real authentication state
     this.auth.isAuthenticated$.subscribe((status) => {
       this.isLoggedIn = status;
@@ -80,7 +83,7 @@ export class ProfileComponent implements OnInit {
         name: user.name
     };
 
-    this.http.post('http://localhost:3001/api/auth-user', payload).subscribe({
+    this.http.post('/api/auth-user', payload).subscribe({
         next: (res) => console.log('Registration/Login Sync Success:', res),
         error: (err) => console.error('Registration/Login Sync Failed:', err)
     });
@@ -93,6 +96,24 @@ export class ProfileComponent implements OnInit {
     } else {
       this.auth.login();
     }
+  }
+
+  toggleTheme(): void {
+    this.isDarkTheme = !this.isDarkTheme;
+    this.applyTheme(this.isDarkTheme);
+    localStorage.setItem(this.themeStorageKey, this.isDarkTheme ? 'dark' : 'light');
+  }
+
+  private initializeTheme(): void {
+    const savedTheme = localStorage.getItem(this.themeStorageKey);
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    this.isDarkTheme = savedTheme ? savedTheme === 'dark' : prefersDark;
+    this.applyTheme(this.isDarkTheme);
+  }
+
+  private applyTheme(isDark: boolean): void {
+    document.body.classList.toggle('dark', isDark);
   }
 
   deleteAccount() {
@@ -141,7 +162,7 @@ export class ProfileComponent implements OnInit {
           profilePic: this.selectedImageBase64 || this.dbProfilePic 
         };
         console.log("Sending payload:", payload);
-        this.http.put('http://localhost:3001/api/update-profile', payload)
+        this.http.put('/api/update-profile', payload)
           .subscribe({
             next: () => {
               alert('Profile updated!');
@@ -159,7 +180,7 @@ export class ProfileComponent implements OnInit {
     });
   }
   fetchMongoProfile(auth0Id: string) {
-    this.http.get(`http://localhost:3001/api/profile/${auth0Id}`)
+    this.http.get(`/api/profile/${auth0Id}`)
       .subscribe({
         next: (mongoUser: any) => {
           if (mongoUser) {

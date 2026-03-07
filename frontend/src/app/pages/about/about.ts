@@ -14,13 +14,13 @@ import { Router } from '@angular/router';
 import { AuthenticationService } from '../../services/authentication.service';
 import { HttpClient } from '@angular/common/http';
 import { NavbarComponent } from '../../shared/components/navbar/navbar';
+import { PageSeparatorComponent } from '../../shared/ui/page-separator/page-separator';
 
 @Component({
   selector: 'app-about',
   standalone: true,
   imports: [
     CommonModule,
-    RouterModule,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
@@ -30,7 +30,8 @@ import { NavbarComponent } from '../../shared/components/navbar/navbar';
     MatMenuModule,
     MatToolbarModule,
     MatIconModule,
-    NavbarComponent
+    NavbarComponent,
+    PageSeparatorComponent
   ],
   templateUrl: './about.html',
   styleUrls: ['./about.css'],
@@ -80,7 +81,7 @@ export class AboutComponent implements OnInit{
         name: user.name
     };
 
-    this.http.post('http://localhost:3001/api/auth-user', payload).subscribe({
+    this.http.post('/api/auth-user', payload).subscribe({
         next: (res) => console.log('Registration/Login Sync Success:', res),
         error: (err) => console.error('Registration/Login Sync Failed:', err)
     });
