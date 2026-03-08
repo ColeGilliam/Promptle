@@ -2,10 +2,10 @@ import { Component } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 
 @Component({
-  selector: 'app-bottom-header',
+  selector: 'app-uni-footer',
   standalone: true,
   imports: [MatCardModule],
-  templateUrl: './bottom-header.html',
-  styleUrl: './bottom-header.css',
+  templateUrl: './uni-footer.html',
+  styleUrl: './uni-footer.css',
 })
-export class BottomHeaderComponent {}
+export class UniFooterComponent {}

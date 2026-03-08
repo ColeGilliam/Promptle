@@ -53,7 +53,7 @@ h1 {
   /*border: 1px solid rgba(60, 145, 241, 0.42);*/
   /*border-color: rgba(60, 145, 241, 0.42);*/
   box-shadow: 0 0 20px rgba(60, 145, 241, 0.42);
-  margin-bottom: clamp(28px, 5vh, 64px);
+  margin-bottom: clamp(28px, 5vh, 30px);
 }
 
 .option-card mat-card-content {

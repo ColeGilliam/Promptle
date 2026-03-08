@@ -18,7 +18,7 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 
 import { NavbarComponent } from '../../shared/components/navbar/navbar';
 import { SwitchMode } from '../../shared/ui/switch-mode/switch-mode';
-import { BottomHeaderComponent } from '../../shared/ui/bottom-header/bottom-header';
+import { UniFooterComponent } from '../../shared/ui/uni-footer/uni-footer';
 
 
 @Component({
@@ -36,7 +36,7 @@ import { BottomHeaderComponent } from '../../shared/ui/bottom-header/bottom-head
     MatButtonModule,
     NavbarComponent,
     SwitchMode,
-    BottomHeaderComponent,
+    UniFooterComponent,
     MatAutocompleteModule
   ],
   templateUrl: './home-page.html',
