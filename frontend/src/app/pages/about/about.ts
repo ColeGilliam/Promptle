@@ -81,7 +81,7 @@ export class AboutComponent implements OnInit{
         name: user.name
     };
 
-    this.http.post('http://localhost:3001/api/auth-user', payload).subscribe({
+    this.http.post('/api/auth-user', payload).subscribe({
         next: (res) => console.log('Registration/Login Sync Success:', res),
         error: (err) => console.error('Registration/Login Sync Failed:', err)
     });

@@ -8,6 +8,15 @@ let topicCollection;
 let guessesCollection;
 let usersCollection;
 
+let cachedMultiplayerGamesCollection = null;
+
+export function getMultiplayerGamesCollection() {
+  if (!cachedMultiplayerGamesCollection) {
+    cachedMultiplayerGamesCollection = db.collection('multiplayerGames');
+  }
+  return cachedMultiplayerGamesCollection;
+}
+
 export async function connectDB() {
   if (db) return { db, topicCollection, guessesCollection, usersCollection }; // Already connected
 

@@ -9,7 +9,7 @@ import { BehaviorSubject } from 'rxjs';
 })
 export class AuthenticationService {
 
-  private apiUrl = 'http://localhost:3001/api'; 
+  private apiUrl = '/api'; 
   public mongoUser$ = new BehaviorSubject<any>(null);
   constructor(
     private auth0: Auth0Service,

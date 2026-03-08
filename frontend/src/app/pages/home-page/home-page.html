@@ -1,37 +1,44 @@
 <app-navbar></app-navbar>
+
+<!-- PROMPTLE LOGO -->
 <div class="home-main">
-  <!--PROMPTLE LOGO-->
   <div class="logoTitle">
     <img src="PromptleLogoTransparent.png">
   </div>
 
-
-  <!-- Toggle multiplayer single player -->
+  <!-- Toggle multiplayer / single player -->
   <div style="text-align: center; margin-top: 12px;">
-    <app-switch-mode [(isSingleplayer)]="isSinglePlayerMode"></app-switch-mode>
+    <app-toggle-mode
+      [isSingleplayer]="!isMultiplayer"
+      (isSingleplayerChange)="onModeChange($event)"
+    ></app-toggle-mode>
+  </div>
+
+  <!-- Current mode indicator (helpful for testing) -->
+  <div style="text-align: center; margin: 12px 0; font-weight: bold; color: #444;">
+    Current mode: {{ isMultiplayer ? 'MULTIPLAYER 👥' : 'SINGLE PLAYER 👤' }}
+  </div>
+
+  <!-- Single-player actions: show Load/New when in single-player mode -->
+  <div style="text-align: center; margin-top: 10px;" *ngIf="!isMultiplayer">
+    <div style="display:flex; justify-content:center; gap:14px; flex-wrap:wrap; margin-bottom:10px; width:100%;">
+      <button matButton="elevated" class="rect-btn promp2-btn" (click)="onLoadClicked()" [disabled]="!hasSavedGame">LOAD GAME</button>
+      <button matButton="elevated" class="rect-btn promp2-btn" (click)="newGame()">NEW GAME</button>
+    </div>
   </div>
 
   <!-- Multiplayer actions: show Join/Create when in multiplayer mode -->
-  <div style="text-align: center; margin-top: 10px;">
-    <ng-container *ngIf="!isSinglePlayerMode; else singleplayerActions">
-      <button matButton="filled" (click)="joinChatRoom()">Join Chat Room</button>
-      <button matButton="filled" (click)="createRoom()">Create Room</button>
-    </ng-container>
-    <ng-template #singleplayerActions></ng-template>
+  <div style="text-align: center; margin-top: 10px;" *ngIf="isMultiplayer">
+    <button matButton="filled" (click)="joinChatRoom()">Join Chat Room</button>
+    <button matButton="filled" (click)="createRoom()">Create Room</button>
   </div>
 
-  <div class="topic-selection" *ngIf="isSinglePlayerMode && !showLoadConfirm">
+  <!-- Topic selection cards (shared, but text/buttons adapt to mode) -->
+  <div class="topic-selection" *ngIf="!showLoadConfirm">
 
     <div class="columns">
 
-      <!-- Singleplayer quick actions: Load or New -->
-      <div style="display:flex; justify-content:center; gap:14px; flex-wrap:wrap; margin-bottom:10px; width:100%;">
-        <button matButton="elevated" class="rect-btn promp2-btn" (click)="onLoadClicked()" [disabled]="!hasSavedGame">LOAD GAME</button>
-        <button matButton="elevated" class="rect-btn promp2-btn" (click)="newGame()">NEW GAME</button>
-      </div>
-
-
-      <!-- LEFT -->
+      <!-- LEFT: Popular Topics -->
       <div class="column">
         <mat-card class="option-card">
           <mat-card-content>
@@ -65,12 +72,16 @@
               as it pulls from the MongoDB database
             </p>
 
-            <button matButton="filled" class="rect-btn promp1-btn" [disabled]="!selectedTopic" (click)="startGame()">GENERATE</button>
+            <button matButton="filled" class="rect-btn promp1-btn" 
+                    [disabled]="!selectedTopic" 
+                    (click)="startGame()">
+              {{ isMultiplayer ? 'CREATE MULTIPLAYER ROOM' : 'PLAY THIS TOPIC' }}
+            </button>
           </mat-card-content>
         </mat-card>
       </div>
 
-      <!-- RIGHT -->
+      <!-- RIGHT: Create Unique (AI) -->
       <div class="column">
         <mat-card class="option-card">
           <mat-card-content>
@@ -89,8 +100,10 @@
               Uses AI to generate a new Promptle on the fly
             </p>
 
-            <button matButton="filled" class="rect-btn promp1-btn" [disabled]="!customTopic.trim()" (click)="startAiGame()">
-              GENERATE AI GAME
+            <button matButton="filled" class="rect-btn promp1-btn" 
+                    [disabled]="!customTopic.trim()" 
+                    (click)="startAiGame()">
+              {{ isMultiplayer ? 'CREATE MULTIPLAYER AI ROOM' : 'GENERATE AI GAME' }}
             </button>
           </mat-card-content>
         </mat-card>
@@ -99,8 +112,9 @@
     </div>
   </div>
 
-  <!-- Inline confirmation shown when user clicks LOAD and a saved game exists -->
-  <div *ngIf="showLoadConfirm" style="text-align:center; margin-top:20px; padding:16px; border:1px solid #ddd; border-radius:8px; max-width:600px; margin-left:auto; margin-right:auto; background:#fff;">
+  <!-- Inline confirmation shown when user clicks LOAD and a saved game exists (single-player only) -->
+  <div *ngIf="showLoadConfirm && !isMultiplayer" 
+       style="text-align:center; margin-top:20px; padding:16px; border:1px solid #ddd; border-radius:8px; max-width:600px; margin-left:auto; margin-right:auto; background:#fff;">
     <h3>Saved game found</h3>
     <p *ngIf="savedGameTopic">Topic: <strong>{{ savedGameTopic }}</strong></p>
     <p *ngIf="savedGameSavedAt" style="color:#666; font-size:0.9em;">Saved: {{ savedGameSavedAt }}</p>

@@ -11,7 +11,7 @@ export interface TopicInfo {
   providedIn: 'root'
 })
 export class TopicsListService {
-  private baseUrl = 'http://localhost:3001/api';
+  private baseUrl = '/api';
 
   constructor(private http: HttpClient) {}
 

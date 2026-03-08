@@ -12,7 +12,7 @@ async function startServer() {
   await connectDB(); // Connect DB before listening; collections are now available for import in controllers
 
   const server = createServer(app);
-  server.listen(PORT, () => {
+  server.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running at http://localhost:${PORT}`);
   });
   setupSocket(server);
