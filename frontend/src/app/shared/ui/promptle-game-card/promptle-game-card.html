@@ -18,19 +18,12 @@
     </div>
 
     <div class="game-topic-right" *ngIf="isMultiplayer">
-      <p class="topic-mp-heading">Multiplayer Room</p>
-      <h3 class="topic-mp-room">{{ currentRoom || 'Connecting...' }}</h3>
-
-      <p class="topic-mp-players-label">Players ({{ players.length }})</p>
-      <ul *ngIf="players.length > 0; else noPlayersInCard" class="topic-mp-list">
-        <li *ngFor="let player of players" class="topic-mp-item">
-          <span>{{ player.name || 'Unknown' }}</span>
-          <small *ngIf="player.guesses !== undefined">{{ player.guesses }} guesses</small>
-        </li>
-      </ul>
-      <ng-template #noPlayersInCard>
-        <p class="topic-mp-empty-text">Waiting for players...</p>
-      </ng-template>
+      <p class="topic-mp-heading">
+        Multiplayer Room - <span class="topic-mp-room-inline">{{ currentRoom || 'Connecting...' }}</span>
+      </p>
+      <p class="topic-mp-players-line">
+        Players ({{ players.length }}) <span class="topic-mp-player-names">{{ playerNamesText }}</span>
+      </p>
     </div>
   </mat-card-content>
 </mat-card>

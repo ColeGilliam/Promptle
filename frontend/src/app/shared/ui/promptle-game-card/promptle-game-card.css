@@ -84,7 +84,8 @@
   border-left: 1px solid rgba(60, 145, 241, 0.32);
   padding-left: 16px;
   display: flex;
-  align-items: stretch;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .topic-mp-heading {
@@ -96,41 +97,23 @@
   font-weight: 700;
 }
 
-.topic-mp-room {
-  margin: 4px 0 10px;
-  font-size: 1.06rem;
-  color: #27354b;
+.topic-mp-room-inline {
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
 }
 
-.topic-mp-players-label {
-  margin: 0 0 8px;
+.topic-mp-players-line {
+  margin: 8px 0 0;
   font-size: 0.92rem;
   color: #4b5d79;
   font-weight: 600;
 }
 
-.topic-mp-list {
-  margin: 0;
-  padding-left: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.topic-mp-item {
+.topic-mp-player-names {
   color: #344861;
-  font-size: 0.92rem;
-}
-
-.topic-mp-item small {
-  margin-left: 6px;
-  color: #5f7394;
-}
-
-.topic-mp-empty-text {
-  margin: 0;
-  color: #6a7f9e;
-  font-style: italic;
+  font-weight: 500;
 }
 
 :host-context(.dark) .game-topic-kicker {
@@ -159,17 +142,11 @@
   color: #7e7afc;
 }
 
-:host-context(.dark) .topic-mp-room {
-  color: #d9e2f6;
-}
-
-:host-context(.dark) .topic-mp-players-label,
-:host-context(.dark) .topic-mp-item {
+:host-context(.dark) .topic-mp-players-line {
   color: #b9c8e4;
 }
 
-:host-context(.dark) .topic-mp-item small,
-:host-context(.dark) .topic-mp-empty-text {
+:host-context(.dark) .topic-mp-player-names {
   color: #98abd0;
 }
 

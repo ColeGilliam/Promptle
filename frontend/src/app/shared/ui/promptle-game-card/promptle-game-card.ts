@@ -16,4 +16,14 @@ export class PromptleGameCard {
   @Input() isMultiplayer = false;
   @Input() currentRoom = '';
   @Input() players: { id?: string; name?: string; guesses?: number }[] = [];
+
+  get playerNamesText(): string {
+    if (!this.players.length) {
+      return 'Waiting for players...';
+    }
+
+    return this.players
+      .map((player) => player.name?.trim() || 'Unknown')
+      .join(', ');
+  }
 }
