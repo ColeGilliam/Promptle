@@ -1,17 +1,18 @@
-<app-navbar></app-navbar>
+<div class="home-first-view">
+  <app-navbar></app-navbar>
 
-<!-- PROMPTLE LOGO -->
-<div class="home-main">
+  <!-- PROMPTLE LOGO -->
+  <div class="home-main">
   <div class="logoTitle">
     <img src="PromptleLogoTransparent.png">
   </div>
 
   <!-- Toggle multiplayer / single player -->
   <div style="text-align: center; margin-top: 12px;">
-    <app-toggle-mode
+    <app-switch-mode
       [isSingleplayer]="!isMultiplayer"
       (isSingleplayerChange)="onModeChange($event)"
-    ></app-toggle-mode>
+    ></app-switch-mode>
   </div>
 
   <!-- Current mode indicator (helpful for testing) -->
@@ -29,8 +30,10 @@
 
   <!-- Multiplayer actions: show Join/Create when in multiplayer mode -->
   <div style="text-align: center; margin-top: 10px;" *ngIf="isMultiplayer">
-    <button matButton="filled" (click)="joinChatRoom()">Join Chat Room</button>
-    <button matButton="filled" (click)="createRoom()">Create Room</button>
+    <div style="display:flex; justify-content:center; gap:14px; flex-wrap:wrap; margin-bottom:10px; width:100%;">
+      <button matButton="filled" class="rect-btn promp2-btn" (click)="joinChatRoom()">Join Chat Room</button>
+      <button matButton="filled" class="rect-btn promp2-btn" (click)="createRoom()">Create Room</button>
+    </div>
   </div>
 
   <!-- Topic selection cards (shared, but text/buttons adapt to mode) -->
@@ -113,17 +116,15 @@
   </div>
 
   <!-- Inline confirmation shown when user clicks LOAD and a saved game exists (single-player only) -->
-  <div *ngIf="showLoadConfirm && !isMultiplayer" 
-       style="text-align:center; margin-top:20px; padding:16px; border:1px solid #ddd; border-radius:8px; max-width:600px; margin-left:auto; margin-right:auto; background:#fff;">
-    <h3>Saved game found</h3>
-    <p *ngIf="savedGameTopic">Topic: <strong>{{ savedGameTopic }}</strong></p>
-    <p *ngIf="savedGameSavedAt" style="color:#666; font-size:0.9em;">Saved: {{ savedGameSavedAt }}</p>
-    <div style="margin-top:12px;">
-      <button matButton="filled" (click)="continueSaved()">Continue Saved Game</button>
-      <button matButton="outlined" (click)="cancelLoadConfirm()" style="margin-left:8px;">Cancel</button>
-      <button matButton="text" (click)="cancelLoadConfirm(); newGame();" style="margin-left:8px;">Start New Game</button>
-      <button matButton="filled" color="warn" (click)="deleteSavedConfirm()" style="margin-left:8px;">Delete Saved Game</button>
-    </div>
+  <app-load-saved-game-card
+    *ngIf="showLoadConfirm && !isMultiplayer"
+    [topic]="savedGameTopic"
+    [savedAt]="savedGameSavedAt"
+    (continueClicked)="continueSaved()"
+    (cancelClicked)="cancelLoadConfirm()"
+    (startNewClicked)="cancelLoadConfirm(); newGame()"
+    (deleteClicked)="deleteSavedConfirm()"
+  ></app-load-saved-game-card>
   </div>
 </div>
 

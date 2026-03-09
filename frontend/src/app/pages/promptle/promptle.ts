@@ -14,10 +14,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
+import { MatInputModule } from '@angular/material/input';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatCardModule } from '@angular/material/card';
 
 import { MultiplayerService } from '../../services/multiplayer-promptle';
 import { Subscription } from 'rxjs';
+import { PromptleGameCard } from '../../shared/ui/promptle-game-card/promptle-game-card';
+import { PromptleWinPopup } from '../../shared/ui/promptle-win-popup/promptle-win-popup';
 
 @Component({
   selector: 'app-promptle',
@@ -30,7 +34,11 @@ import { Subscription } from 'rxjs';
     MatMenuModule,
     MatButtonModule,
     MatFormFieldModule,
-    MatSelectModule,
+    MatInputModule,
+    MatAutocompleteModule,
+    MatCardModule,
+    PromptleGameCard,
+    PromptleWinPopup,
     NavbarComponent
   ],
   templateUrl: './promptle.html',
@@ -43,12 +51,14 @@ export class PromptleComponent implements OnInit, OnDestroy {
   topic = '';
   headers: string[] = [];
   answers: { name: string; values: string[] }[] = [];
+  filteredAnswers: { name: string; values: string[] }[] = [];
   correctAnswer: {name: string; values: string[]} = {name: '', values: []};
   selectedGuess = '';
+  guessQuery = '';
   isGameOver = false;
 
-  // Each submitted guess stores both the values and their color indicators
-  submittedGuesses: { values: string[]; colors: string[] }[] = [];
+  // Each submitted guess stores both the selected answer name and its color indicators
+  submittedGuesses: { name?: string; values: string[]; colors: string[] }[] = [];
 
   // Backend preview grid (shows the correct answer row)
   backendHeaders: string[] = [];
@@ -260,8 +270,17 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.topic = payload.topic;
     this.headers = payload.headers || [];
     this.answers = payload.answers || [];
+    this.submittedGuesses = Array.isArray(payload.submittedGuesses)
+      ? payload.submittedGuesses.map((guess: any) => ({
+          name: typeof guess?.name === 'string' ? guess.name : undefined,
+          values: Array.isArray(guess?.values) ? guess.values : [],
+          colors: Array.isArray(guess?.colors) ? guess.colors : []
+        }))
+      : [];
+    this.selectedGuess = '';
+    this.guessQuery = '';
+    this.filterAnswers(this.guessQuery);
     this.correctAnswer = payload.correctAnswer || { name: '', values: [] };
-    this.submittedGuesses = payload.submittedGuesses || [];
     this.isGameOver = !!payload.isGameOver;
     this.savedTimestamp = payload.savedAt ? new Date(payload.savedAt).toLocaleString() : null;
 
@@ -290,6 +309,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
       // Reset guesses but keep the same correct answer
       this.submittedGuesses = [];
       this.selectedGuess = '';
+      this.guessQuery = '';
+      this.filterAnswers(this.guessQuery);
       this.isGameOver = false;
       return;
     }
@@ -303,6 +324,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
       // All answers match current correct (unlikely) — just reset guesses
       this.submittedGuesses = [];
       this.selectedGuess = '';
+      this.guessQuery = '';
+      this.filterAnswers(this.guessQuery);
       this.isGameOver = false;
       return;
     }
@@ -320,6 +343,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
     // Reset gameplay state
     this.submittedGuesses = [];
     this.selectedGuess = '';
+    this.guessQuery = '';
+    this.filterAnswers(this.guessQuery);
     this.isGameOver = false;
     this.gameError = '';
   }
@@ -357,6 +382,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.topic = data.topic;
     this.headers = data.headers;
     this.answers = data.answers;
+    this.filterAnswers(this.guessQuery);
     this.correctAnswer = data.correctAnswer;
 
     // Build preview row from the matching correct answer
@@ -372,9 +398,76 @@ export class PromptleComponent implements OnInit, OnDestroy {
     // Reset guesses
     this.submittedGuesses = [];
     this.selectedGuess = '';
+    this.guessQuery = '';
+    this.filterAnswers(this.guessQuery);
     if (this.isMultiplayer) {
       this.cdr.detectChanges();
     }
+  }
+
+  onGuessQueryChange(query: string) {
+    this.guessQuery = query;
+    this.filterAnswers(query);
+
+    const normalizedQuery = query.trim().toLowerCase();
+    const exactMatch = this.filteredAnswers.find(answer =>
+      answer.name.toLowerCase() === normalizedQuery
+    );
+    this.selectedGuess = exactMatch ? exactMatch.name : '';
+  }
+
+  onGuessOptionSelected(answerName: string) {
+    if (this.isAlreadyGuessed(answerName)) return;
+    this.selectedGuess = answerName;
+    this.guessQuery = answerName;
+    this.filterAnswers(answerName);
+  }
+
+  private filterAnswers(query: string) {
+    const guessedNames = this.getGuessedNamesLowercase();
+    const availableAnswers = this.answers.filter(answer =>
+      !guessedNames.has(answer.name.toLowerCase())
+    );
+
+    const normalizedQuery = query.trim().toLowerCase();
+    if (!normalizedQuery) {
+      this.filteredAnswers = [...availableAnswers];
+      return;
+    }
+
+    this.filteredAnswers = availableAnswers.filter(answer =>
+      answer.name.toLowerCase().includes(normalizedQuery)
+    );
+  }
+
+  private getGuessedNamesLowercase(): Set<string> {
+    const guessedNames = new Set<string>();
+
+    for (const guess of this.submittedGuesses) {
+      const explicitName = guess.name?.trim();
+      if (explicitName) {
+        guessedNames.add(explicitName.toLowerCase());
+        continue;
+      }
+
+      // Backward compatibility: infer name from values in older saved payloads.
+      const matchedAnswer = this.answers.find(answer =>
+        answer.values.length === guess.values.length &&
+        answer.values.every((value, index) =>
+          value.trim().toLowerCase() === String(guess.values[index] ?? '').trim().toLowerCase()
+        )
+      );
+
+      if (matchedAnswer) {
+        guessedNames.add(matchedAnswer.name.toLowerCase());
+      }
+    }
+
+    return guessedNames;
+  }
+
+  private isAlreadyGuessed(answerName: string): boolean {
+    return this.getGuessedNamesLowercase().has(answerName.trim().toLowerCase());
   }
 
   //Split a string into lowercase word tokens (for partial match scoring)
@@ -406,6 +499,12 @@ export class PromptleComponent implements OnInit, OnDestroy {
   // Submit a guess and calculate colors for feedback
   onSubmitGuess() {
     if (!this.selectedGuess || this.isGameOver) return;
+    if (this.isAlreadyGuessed(this.selectedGuess)) {
+      this.selectedGuess = '';
+      this.guessQuery = '';
+      this.filterAnswers(this.guessQuery);
+      return;
+    }
 
     const guessed = this.answers.find(a => a.name === this.selectedGuess);
     const correct = this.answers.find(a => a.name === this.correctAnswer.name);
@@ -433,7 +532,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
 
     // Store the result
     this.submittedGuesses.push({
-      values: guessed.values,
+      name: guessed.name,
+      values: [...guessed.values],
       colors: colors
     });
 
@@ -443,6 +543,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
 
     // Clear selection for next guess
     this.selectedGuess = '';
+    this.guessQuery = '';
+    this.filterAnswers(this.guessQuery);
     if (this.isMultiplayer) {
       this.cdr.detectChanges();
     }

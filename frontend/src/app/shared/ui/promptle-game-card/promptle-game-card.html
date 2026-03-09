@@ -1,0 +1,27 @@
+<mat-card class="game-topic-card">
+  <mat-card-content class="game-topic-content" [class.split-topic-card]="isMultiplayer">
+    <div class="game-topic-left">
+      <img class="game-topic-logo" src="PromptleLogoTransparent.png" alt="Promptle logo">
+      <div class="game-topic-copy">
+        <p class="game-topic-kicker">Promptle</p>
+        <h1 class="game-topic-title">{{ topic || 'Loading topic...' }}</h1>
+      </div>
+    </div>
+
+    <div class="game-topic-right" *ngIf="isMultiplayer">
+      <p class="topic-mp-heading">Multiplayer Room</p>
+      <h3 class="topic-mp-room">{{ currentRoom || 'Connecting...' }}</h3>
+
+      <p class="topic-mp-players-label">Players ({{ players.length }})</p>
+      <ul *ngIf="players.length > 0; else noPlayersInCard" class="topic-mp-list">
+        <li *ngFor="let player of players" class="topic-mp-item">
+          <span>{{ player.name || 'Unknown' }}</span>
+          <small *ngIf="player.guesses !== undefined">{{ player.guesses }} guesses</small>
+        </li>
+      </ul>
+      <ng-template #noPlayersInCard>
+        <p class="topic-mp-empty-text">Waiting for players...</p>
+      </ng-template>
+    </div>
+  </mat-card-content>
+</mat-card>

@@ -1,0 +1,52 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.load-confirm-card {
+  width: min(760px, 100%);
+  max-width: 760px;
+  margin: 20px auto 0;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(60, 145, 241, 0.35);
+  border: 1px solid rgba(60, 145, 241, 0.32);
+  background: #ffffff;
+  color: #182337;
+}
+
+.load-confirm-card mat-card-content {
+  padding: 20px;
+  text-align: center;
+}
+
+.load-confirm-card h3 {
+  margin: 0 0 10px;
+}
+
+.load-confirm-card p {
+  margin: 0 0 8px;
+}
+
+.load-confirm-meta {
+  color: #66778f;
+  font-size: 0.9em;
+}
+
+.load-confirm-actions {
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+:host-context(.dark) .load-confirm-card {
+  border-color: rgba(192, 198, 208, 0.62);
+  box-shadow: 0 0 20px rgba(192, 198, 208, 0.25);
+  background: #1f2733;
+  color: #e3eaf7;
+}
+
+:host-context(.dark) .load-confirm-meta {
+  color: #b9c8e4;
+}

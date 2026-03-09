@@ -17,9 +17,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 
 import { NavbarComponent } from '../../shared/components/navbar/navbar';
-import { SwitchMode } from '../../shared/ui/switch-mode/switch-mode';
 import { UniFooterComponent } from '../../shared/ui/uni-footer/uni-footer';
-import { ToggleMode } from "../../shared/ui/toggle-mode/toggle-mode"; // Assuming this is the correct import; swap to SwitchMode if needed
+import { SwitchMode } from '../../shared/ui/switch-mode/switch-mode';
+import { LoadSavedGameCard } from '../../shared/ui/load-saved-game-card/load-saved-game-card';
 
 @Component({
   selector: 'app-home-page',
@@ -35,10 +35,10 @@ import { ToggleMode } from "../../shared/ui/toggle-mode/toggle-mode"; // Assumin
     MatChipsModule,
     MatButtonModule,
     NavbarComponent,
-    SwitchMode,
     UniFooterComponent,
-    MatAutocompleteModule
-    ToggleMode,
+    MatAutocompleteModule,
+    SwitchMode,
+    LoadSavedGameCard,
   ],
   templateUrl: './home-page.html',
   styleUrls: ['./home-page.css'],
@@ -351,25 +351,6 @@ export class HomePage implements OnInit, AfterViewInit {
     this.filteredTopics = this.allTopics.filter(topic =>
       topic.topicName.toLowerCase().includes(normalized)
     );
-  }
-
-  startGame() {
-    if (!this.selectedTopic) return;
-
-    this.router.navigate(['/game'], {
-      queryParams: {
-        id: this.selectedTopic.topicId
-      }
-    });
-  }
-
-  startAiGame() {
-    const topic = this.customTopic.trim();
-    if (!topic) return;
-
-    this.router.navigate(['/game'], {
-      queryParams: { topic }
-    });
   }
 
   joinChatRoom() {

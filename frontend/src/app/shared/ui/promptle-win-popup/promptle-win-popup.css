@@ -1,0 +1,85 @@
+:host {
+  display: block;
+}
+
+.win-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.62);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.win-card {
+  width: min(680px, calc(100% - 28px));
+  min-width: 520px;
+  background: #ffffff;
+  color: #1b2435;
+  border: 1px solid rgba(60, 145, 241, 0.34);
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(60, 145, 241, 0.32);
+}
+
+.win-card mat-card-content {
+  padding: 26px 24px;
+  text-align: center;
+}
+
+.win-card h2 {
+  margin: 0 0 10px;
+}
+
+.win-card p {
+  margin: 0;
+}
+
+.win-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+:host-context(.dark) .win-overlay {
+  background: rgba(0, 0, 0, 0.72);
+}
+
+:host-context(.dark) .win-card {
+  background: #1f2733;
+  color: #e3eaf7;
+  border-color: rgba(192, 198, 208, 0.62);
+  box-shadow: 0 0 20px rgba(192, 198, 208, 0.24);
+}
+
+:host-context(.dark) .win-card strong {
+  color: #f2f5fb;
+}
+
+:host-context(.dark) .win-card p {
+  color: #c7d2e8;
+}
+
+@media (max-width: 700px) {
+  .win-card {
+    width: min(680px, calc(100% - 16px));
+    min-width: 0;
+    border-radius: 10px;
+  }
+
+  .win-card mat-card-content {
+    padding: 20px 16px;
+  }
+
+  .win-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .win-actions .rect-btn.promp1-btn,
+  .win-actions .rect-btn.promp2-btn {
+    width: 100%;
+  }
+}

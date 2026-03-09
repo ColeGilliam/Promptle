@@ -1,0 +1,177 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.game-topic-card {
+  width: 100%;
+  margin-bottom: 26px;
+  border-radius: 12px;
+  /*border: 1px solid rgba(60, 145, 241, 0.3);*/
+  box-shadow: 0 0 15px rgba(60, 145, 241, 0.50);
+}
+
+.game-topic-content {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 12px 16px !important;
+}
+
+.split-topic-card {
+  display: grid;
+  grid-template-columns: minmax(240px, 45fr) minmax(280px, 55fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+.game-topic-left {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-right: 8px;
+}
+
+.game-topic-logo {
+  width: clamp(110px, 14vw, 180px);
+  height: auto;
+  flex-shrink: 0;
+}
+
+.game-topic-copy {
+  min-width: 0;
+}
+
+.game-topic-kicker {
+  margin: 0 0 6px;
+  font-size: 0.82rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #3c91f1;
+  font-weight: 700;
+}
+
+.game-topic-title {
+  margin: 0;
+  font-size: clamp(1rem, 2.1vw, 1.8rem);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  background: linear-gradient(135deg, #3b82f6, #6366f1, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.game-topic-right {
+  min-height: 110px;
+  border-left: 1px solid rgba(60, 145, 241, 0.32);
+  padding-left: 16px;
+  display: flex;
+  align-items: stretch;
+}
+
+.topic-mp-heading {
+  margin: 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #3c91f1;
+  font-weight: 700;
+}
+
+.topic-mp-room {
+  margin: 4px 0 10px;
+  font-size: 1.06rem;
+  color: #27354b;
+}
+
+.topic-mp-players-label {
+  margin: 0 0 8px;
+  font-size: 0.92rem;
+  color: #4b5d79;
+  font-weight: 600;
+}
+
+.topic-mp-list {
+  margin: 0;
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.topic-mp-item {
+  color: #344861;
+  font-size: 0.92rem;
+}
+
+.topic-mp-item small {
+  margin-left: 6px;
+  color: #5f7394;
+}
+
+.topic-mp-empty-text {
+  margin: 0;
+  color: #6a7f9e;
+  font-style: italic;
+}
+
+:host-context(.dark) .game-topic-kicker {
+  color: #7e7afc;
+}
+
+:host-context(.dark) .game-topic-card {
+  /*border-color: rgba(139, 92, 246, 0.35);*/
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.42);
+}
+
+:host-context(.dark) .game-topic-right {
+  border-left-color: rgba(139, 92, 246, 0.35);
+}
+
+:host-context(.dark) .topic-mp-heading {
+  color: #7e7afc;
+}
+
+:host-context(.dark) .topic-mp-room {
+  color: #d9e2f6;
+}
+
+:host-context(.dark) .topic-mp-players-label,
+:host-context(.dark) .topic-mp-item {
+  color: #b9c8e4;
+}
+
+:host-context(.dark) .topic-mp-item small,
+:host-context(.dark) .topic-mp-empty-text {
+  color: #98abd0;
+}
+
+@media (max-width: 700px) {
+  .split-topic-card {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .game-topic-left {
+    padding-right: 0;
+  }
+
+  .game-topic-right {
+    border-left: none;
+    border-top: 1px solid rgba(60, 145, 241, 0.32);
+    padding-left: 0;
+    padding-top: 10px;
+  }
+
+  .game-topic-logo {
+    width: 150px;
+  }
+}
+
+@media (max-width: 700px) {
+  :host-context(.dark) .game-topic-right {
+    border-top-color: rgba(139, 92, 246, 0.35);
+  }
+}

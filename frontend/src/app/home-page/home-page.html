@@ -1,53 +1,37 @@
-<app-navbar></app-navbar>
+<div class="legacy-first-view">
+  <app-navbar></app-navbar>
 
-<mat-card class="headline-card" aria-label="Promptle headline">
-  <mat-card-content class="headline-card__content">
-    <img class="headline-card__logo" src="PromptleLogoTransparent.png" alt="Promptle logo">
-    <div class="headline-card__copy">
-      <h1 class="headline-card__title">An AI twist on the guessing-game genre.</h1>
-      <p class="headline-card__subtitle">
-        Create your guessing game with no boundaries except your imagination.
+  <div class="legacy-main">
+    <mat-card class="headline-card" aria-label="Promptle headline">
+      <mat-card-content class="headline-card__content">
+        <img class="headline-card__logo" src="PromptleLogoTransparent.png" alt="Promptle logo">
+        <div class="headline-card__copy">
+          <h1 class="headline-card__title">An AI twist on the guessing-game genre.</h1>
+          <p class="headline-card__subtitle">
+            Create your guessing game with no boundaries except your imagination.
+          </p>
+          <div class="auth-actions auth-actions--headline">
+            <button matButton="elevated" 
+            class="rect-btn promp1-btn" 
+            aria-label="Sign in or sign up">
+            Sign In / Sign Up
+          </button>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="about-card" aria-label="About section placeholder">
+      <p class="about-card__text">
+        Have you ever played Wordle and wished there were more topics to choose from, or even the ability to create your own? With Promptle, now you can. Promptle is an AI-enhanced word guessing game where each round is built around a specific theme or topic. If you select one of our popular cached topics, you’ll guess from a fixed list of possible answers. If you choose to generate your own theme, AI will dynamically create a new challenge just for you.
+        Use the hints provided in the grid to narrow down your options and do your best to guess the correct answer before you run out of attempts.
       </p>
-      <div class="auth-actions auth-actions--headline">
-        <button matButton="elevated" 
-        class="rect-btn promp1-btn" 
-        aria-label="Sign in or sign up">
-        Sign In / Sign Up
-      </button>
-      </div>
-    </div>
-  </mat-card-content>
-</mat-card>
-
-<mat-card class="about-card" aria-label="About section placeholder">
-  <p class="about-card__text">
-    Have you ever played Wordle and wished there were more topics to choose from, or even the ability to create your own? With Promptle, now you can. Promptle is an AI-enhanced word guessing game where each round is built around a specific theme or topic. If you select one of our popular cached topics, you’ll guess from a fixed list of possible answers. If you choose to generate your own theme, AI will dynamically create a new challenge just for you.
-    Use the hints provided in the grid to narrow down your options and do your best to guess the correct answer before you run out of attempts.
-  <p class="about-card__text">
-    Choose Quick Play to instantly start a game just for yourself, or find an online match and compete against other players. You can also select Create Room or Join Room to set up a private lobby and play with your friends. Whether you want a fast solo challenge or a competitive multiplayer experience, Promptle gives you the option.
-    <a routerLink="/about" class="about-link">Learn more here!.</a>
-  </p>
-</mat-card>
-
-<mat-divider class="cta-divider"></mat-divider>
-
-<div class="gamemode-title">Game Modes</div>
-
-<div class="play-actions" aria-label="Game mode selection">
-  <div class="quickplay-group">
-    <button
-      matButton="elevated"
-      color="primary"
-      class="rect-btn play-btn"
-      [matMenuTriggerFor]="quickPlayMenu"
-      #quickPlayTrigger="matMenuTrigger"
-      aria-label="Quick Play options">
-      Quick Play
-    </button>
-    <mat-menu #quickPlayMenu="matMenu">
-      <button mat-menu-item aria-label="Quick Play online">Online</button>
-      <button mat-menu-item aria-label="Quick Play solo" routerLink="/landing">Solo</button>
-    </mat-menu>
+      <p class="about-card__text">
+        Choose Quick Play to instantly start a game just for yourself, or find an online match and compete against other players. You can also select Create Room or Join Room to set up a private lobby and play with your friends. Whether you want a fast solo challenge or a competitive multiplayer experience, Promptle gives you the option.
+        <a routerLink="/about" class="about-link">Learn more here!.</a>
+      </p>
+    </mat-card>
   </div>
-  <button matButton="elevated" color="accent" class="rect-btn play-btn" aria-label="Create or join a room">Create / Join Room</button>
 </div>
+
+<app-uni-footer></app-uni-footer>

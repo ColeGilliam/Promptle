@@ -1,117 +1,128 @@
-<app-navbar></app-navbar>
+<div class="game-first-view">
+  <app-navbar></app-navbar>
 
-<!-- Multiplayer info banner (shows only in multiplayer mode) -->
-<div *ngIf="isMultiplayer" class="multiplayer-info">
-  <h3>Room: {{ currentRoom || 'Connecting...' }}</h3>
+  <div class="game-main">
+    <div class="promptle-container">
+      <app-promptle-game-card
+        [topic]="topic"
+        [isMultiplayer]="isMultiplayer"
+        [currentRoom]="currentRoom"
+        [players]="players"
+      ></app-promptle-game-card>
 
-  <h4>Players ({{ players.length }}):</h4>
+      <!-- Loading / errors -->
+      <div *ngIf="gameLoading" class="loading-container">
+        <img src="loading.gif" alt="Loading" />
+      </div>
+      <div *ngIf="gameError" class="error">{{ gameError }}</div>
 
-  <ul *ngIf="players.length > 0; else noPlayers">
-    <li *ngFor="let player of players; let i = index">
-      {{ player.name || 'Unknown' }}
-      <span *ngIf="player.guesses !== undefined">({{ player.guesses }} guesses)</span>
-    </li>
-  </ul>
+      <!-- Backend preview (single correct answer row) -->
+      <div *ngIf="!gameLoading && !gameError && correctAnswer && correctAnswer.values.length" hidden>
+        <h2 style="text-align:center;">Current Answer (from backend)</h2>
 
-  <ng-template #noPlayers>
-    <p style="color: #888; font-style: italic;">
-      Waiting for players... (open this link in another tab to test)
-    </p>
-  </ng-template>
-</div>
+        <div class="game-grid single-row">
+          <div class="column" *ngFor="let header of headers; let i = index">
+            <div class="header">{{ header }}</div>
 
-<div class="promptle-container">
-  <h1 style="text-align: center;">
-    Promptle <br><br> {{ topic }}
-  </h1>
-
-  <!-- Loading / errors -->
-  <div *ngIf="gameLoading" class="loading-container">
-    <img src="loading.gif" alt="Loading" />
-  </div>
-  <div *ngIf="gameError" class="error">{{ gameError }}</div>
-
-  <!-- Backend preview (single correct answer row) -->
-  <div *ngIf="!gameLoading && !gameError && correctAnswer && correctAnswer.values.length" hidden>
-    <h2 style="text-align:center;">Current Answer (from backend)</h2>
-
-    <div class="game-grid single-row">
-      <div class="column" *ngFor="let header of headers; let i = index">
-        <div class="header">{{ header }}</div>
-
-        <div class="guess-cell backend-cell">
-          {{ correctAnswer.values[i] }}
+            <div class="guess-cell backend-cell">
+              {{ correctAnswer.values[i] }}
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
 
-  <!-- Guess Input -->
-  <div class="guess-input" *ngIf="answers.length">
-    <mat-form-field appearance="fill" class="guess-select-field">
-      <mat-label>Select a Guess</mat-label>
-      <mat-select [(ngModel)]="selectedGuess">
-        <mat-option *ngFor="let answer of answers" [value]="answer.name">
-          {{ answer.name }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
+      <!-- Guess Input -->
+      <mat-card class="guess-actions-card" *ngIf="answers.length">
+        <mat-card-content>
+          <div class="guess-input">
+            <mat-form-field appearance="fill" class="guess-select-field" subscriptSizing="dynamic">
+              <mat-label>Select a Guess</mat-label>
+              <input
+                type="text"
+                matInput
+                [matAutocomplete]="guessAuto"
+                [(ngModel)]="guessQuery"
+                (ngModelChange)="onGuessQueryChange($event)"
+                placeholder="Start typing a guess"
+              >
+              <mat-autocomplete
+                #guessAuto="matAutocomplete"
+                (optionSelected)="onGuessOptionSelected($event.option.value)"
+              >
+                <mat-option *ngFor="let answer of filteredAnswers" [value]="answer.name">
+                  {{ answer.name }}
+                </mat-option>
+                <mat-option *ngIf="filteredAnswers.length === 0" disabled>
+                  No guesses found
+                </mat-option>
+              </mat-autocomplete>
+            </mat-form-field>
 
-    <button
-      mat-raised-button color="primary"
-      [disabled]="!selectedGuess"
-      (click)="onSubmitGuess()"
-    >
-      SUBMIT
-    </button>
-    
-    <!-- Single-player only: Save/Restart buttons -->
-    <ng-container *ngIf="!isMultiplayer">
-      <button matButton="outlined" (click)="saveGame()" [disabled]="!answers.length">SAVE</button>
-      <button matButton="text" (click)="restartGame()" [disabled]="!answers.length" style="margin-left:8px;">RESTART</button>
-      <span *ngIf="savedTimestamp" style="margin-left:8px; font-size:0.9em; color: #666;">Saved: {{ savedTimestamp }}</span>
-    </ng-container>
-  </div>
+            <button
+              matButton="filled"
+              class="rect-btn promp1-btn"
+              [disabled]="!selectedGuess"
+              (click)="onSubmitGuess()"
+            >
+              SUBMIT
+            </button>
 
-  <!-- Game Grid -->
-  <div class="game-grid" *ngIf="headers.length">
-    <div class="column" *ngFor="let header of headers; let i = index">
-      <div class="header">{{ header }}</div>
+            <ng-container *ngIf="!isMultiplayer">
+              <button matButton="filled" class="rect-btn promp2-btn" (click)="saveGame()" [disabled]="!answers.length">SAVE</button>
+              <button matButton="filled" class="rect-btn promp2-btn" (click)="restartGame()" [disabled]="!answers.length">RESTART</button>
+              <span *ngIf="savedTimestamp" class="saved-status-inline">Saved: {{ savedTimestamp }}</span>
+            </ng-container>
+          </div>
+        </mat-card-content>
+      </mat-card>
 
-      <div
-        class="guess-cell"
-        *ngFor="let guess of submittedGuesses"
-        [style.background-color]="guess.colors[i]"
-      >
-        {{ guess.values[i] }}
+      <!-- Game Grid -->
+      <mat-card class="game-grid-card" *ngIf="headers.length">
+        <mat-card-content>
+          <div class="game-grid-meta">
+            <p class="game-grid-subtitle" *ngIf="submittedGuesses.length === 0">Submit a guess to start filling the grid.</p>
+            <p class="game-grid-subtitle" *ngIf="submittedGuesses.length > 0">{{ submittedGuesses.length }} guess{{ submittedGuesses.length === 1 ? '' : 'es' }} submitted.</p>
+          </div>
+
+          <div class="game-grid-scroll">
+            <div class="game-grid">
+              <div class="column" *ngFor="let header of headers; let i = index">
+                <div class="header">{{ header }}</div>
+
+                <div
+                  class="guess-cell"
+                  *ngFor="let guess of submittedGuesses"
+                  [style.background-color]="guess.colors[i]"
+                >
+                  {{ guess.values[i] }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Commented-out settings menu (from both originals) -->
+      <!-- 
+      <div class="settings-container">
+        <button class="settings-button" (click)="toggleSettingsMenu()">
+          ⚙️
+        </button>
+
+        <div class="settings-menu" *ngIf="showSettingsMenu">
+          <button class="settings-item" (click)="quitGame()">Quit Game</button>
+        </div>
       </div>
+      -->
     </div>
   </div>
-
-  <!-- Commented-out settings menu (from both originals) -->
-  <!-- 
-  <div class="settings-container">
-    <button class="settings-button" (click)="toggleSettingsMenu()">
-      ⚙️
-    </button>
-
-    <div class="settings-menu" *ngIf="showSettingsMenu">
-      <button class="settings-item" (click)="quitGame()">Quit Game</button>
-    </div>
-  </div>
-  -->
 </div>
 
 <!-- Win overlay (enhanced for single-player) -->
-<div class="win-overlay" *ngIf="isGameOver">
-  <div class="win-card">
-    <h2>🏆 Victory!</h2>
-    <p>The correct answer was <strong>{{ correctAnswer.name }}</strong></p>
-    <div style="display:flex; gap:8px; justify-content:center; margin-top:12px;">
-      <button mat-raised-button color="primary" (click)="quitGame()">Return Home</button>
-      <ng-container *ngIf="!isMultiplayer">
-        <button mat-raised-button color="accent" (click)="restartGame()">Play Again (Different Answer)</button>
-      </ng-container>
-    </div>
-  </div>
-</div>
+<app-promptle-win-popup
+  *ngIf="isGameOver"
+  [answerName]="correctAnswer.name"
+  [isMultiplayer]="isMultiplayer"
+  (returnHome)="quitGame()"
+  (playAgain)="restartGame()"
+></app-promptle-win-popup>
