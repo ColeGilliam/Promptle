@@ -63,6 +63,22 @@
   -webkit-text-fill-color: transparent;
 }
 
+.topic-loading-title {
+  display: inline-flex;
+  align-items: baseline;
+  -webkit-text-fill-color: initial;
+  color: #2f4768;
+  background: none;
+}
+
+.topic-loading-bar {
+  margin-top: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  --mat-progress-bar-active-indicator-color: #3c91f1;
+  --mat-progress-bar-track-color: rgba(60, 145, 241, 0.24);
+}
+
 .game-topic-right {
   min-height: 110px;
   border-left: 1px solid rgba(60, 145, 241, 0.32);
@@ -119,6 +135,15 @@
 
 :host-context(.dark) .game-topic-kicker {
   color: #7e7afc;
+}
+
+:host-context(.dark) .topic-loading-title {
+  color: #d9e2f6;
+}
+
+:host-context(.dark) .topic-loading-bar {
+  --mat-progress-bar-active-indicator-color: #7e7afc;
+  --mat-progress-bar-track-color: rgba(126, 122, 252, 0.28);
 }
 
 :host-context(.dark) .game-topic-card {

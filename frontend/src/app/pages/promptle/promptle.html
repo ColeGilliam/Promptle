@@ -4,6 +4,7 @@
   <div class="game-main">
     <div class="promptle-container">
       <app-promptle-game-card
+        [loading]="gameLoading"
         [topic]="topic"
         [isMultiplayer]="isMultiplayer"
         [currentRoom]="currentRoom"
@@ -11,9 +12,6 @@
       ></app-promptle-game-card>
 
       <!-- Loading / errors -->
-      <div *ngIf="gameLoading" class="loading-container">
-        <img src="loading.gif" alt="Loading" />
-      </div>
       <div *ngIf="gameError" class="error">{{ gameError }}</div>
 
       <!-- Backend preview (single correct answer row) -->
@@ -32,7 +30,7 @@
       </div>
 
       <!-- Guess Input -->
-      <mat-card class="guess-actions-card" *ngIf="answers.length">
+      <mat-card class="guess-actions-card" *ngIf="answers.length" [@cardEnter]>
         <mat-card-content>
           <div class="guess-input">
             <mat-form-field appearance="fill" class="guess-select-field" subscriptSizing="dynamic">
@@ -77,7 +75,7 @@
       </mat-card>
 
       <!-- Game Grid -->
-      <mat-card class="game-grid-card" *ngIf="headers.length">
+      <mat-card class="game-grid-card" *ngIf="headers.length" [@cardEnterDelayed]>
         <mat-card-content>
           <div class="game-grid-meta">
             <p class="game-grid-subtitle" *ngIf="submittedGuesses.length === 0">Submit a guess to start filling the grid.</p>
@@ -92,6 +90,7 @@
                 <div
                   class="guess-cell"
                   *ngFor="let guess of submittedGuesses"
+                  [@cardEnter]
                   [style.background-color]="guess.colors[i]"
                 >
                   {{ guess.values[i] }}

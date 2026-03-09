@@ -4,7 +4,16 @@
       <img class="game-topic-logo" src="PromptleLogoTransparent.png" alt="Promptle logo">
       <div class="game-topic-copy">
         <p class="game-topic-kicker">Promptle</p>
-        <h1 class="game-topic-title">{{ topic || 'Loading topic...' }}</h1>
+        <ng-container *ngIf="loading; else loadedTopic">
+          <h1 class="game-topic-title topic-loading-title" aria-live="polite">
+            Loading topic...
+          </h1>
+          <mat-progress-bar mode="indeterminate" class="topic-loading-bar"></mat-progress-bar>
+        </ng-container>
+
+        <ng-template #loadedTopic>
+          <h1 class="game-topic-title">{{ topic || 'Loading topic...' }}</h1>
+        </ng-template>
       </div>
     </div>
 

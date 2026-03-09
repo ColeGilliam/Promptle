@@ -17,6 +17,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatCardModule } from '@angular/material/card';
+import { animate, style, transition, trigger } from '@angular/animations';
 
 import { MultiplayerService } from '../../services/multiplayer-promptle';
 import { Subscription } from 'rxjs';
@@ -40,6 +41,20 @@ import { PromptleWinPopup } from '../../shared/ui/promptle-win-popup/promptle-wi
     PromptleGameCard,
     PromptleWinPopup,
     NavbarComponent
+  ],
+  animations: [
+    trigger('cardEnter', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateY(14px)' }),
+        animate('320ms cubic-bezier(0.2, 0, 0, 1)', style({ opacity: 1, transform: 'translateY(0)' }))
+      ])
+    ]),
+    trigger('cardEnterDelayed', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateY(14px)' }),
+        animate('360ms 90ms cubic-bezier(0.2, 0, 0, 1)', style({ opacity: 1, transform: 'translateY(0)' }))
+      ])
+    ])
   ],
   templateUrl: './promptle.html',
   styleUrls: ['./promptle.css']
