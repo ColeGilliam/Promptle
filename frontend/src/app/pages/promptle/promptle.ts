@@ -87,7 +87,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
   currentRoom = '';
   isMultiplayer = false;
   players: { id: string; name: string; colors?: string[]; won?: boolean }[] = [];
-  private myUsername = '';  // ← cache username so we don't need async in onSubmitGuess
+  private myUsername = '';  // ← cache username so we don't need async in onSubmitGuess 
+  private mySocketId = '';
 
   private roomStateSub?: Subscription;
   private opponentGuessSub?: Subscription;
@@ -115,21 +116,44 @@ export class PromptleComponent implements OnInit, OnDestroy {
       const room = params.get('room')?.trim();
 
       if (room && room.length > 0) {
-        console.log('[Promptle] Multiplayer mode activated with room:', room);
         this.currentRoom = room;
         this.isMultiplayer = true;
 
-        // Cache username for use in onSubmitGuess
         this.auth.user$.pipe(take(1)).subscribe(user => {
-          const baseUsername = user?.name || user?.email?.split('@')[0] || 'Guest';
-          this.myUsername = baseUsername; // keep clean name for emitting to others
-          this.multiplayerService.joinRoom(room, baseUsername);
-        });
+          if (user?.sub) {
+            // Fetch custom username from MongoDB
+            this.http.get<any>(`/api/profile/${encodeURIComponent(user.sub)}`).subscribe({
+              next: (mongoUser) => {
+                const baseUsername = mongoUser?.username || user?.name || user?.email?.split('@')[0] || 'Guest';
+                this.myUsername = baseUsername;
+                this.multiplayerService.joinRoom(room, baseUsername);
+                setTimeout(() => {
+                  this.mySocketId = this.multiplayerService.getSocketId();
+                }, 1000);
+              },
+              error: () => {
+                // Fallback if profile fetch fails
+                const baseUsername = user?.name || user?.email?.split('@')[0] || 'Guest';
+                this.myUsername = baseUsername;
+                this.multiplayerService.joinRoom(room, baseUsername);
+                setTimeout(() => {
+                  this.mySocketId = this.multiplayerService.getSocketId();
+                }, 1000);
+              }
+            });
+          } else {
+            // Not logged in
+            this.myUsername = 'Guest';
+            this.multiplayerService.joinRoom(room, 'Guest');
+            setTimeout(() => {
+              this.mySocketId = this.multiplayerService.getSocketId();
+            }, 1000);
+    }
+  });
 
-        this.loadGame({ room });
-        return;
-      }
-
+  this.loadGame({ room });
+  return;
+}
       console.log('[Promptle] Single-player mode');
       this.isMultiplayer = false;
       this.multiplayerService.leaveRoom();
