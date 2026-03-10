@@ -16,6 +16,8 @@ import { ProfileService } from '../../services/profile.service';
 import { take } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { NavbarComponent } from '../../shared/components/navbar/navbar';
+import { UniFooterComponent } from '../../shared/ui/uni-footer/uni-footer';
 
 @Component({
   selector: 'app-profile',
@@ -32,7 +34,9 @@ import { HttpClient } from '@angular/common/http';
     MatMenuModule,
     MatToolbarModule,
     MatIconModule,
-    FormsModule
+    FormsModule,
+    NavbarComponent,
+    UniFooterComponent
   ],
   templateUrl: './profile.html',
   styleUrls: ['./profile.css'],

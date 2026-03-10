@@ -1,40 +1,30 @@
-.topbar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
+.page-layout {
+  min-height: calc(100vh - 128px); /* adjust for navbar + footer height */
+  padding: 32px;
 }
 
-.spacer {
-  flex: 1 1 auto;
-}
-
-.placeholder-copy {
-  padding: 16px;
-}
-
-.placeholder-copy {
-  padding: 0;
-  margin: 0;
-  line-height: 1.6;
-}
-
-.profile-container {
+.profile-content {
   display: flex;
-  justify-content: center;
-  padding: 20px;
+  gap: 24px;
+  align-items: flex-start;  /* cards align at the top */
 }
 
 .profile-card {
-  width: 100%;
-  max-width: 450px;
-  margin-top: 20px;
+  flex: 1;
+  min-width: 50px;
+}
+
+.stats-card {
+  flex: 1;
+  min-width: 300px;
 }
 
 .avatar-section {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 20px 0;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
 .profile-avatar {
@@ -42,8 +32,6 @@
   height: 120px;
   border-radius: 50%;
   object-fit: cover;
-  margin-bottom: 15px;
-  border: 2px solid #ccc;
 }
 
 .full-width {
@@ -52,30 +40,36 @@
 
 .actions {
   display: flex;
-  justify-content: space-between;
+  gap: 12px;
   padding: 16px;
 }
 
-.user-nav-section {
+.stat-item {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-right: 15px;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
 }
 
-.nav-username {
-  font-size: 14px;
-  font-weight: 500;
+/* Responsive: stack on small screens */
+@media (max-width: 768px) {
+  .profile-content {
+    flex-direction: column;
+  }
 }
 
-.nav-avatar {
-  width: 35px;
-  height: 35px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 1.5px solid white;
+.page-layout {
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 128px); /* remove this line - it's causing the footer gap */
 }
 
-.spacer {
-  flex: 1 1 auto;
+.profile-content {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  max-width: 800px;  /* controls overall width */
+  margin: 0 auto;    /* centers it */
+  width: 100%;
 }
