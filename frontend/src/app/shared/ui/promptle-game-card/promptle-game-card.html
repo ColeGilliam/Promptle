@@ -1,19 +1,38 @@
 <mat-card class="game-topic-card">
   <mat-card-content class="game-topic-content" [class.split-topic-card]="isMultiplayer">
-    <div class="game-topic-left">
-      <img class="game-topic-logo" src="PromptleLogoTransparent.png" alt="Promptle logo">
-      <div class="game-topic-copy">
-        <p class="game-topic-kicker">Promptle</p>
-        <ng-container *ngIf="loading; else loadedTopic">
-          <h1 class="game-topic-title topic-loading-title" aria-live="polite">
-            Loading topic...
-          </h1>
-          <mat-progress-bar mode="indeterminate" class="topic-loading-bar"></mat-progress-bar>
-        </ng-container>
+    <div class="game-topic-left-shell" [class.left-hidden]="isMultiplayer && leftPanelHidden">
+      <button
+        *ngIf="isMultiplayer"
+        matMiniFab
+        type="button"
+        class="left-pane-toggle"
+        [class.left-pane-toggle-enabled]="!leftPanelHidden"
+        [class.left-pane-toggle-disabled]="leftPanelHidden"
+        (click)="toggleLeftPanel()"
+        [attr.aria-label]="leftPanelHidden ? 'Show topic panel' : 'Hide topic panel'"
+      >
+        <mat-icon>{{ leftPanelHidden ? 'chat_bubble_outline' : 'chat_bubble' }}</mat-icon>
+      </button>
 
-        <ng-template #loadedTopic>
-          <h1 class="game-topic-title">{{ topic || 'Loading topic...' }}</h1>
-        </ng-template>
+      <div
+        class="game-topic-left"
+        [@leftPane]="isMultiplayer && leftPanelHidden ? 'hidden' : 'visible'"
+        [attr.aria-hidden]="isMultiplayer && leftPanelHidden ? 'true' : null"
+      >
+        <img class="game-topic-logo" src="PromptleLogoTransparent.png" alt="Promptle logo">
+        <div class="game-topic-copy">
+          <p class="game-topic-kicker">Promptle</p>
+          <ng-container *ngIf="loading; else loadedTopic">
+            <h1 class="game-topic-title topic-loading-title" aria-live="polite">
+              Loading topic...
+            </h1>
+            <mat-progress-bar mode="indeterminate" class="topic-loading-bar"></mat-progress-bar>
+          </ng-container>
+
+          <ng-template #loadedTopic>
+            <h1 class="game-topic-title">{{ topic || 'Loading topic...' }}</h1>
+          </ng-template>
+        </div>
       </div>
     </div>
 

@@ -25,12 +25,50 @@
   align-items: stretch;
 }
 
-.game-topic-left {
+.game-topic-left-shell {
   min-width: 0;
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+
+.game-topic-left {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
   display: flex;
   align-items: center;
   gap: 16px;
   padding-right: 8px;
+}
+
+.split-topic-card .game-topic-left {
+  padding-right: 44px;
+}
+
+.game-topic-left-shell.left-hidden .game-topic-left {
+  pointer-events: none;
+}
+
+.left-pane-toggle {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 2;
+  --mat-fab-small-container-elevation-shadow: none;
+  box-shadow: none !important;
+}
+
+.left-pane-toggle.left-pane-toggle-enabled {
+  --mat-fab-small-container-color: #1f8a4c;
+  --mat-fab-small-foreground-color: #ecfff4;
+  --mat-fab-small-state-layer-color: #c5f6db;
+}
+
+.left-pane-toggle.left-pane-toggle-disabled {
+  --mat-fab-small-container-color: #a12c2c;
+  --mat-fab-small-foreground-color: #fff0f0;
+  --mat-fab-small-state-layer-color: #ffd6d6;
 }
 
 .game-topic-logo {
@@ -104,24 +142,12 @@
   color: inherit;
 }
 
-.topic-mp-players-line {
-  margin: 8px 0 0;
-  font-size: 0.92rem;
-  color: #4b5d79;
-  font-weight: 600;
-}
-
-.topic-mp-player-names {
-  color: #344861;
-  font-weight: 500;
-}
-
 :host-context(.dark) .game-topic-kicker {
   color: #7e7afc;
 }
 
 :host-context(.dark) .topic-loading-title {
-  color: #d9e2f6;
+  color: #5757fa;
 }
 
 :host-context(.dark) .topic-loading-bar {
@@ -130,7 +156,6 @@
 }
 
 :host-context(.dark) .game-topic-card {
-  /*border-color: rgba(139, 92, 246, 0.35);*/
   box-shadow: 0 0 15px rgba(139, 92, 246, 0.42);
 }
 
@@ -138,16 +163,20 @@
   border-left-color: rgba(139, 92, 246, 0.35);
 }
 
+:host-context(.dark) .left-pane-toggle.left-pane-toggle-enabled {
+  --mat-fab-small-container-color: #166534;
+  --mat-fab-small-foreground-color: #dcfce7;
+  --mat-fab-small-state-layer-color: #bbf7d0;
+}
+
+:host-context(.dark) .left-pane-toggle.left-pane-toggle-disabled {
+  --mat-fab-small-container-color: #7f1d1d;
+  --mat-fab-small-foreground-color: #fee2e2;
+  --mat-fab-small-state-layer-color: #fecaca;
+}
+
 :host-context(.dark) .topic-mp-heading {
   color: #7e7afc;
-}
-
-:host-context(.dark) .topic-mp-players-line {
-  color: #b9c8e4;
-}
-
-:host-context(.dark) .topic-mp-player-names {
-  color: #98abd0;
 }
 
 @media (max-width: 700px) {
@@ -158,6 +187,10 @@
 
   .game-topic-left {
     padding-right: 0;
+  }
+
+  .split-topic-card .game-topic-left {
+    padding-right: 44px;
   }
 
   .game-topic-right {
@@ -199,4 +232,4 @@
 
 .color-dot.empty {
   background-color: #ddd;
-} 
+}
