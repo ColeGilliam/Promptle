@@ -45,10 +45,10 @@ export function setupSocket(server) {
       socket.emit('joined-room', { roomId: cleanRoom, message: `Joined ${cleanRoom}` });
     });
 
-    socket.on('player-guess', ({ roomId, playerName, playerId, colors, isCorrect }) => {
-      socket.to(roomId).emit('opponent-guess', { playerName, playerId, colors, isCorrect });
+    socket.on('player-guess', ({ roomId, playerName, playerId, colors, isCorrect, finishTime }) => {
+      socket.to(roomId).emit('opponent-guess', { playerName, playerId, colors, isCorrect, finishTime });
       if (isCorrect) {
-        io.to(roomId).emit('player-won', { playerName });
+        io.to(roomId).emit('player-won', { playerName, playerId });  // ← add playerId
       }
     });
 

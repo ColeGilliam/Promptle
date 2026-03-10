@@ -208,7 +208,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
 
     this.playerWonSub = this.multiplayerService.onPlayerWon().subscribe(data => {
       this.players = this.players.map(p =>
-        p.name === data.playerName ? { ...p, won: true } : p
+        p.id === data.playerId ? { ...p, won: true } : p  // ← match by ID
       );
       this.cdr.detectChanges();
     });
