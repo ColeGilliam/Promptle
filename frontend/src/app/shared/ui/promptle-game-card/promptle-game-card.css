@@ -233,3 +233,12 @@
 .color-dot.empty {
   background-color: #ddd;
 }
+
+.guess-count {
+  font-size: 0.78rem;
+  color: #6b7a91;
+  font-weight: 500;
+  vertical-align: top;
+  position: relative;
+  top: -4px;
+}

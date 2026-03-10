@@ -54,6 +54,11 @@
             [style.background-color]="color"
           ></span>
         </div>
+        <!-- Guess count -->
+        <span class="guess-count" *ngIf="player.guesses">
+          {{ player.guesses }} guess{{ player.guesses === 1 ? '' : 'es' }}
+        </span>
+
 
         <!-- No guess yet -->
         <div class="player-colors" *ngIf="!player.colors?.length">

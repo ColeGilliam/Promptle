@@ -124,7 +124,7 @@ export class MultiplayerService {
     });
   }
 
-  onPlayerWon(): Observable<{ playerName: string; playerId: string }> {
+  onPlayerWon(): Observable<{ playerName: string; playerId: string; guesses: number }> {
     return new Observable(observer => {
       const cb = (data: any) => observer.next(data);
       this.playerWonCallbacks.push(cb);

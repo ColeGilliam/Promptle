@@ -13,7 +13,9 @@ export function setupSocket(server) {
     allowEIO3: true,
   });
 
-  const playerNames = new Map(); // socketId → playerName
+  const playerNames = new Map();   // socketId → playerName
+  const roomHosts = new Map();     // roomId → host socketId
+  const playerGuesses = new Map(); // socketId → guess count
 
   io.on('connection', (socket) => {
     console.log('[BACKEND] Player connected:', socket.id);
@@ -25,30 +27,44 @@ export function setupSocket(server) {
       }
 
       const cleanRoom = roomId.trim();
-
-      // Store this player's name keyed by their socket ID
-      playerNames.set(socket.id, playerName || `Guest`);
-
+      playerNames.set(socket.id, playerName || 'Guest');
       socket.join(cleanRoom);
       console.log(`[BACKEND] ${playerName || 'Guest'} joined room ${cleanRoom} (socket ${socket.id})`);
 
-      // Build player list using each socket's stored name
+      if (!roomHosts.has(cleanRoom)) {
+        roomHosts.set(cleanRoom, socket.id);
+        console.log(`[BACKEND] Host of ${cleanRoom} is ${socket.id}`);
+      }
+
+      const isHost = roomHosts.get(cleanRoom) === socket.id;
+      socket.emit('host-status', { isHost });
+
       const roomSockets = io.sockets.adapter.rooms.get(cleanRoom) || new Set();
       const players = Array.from(roomSockets).map((clientId) => ({
         id: clientId,
-        name: playerNames.get(clientId) || 'Guest'  // ← each player's own name
+        name: playerNames.get(clientId) || 'Guest'
       }));
 
       console.log(`[BACKEND] Current players in ${cleanRoom}:`, players);
-
       io.to(cleanRoom).emit('players-updated', { roomId: cleanRoom, players });
       socket.emit('joined-room', { roomId: cleanRoom, message: `Joined ${cleanRoom}` });
     });
 
+    socket.on('start-game', ({ roomId }) => {
+      if (roomHosts.get(roomId) !== socket.id) return;
+      console.log(`[BACKEND] Game started in ${roomId} by host ${socket.id}`);
+      io.to(roomId).emit('game-started');
+    });
+
     socket.on('player-guess', ({ roomId, playerName, playerId, colors, isCorrect, finishTime }) => {
-      socket.to(roomId).emit('opponent-guess', { playerName, playerId, colors, isCorrect, finishTime });
+      // Increment guess count for this player
+      playerGuesses.set(playerId, (playerGuesses.get(playerId) || 0) + 1);
+      const guesses = playerGuesses.get(playerId);
+
+      socket.to(roomId).emit('opponent-guess', { playerName, playerId, colors, isCorrect, finishTime, guesses });
+
       if (isCorrect) {
-        io.to(roomId).emit('player-won', { playerName, playerId });  // ← add playerId
+        io.to(roomId).emit('player-won', { playerName, playerId, guesses });
       }
     });
 
@@ -68,7 +84,8 @@ export function setupSocket(server) {
 
     socket.on('disconnect', () => {
       console.log('[BACKEND] Player disconnected:', socket.id);
-      playerNames.delete(socket.id); // ← clean up their name
+      playerNames.delete(socket.id);
+      playerGuesses.delete(socket.id); // ← clean up
 
       socket.rooms.forEach((room) => {
         if (room !== socket.id) {
@@ -79,6 +96,10 @@ export function setupSocket(server) {
           }));
           io.to(room).emit('players-updated', { roomId: room, players });
         }
+      });
+
+      roomHosts.forEach((hostId, roomId) => {
+        if (hostId === socket.id) roomHosts.delete(roomId);
       });
     });
   });
