@@ -21,9 +21,26 @@
       <p class="topic-mp-heading">
         Multiplayer Room - <span class="topic-mp-room-inline">{{ currentRoom || 'Connecting...' }}</span>
       </p>
-      <p class="topic-mp-players-line">
-        Players ({{ players.length }}) <span class="topic-mp-player-names">{{ playerNamesText }}</span>
-      </p>
+      <div class="player-row" *ngFor="let player of players">
+        <span class="player-name">
+          {{ player.name }}{{ player.isMe ? ' (Me)' : '' }}
+          <span *ngIf="player.won"> 🏆</span>
+        </span>
+
+        <!-- Color dots from last guess -->
+        <div class="player-colors" *ngIf="player.colors?.length">
+          <span
+            *ngFor="let color of player.colors"
+            class="color-dot"
+            [style.background-color]="color"
+          ></span>
+        </div>
+
+        <!-- No guess yet -->
+        <div class="player-colors" *ngIf="!player.colors?.length">
+          <span class="color-dot empty" *ngFor="let h of headers"></span>
+        </div>
+      </div>
     </div>
   </mat-card-content>
 </mat-card>

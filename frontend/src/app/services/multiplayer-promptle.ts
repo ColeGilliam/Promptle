@@ -18,10 +18,14 @@ interface RoomState {
 export class MultiplayerService {
 
   private socket: Socket | null = null;
-  
+  private mySocketId = '';
 
   private roomStateSubject = new BehaviorSubject<RoomState | null>(null);
   public roomState$: Observable<RoomState | null> = this.roomStateSubject.asObservable();
+
+  // Callback arrays so listeners survive across Observable subscriptions
+  private opponentGuessCallbacks: ((data: any) => void)[] = [];
+  private playerWonCallbacks: ((data: any) => void)[] = [];
 
   constructor() {}
 
@@ -37,21 +41,31 @@ export class MultiplayerService {
     console.log('[Service] Creating new socket connection');
 
     this.socket = io({
-      // DO NOT put 'http://localhost:3001' here. 
-      // Leaving it empty forces it to use the current domain (promptle.unr.dev)
       path: '/socket.io/',
-      transports: ['polling', 'websocket'], 
+      transports: ['polling', 'websocket'],
       reconnection: true,
       reconnectionAttempts: 5
     });
 
     this.socket.on('connect', () => {
-      console.log(`[Service] ✅ CONNECTED! Socket ID: ${this.socket!.id}`);
+      this.mySocketId = this.socket!.id!;
+      console.log(`[Service] ✅ CONNECTED! Socket ID: ${this.mySocketId}`);
       this.socket!.emit('join-room', { roomId, playerName });
+
+      // Register game event listeners AFTER socket is connected
+      this.socket!.on('opponent-guess', (data) => {
+        console.log('[Service] opponent-guess received:', data);
+        this.opponentGuessCallbacks.forEach(cb => cb(data));
+      });
+
+      this.socket!.on('player-won', (data) => {
+        console.log('[Service] player-won received:', data);
+        this.playerWonCallbacks.forEach(cb => cb(data));
+      });
     });
 
-    this.socket.on('connect_error', (err) => {
-      console.error('[Service] ❌ Connection error:', err.message);
+    this.socket.on('reconnect', () => {
+      this.mySocketId = this.socket!.id!;
     });
 
     this.socket.on('players-updated', (data: { roomId: string; players: Player[] }) => {
@@ -64,6 +78,10 @@ export class MultiplayerService {
 
     this.socket.on('joined-room', (data) => {
       console.log('[Service] 🎉 Successfully joined room:', data.roomId);
+    });
+
+    this.socket.on('connect_error', (err) => {
+      console.error('[Service] ❌ Connection error:', err.message);
     });
 
     this.socket.on('error', (err) => {
@@ -86,5 +104,37 @@ export class MultiplayerService {
       this.socket = null;
     }
     this.roomStateSubject.next(null);
+    this.opponentGuessCallbacks = [];
+    this.playerWonCallbacks = [];
+  }
+
+  emitGuess(roomId: string, playerName: string, colors: string[], isCorrect: boolean) {
+    console.log('[Service] Emitting player-guess:', { roomId, playerName, colors, isCorrect });
+    this.socket?.emit('player-guess', { roomId, playerName, playerId: this.mySocketId, colors, isCorrect });
+  }
+
+  onOpponentGuess(): Observable<{ playerName: string; colors: string[]; isCorrect: boolean; playerId: string }> {
+    return new Observable(observer => {
+      const cb = (data: any) => observer.next(data);
+      this.opponentGuessCallbacks.push(cb);
+      // Cleanup when unsubscribed
+      return () => {
+        this.opponentGuessCallbacks = this.opponentGuessCallbacks.filter(c => c !== cb);
+      };
+    });
+  }
+
+  onPlayerWon(): Observable<{ playerName: string }> {
+    return new Observable(observer => {
+      const cb = (data: any) => observer.next(data);
+      this.playerWonCallbacks.push(cb);
+      return () => {
+        this.playerWonCallbacks = this.playerWonCallbacks.filter(c => c !== cb);
+      };
+    });
+  }
+
+  getSocketId(): string {
+    return this.mySocketId || this.socket?.id || '';
   }
 }

@@ -4,12 +4,13 @@
   <div class="game-main">
     <div class="promptle-container">
       <app-promptle-game-card
-        [loading]="gameLoading"
-        [topic]="topic"
-        [isMultiplayer]="isMultiplayer"
-        [currentRoom]="currentRoom"
-        [players]="players"
-      ></app-promptle-game-card>
+      [loading]="gameLoading"
+      [topic]="topic"
+      [isMultiplayer]="isMultiplayer"
+      [currentRoom]="currentRoom"
+      [players]="players"
+      [headers]="headers"
+    ></app-promptle-game-card>
 
       <!-- Loading / errors -->
       <div *ngIf="gameError" class="error">{{ gameError }}</div>

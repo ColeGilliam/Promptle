@@ -72,17 +72,13 @@ export class PromptleComponent implements OnInit, OnDestroy {
   guessQuery = '';
   isGameOver = false;
 
-  // Each submitted guess stores both the selected answer name and its color indicators
   submittedGuesses: { name?: string; values: string[]; colors: string[] }[] = [];
 
-  // Backend preview grid (shows the correct answer row)
   backendHeaders: string[] = [];
   backendRow: string[] = [];
 
-  // Loading / error state
   gameLoading = false;
   gameError = '';
-  // Save status for UI
   savedTimestamp: string | null = null;
 
   //─────────────────────────────────────
@@ -90,9 +86,12 @@ export class PromptleComponent implements OnInit, OnDestroy {
   //─────────────────────────────────────
   currentRoom = '';
   isMultiplayer = false;
-  players: { id: string; name: string; guesses?: number }[] = [];
+  players: { id: string; name: string; colors?: string[]; won?: boolean }[] = [];
+  private myUsername = '';  // ← cache username so we don't need async in onSubmitGuess
 
   private roomStateSub?: Subscription;
+  private opponentGuessSub?: Subscription;
+  private playerWonSub?: Subscription;
 
   constructor(
     private dbGameService: DbGameService,
@@ -105,8 +104,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit() {
-    // Subscribe early so we catch all updates
     this.subscribeToRoomUpdates();
+    this.subscribeToOpponentEvents();
 
     this.route.queryParamMap.subscribe(params => {
       const loadSaved = params.get('loadSaved');
@@ -115,32 +114,28 @@ export class PromptleComponent implements OnInit, OnDestroy {
       const topicId = topicIdParam ? Number(topicIdParam) : NaN;
       const room = params.get('room')?.trim();
 
-      // Multiplayer takes priority
       if (room && room.length > 0) {
         console.log('[Promptle] Multiplayer mode activated with room:', room);
         this.currentRoom = room;
         this.isMultiplayer = true;
 
-        // Join socket with real username
+        // Cache username for use in onSubmitGuess
         this.auth.user$.pipe(take(1)).subscribe(user => {
-          const username = user?.name || user?.email?.split('@')[0] || 'Guest';
-          console.log('[Promptle] Joining socket as:', username);
-          this.multiplayerService.joinRoom(room, username);
+          const baseUsername = user?.name || user?.email?.split('@')[0] || 'Guest';
+          this.myUsername = baseUsername; // keep clean name for emitting to others
+          this.multiplayerService.joinRoom(room, baseUsername);
         });
 
-        // Load game using room code
         this.loadGame({ room });
         return;
       }
 
-      // Single-player paths
       console.log('[Promptle] Single-player mode');
       this.isMultiplayer = false;
       this.multiplayerService.leaveRoom();
 
       if (loadSaved === 'true') {
         this.gameError = '';
-        // Try to load from server if logged in, otherwise localStorage
         this.auth.user$.pipe(take(1)).subscribe(user => {
           if (user && user.sub) {
             this.http.get<any>(`/api/load-game/${encodeURIComponent(user.sub)}`).subscribe({
@@ -148,12 +143,10 @@ export class PromptleComponent implements OnInit, OnDestroy {
                 if (payload && payload.topic) {
                   this.applySavedPayload(payload);
                 } else {
-                  // No server-side saved game for this user
                   this.gameError = 'No saved game found.';
                 }
               },
               error: () => {
-                // No server-side saved game for this user; do not fall back to localStorage
                 this.gameError = 'No saved game found.';
               }
             });
@@ -161,7 +154,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
             if (!this.loadFromLocalStorage()) this.gameError = 'No saved game found.';
           }
         });
-
         return;
       }
 
@@ -179,37 +171,48 @@ export class PromptleComponent implements OnInit, OnDestroy {
     });
   }
 
-  private subscribeToRoomUpdates() {
-    if (this.roomStateSub) {
-      this.roomStateSub.unsubscribe();
-    }
+  private subscribeToOpponentEvents() {
+    this.opponentGuessSub = this.multiplayerService.onOpponentGuess().subscribe(data => {
+      console.log('[Promptle] opponent-guess received:', data);
+      this.players = this.players.map(p =>
+        p.id === data.playerId  // ← match by ID not name
+          ? { ...p, colors: data.colors, won: data.isCorrect }
+          : p
+      );
+      this.cdr.detectChanges();
+    });
 
-    this.roomStateSub = this.multiplayerService.roomState$.subscribe(state => {
-      console.log('[Promptle] Room state update received:', state);
-
-      if (state) {
-        this.players = [...state.players];  // new array reference
-        this.currentRoom = state.roomId;
-        console.log('[Promptle] Players updated:', this.players.length, this.players.map(p => p.name));
-      } else {
-        this.players = [];
-        this.currentRoom = '';
-        console.log('[Promptle] Room state cleared');
-      }
-
-      // Force Angular to re-render
+    this.playerWonSub = this.multiplayerService.onPlayerWon().subscribe(data => {
+      this.players = this.players.map(p =>
+        p.name === data.playerName ? { ...p, won: true } : p
+      );
       this.cdr.detectChanges();
     });
   }
 
-  /**
-   * Save the current in-memory game progress to localStorage.
-   * Only one saved game is supported; this overwrites previous save.
-   * Only available in single-player mode.
-   */
-  saveGame() {
-    if (this.isMultiplayer) return; // Disabled in multiplayer
+  private subscribeToRoomUpdates() {
+     if (this.roomStateSub) this.roomStateSub.unsubscribe();
 
+    this.roomStateSub = this.multiplayerService.roomState$.subscribe(state => {
+      if (state) {
+        const myId = this.multiplayerService.getSocketId();
+        this.players = state.players.map(newPlayer => {
+          const existing = this.players.find(p => p.id === newPlayer.id);
+          return existing
+            ? { ...existing, ...newPlayer, isMe: newPlayer.id === myId }
+            : { ...newPlayer, isMe: newPlayer.id === myId };
+        });
+        this.currentRoom = state.roomId;
+      } else {
+        this.players = [];
+        this.currentRoom = '';
+      }
+      this.cdr.detectChanges();
+    });
+  }
+
+  saveGame() {
+    if (this.isMultiplayer) return;
     if (!this.topic || !this.headers.length) return;
 
     const payload = {
@@ -222,7 +225,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
       isGameOver: this.isGameOver
     };
 
-    // If user is logged in, save to backend under their auth0 id. Otherwise fallback to localStorage.
     this.auth.user$.pipe(take(1)).subscribe(user => {
       const savedAtStr = new Date(payload.savedAt).toLocaleString();
       if (user && user.sub) {
@@ -255,15 +257,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Load saved game from localStorage into current component state.
-   * Returns true if a saved game was loaded.
-   * Only available in single-player mode.
-   */
   loadSavedGame(): boolean {
-    if (this.isMultiplayer) return false; // Disabled in multiplayer
-    // Synchronous loader used in contexts where only localStorage should be consulted.
-    // Server-backed loading is handled during route initialization in ngOnInit.
+    if (this.isMultiplayer) return false;
     return this.loadFromLocalStorage();
   }
 
@@ -309,19 +304,11 @@ export class PromptleComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Restart the current game by selecting a different correct answer randomly
-   * and resetting guesses. If there is only one possible answer, this is a no-op.
-   * Only available in single-player mode.
-   */
   restartGame() {
-    if (this.isMultiplayer) return; // Disabled in multiplayer
-
+    if (this.isMultiplayer) return;
     if (!this.answers || this.answers.length === 0) return;
 
-    // If only one answer, can't pick a different one
     if (this.answers.length === 1) {
-      // Reset guesses but keep the same correct answer
       this.submittedGuesses = [];
       this.selectedGuess = '';
       this.guessQuery = '';
@@ -330,13 +317,11 @@ export class PromptleComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Find indices of answers that are not the current correct answer
     const candidates = this.answers
       .map((a, idx) => ({ a, idx }))
       .filter(x => x.a.name !== this.correctAnswer.name);
 
     if (!candidates.length) {
-      // All answers match current correct (unlikely) — just reset guesses
       this.submittedGuesses = [];
       this.selectedGuess = '';
       this.guessQuery = '';
@@ -345,17 +330,12 @@ export class PromptleComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Pick a random candidate
     const pick = candidates[Math.floor(Math.random() * candidates.length)];
     const newCorrect = pick.a;
 
     this.correctAnswer = { name: newCorrect.name, values: [...newCorrect.values] };
-
-    // Update backend preview row
     this.backendHeaders = [...this.headers];
     this.backendRow = [...newCorrect.values];
-
-    // Reset gameplay state
     this.submittedGuesses = [];
     this.selectedGuess = '';
     this.guessQuery = '';
@@ -364,9 +344,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.gameError = '';
   }
 
-  /**
-   * Fetch a game via unified service (AI or DB depending on params)
-   */
   private loadGame(params: { topic?: string; topicId?: number; room?: string }) {
     this.gameLoading = true;
     this.gameError = '';
@@ -375,24 +352,17 @@ export class PromptleComponent implements OnInit, OnDestroy {
       next: (data: GameData) => {
         this.applyGameData(data);
         this.gameLoading = false;
-        if (this.isMultiplayer) {
-          this.cdr.detectChanges();
-        }
+        if (this.isMultiplayer) this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error loading game data:', err);
         this.gameError = err?.error?.error ?? err?.message ?? 'Failed to load game data';
         this.gameLoading = false;
-        if (this.isMultiplayer) {
-          this.cdr.detectChanges();
-        }
+        if (this.isMultiplayer) this.cdr.detectChanges();
       }
     });
   }
 
-  /**
-   * Apply fetched game data to the component state
-   */
   private applyGameData(data: GameData) {
     this.topic = data.topic;
     this.headers = data.headers;
@@ -400,7 +370,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.filterAnswers(this.guessQuery);
     this.correctAnswer = data.correctAnswer;
 
-    // Build preview row from the matching correct answer
     const correct = this.answers.find(a => a.name === this.correctAnswer.name);
     if (correct) {
       this.backendHeaders = [...this.headers];
@@ -410,14 +379,11 @@ export class PromptleComponent implements OnInit, OnDestroy {
       this.backendRow = [];
     }
 
-    // Reset guesses
     this.submittedGuesses = [];
     this.selectedGuess = '';
     this.guessQuery = '';
     this.filterAnswers(this.guessQuery);
-    if (this.isMultiplayer) {
-      this.cdr.detectChanges();
-    }
+    if (this.isMultiplayer) this.cdr.detectChanges();
   }
 
   onGuessQueryChange(query: string) {
@@ -465,7 +431,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
         continue;
       }
 
-      // Backward compatibility: infer name from values in older saved payloads.
       const matchedAnswer = this.answers.find(answer =>
         answer.values.length === guess.values.length &&
         answer.values.every((value, index) =>
@@ -485,7 +450,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
     return this.getGuessedNamesLowercase().has(answerName.trim().toLowerCase());
   }
 
-  //Split a string into lowercase word tokens (for partial match scoring)
   tokenize(value: string): string[] {
     if (!value) return [];
     return value
@@ -496,8 +460,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
 
   private handleWin() {
     this.isGameOver = true;
-
-    // Update stats if logged in (single-player only for now)
     if (this.isMultiplayer) return;
 
     this.auth.user$.pipe(take(1)).subscribe(user => {
@@ -511,8 +473,13 @@ export class PromptleComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Submit a guess and calculate colors for feedback
   onSubmitGuess() {
+    if (this.isMultiplayer && this.currentRoom) {
+      const myId = this.multiplayerService.getSocketId();
+      console.log('[Debug] myId:', myId);
+      console.log('[Debug] players:', this.players.map(p => ({ id: p.id, name: p.name })));
+      // ... rest of code
+    }
     if (!this.selectedGuess || this.isGameOver) return;
     if (this.isAlreadyGuessed(this.selectedGuess)) {
       this.selectedGuess = '';
@@ -525,61 +492,63 @@ export class PromptleComponent implements OnInit, OnDestroy {
     const correct = this.answers.find(a => a.name === this.correctAnswer.name);
     if (!guessed || !correct) return;
 
-    // Build a set of all tokens in correct answer values
     const correctTokensSet = new Set<string>();
     correct.values.forEach(v => this.tokenize(v).forEach(t => correctTokensSet.add(t)));
 
-    // Determine colors for each column
     const colors = guessed.values.map((value, i) => {
       const correctValue = correct.values[i];
-
       if (value && correctValue && value.toLowerCase() === correctValue.toLowerCase()) {
         return 'green';
       }
-
       const guessTokens = this.tokenize(value);
       for (const t of guessTokens) {
         if (correctTokensSet.has(t)) return 'yellow';
       }
-
       return 'gray';
     });
 
-    // Store the result
+    const isCorrect = this.selectedGuess === this.correctAnswer.name;
+
     this.submittedGuesses.push({
       name: guessed.name,
       values: [...guessed.values],
       colors: colors
     });
 
-    if (this.selectedGuess === this.correctAnswer.name) {
-      this.handleWin(); 
+    // Update own colors in player list immediately (synchronously, no async needed)
+    if (this.isMultiplayer && this.currentRoom) {
+      const myId = this.multiplayerService.getSocketId();
+      this.players = this.players.map(p =>
+        p.id === myId  // ← match by ID not name
+          ? { ...p, colors, won: isCorrect }
+          : p
+      );
+      this.multiplayerService.emitGuess(this.currentRoom, this.myUsername, colors, isCorrect);
     }
 
-    // Clear selection for next guess
+    if (isCorrect) {
+      this.handleWin();
+    }
+
     this.selectedGuess = '';
     this.guessQuery = '';
     this.filterAnswers(this.guessQuery);
-    if (this.isMultiplayer) {
-      this.cdr.detectChanges();
-    }
+    if (this.isMultiplayer) this.cdr.detectChanges();
   }
 
   get playerNamesDisplay(): string {
-    if (!this.players || this.players.length === 0) {
-      return 'empty';
-    }
+    if (!this.players || this.players.length === 0) return 'empty';
     return this.players.map(p => p.name || 'Unknown').join(', ');
   }
 
   quitGame() {
-    this.router.navigate(['/']);   // go back to home
+    this.router.navigate(['/']);
   }
 
   ngOnDestroy() {
-    if (this.roomStateSub) {
-      this.roomStateSub.unsubscribe();
-    }
+    this.opponentGuessSub?.unsubscribe();
+    this.playerWonSub?.unsubscribe();
+    this.roomStateSub?.unsubscribe();
     this.multiplayerService.leaveRoom();
   }
 }

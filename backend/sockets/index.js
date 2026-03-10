@@ -84,6 +84,14 @@ export function setupSocket(server) {
         }
       });
     });
+    socket.on('player-guess', ({ roomId, playerName, colors, isCorrect }) => {
+      socket.to(roomId).emit('opponent-guess', { 
+        playerName, 
+        playerId: socket.id,  // ← add socket id
+        colors, 
+        isCorrect 
+      });
+    });
   });
 
   // Global connection error logging

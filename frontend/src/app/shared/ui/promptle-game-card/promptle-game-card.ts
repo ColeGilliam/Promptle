@@ -15,13 +15,18 @@ export class PromptleGameCard {
   @Input() topic = '';
   @Input() isMultiplayer = false;
   @Input() currentRoom = '';
-  @Input() players: { id?: string; name?: string; guesses?: number }[] = [];
+  @Input() headers: string[] = [];  // ← add this
+  @Input() players: { 
+    id?: string; 
+    name?: string; 
+    guesses?: number;
+    colors?: string[];  // ← add this
+    won?: boolean;
+    isMe?: boolean;       // ← add this
+  }[] = [];
 
   get playerNamesText(): string {
-    if (!this.players.length) {
-      return 'Waiting for players...';
-    }
-
+    if (!this.players.length) return 'Waiting for players...';
     return this.players
       .map((player) => player.name?.trim() || 'Unknown')
       .join(', ');
