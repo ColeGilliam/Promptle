@@ -17,7 +17,7 @@
             <img [src]="selectedImageBase64 || dbProfilePic || 'https://via.placeholder.com/150'"
                  class="profile-avatar" alt="User Avatar">
             <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" hidden>
-            <button matButton="outlined" (click)="fileInput.click()">
+            <button matButton="filled" class="promp2-btn rect-btn" (click)="fileInput.click()">
               <mat-icon>upload</mat-icon> Upload Picture
             </button>
           </div>
@@ -29,10 +29,10 @@
         </mat-card-content>
 
         <mat-card-actions class="actions">
-          <button matButton="elevated" color="primary" (click)="saveProfile()">
+          <button matButton="filled" class="promp2-btn rect-btn" (click)="saveProfile()">
             Save Changes
           </button>
-          <button matButton="text" color="warn" (click)="deleteAccount()">
+          <button matButton="filled" class="promp2-btn rect-btn" (click)="deleteAccount()">
             Delete Account
           </button>
         </mat-card-actions>
@@ -60,5 +60,3 @@
     <p>Please log in to view your profile.</p>
   </div>
 </div>
-
-<app-uni-footer></app-uni-footer>
