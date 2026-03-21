@@ -28,6 +28,7 @@ export class MultiplayerService {
   private playerWonCallbacks:     ((data: any) => void)[] = [];
   private gameStartedCallbacks:   ((data: any) => void)[] = [];
   private hostStatusCallbacks:    ((data: any) => void)[] = [];
+  private powerupEffectCallbacks: ((data: any) => void)[] = [];
 
   constructor() {}
 
@@ -73,6 +74,11 @@ export class MultiplayerService {
       this.socket!.on('host-status', (data: { isHost: boolean }) => {
         console.log('[Service] host-status received:', data);
         this.hostStatusCallbacks.forEach(cb => cb(data));
+      });
+
+      this.socket!.on('powerup-effect', (data) => {
+        console.log('[Service] powerup-effect received:', data);
+        this.powerupEffectCallbacks.forEach(cb => cb(data));
       });
     });
 
@@ -120,6 +126,7 @@ export class MultiplayerService {
     this.playerWonCallbacks     = [];
     this.gameStartedCallbacks   = [];
     this.hostStatusCallbacks    = [];
+    this.powerupEffectCallbacks = [];
   }
 
   /** Host-only: tell all players in the room to start the game. */
@@ -199,5 +206,19 @@ export class MultiplayerService {
 
   getSocketId(): string {
     return this.mySocketId || this.socket?.id || '';
+  }
+
+  emitPowerup(roomId: string, type: string, playerName: string) {
+    this.socket?.emit('use-powerup', { roomId, type, playerName });
+  }
+
+  onPowerupEffect(): Observable<{ type: string; fromPlayerName: string }> {
+    return new Observable(observer => {
+      const cb = (data: any) => observer.next(data);
+      this.powerupEffectCallbacks.push(cb);
+      return () => {
+        this.powerupEffectCallbacks = this.powerupEffectCallbacks.filter(c => c !== cb);
+      };
+    });
   }
 }

@@ -56,6 +56,41 @@
         <span class="stopwatch-value">{{ formatTime(stopwatchMs) }}</span>
       </div>
 
+      <!-- ══ POWER-UPS (multiplayer only) ══ -->
+      <div class="powerup-bar" *ngIf="isMultiplayer && gameStarted && !isGameOver">
+        <span class="powerup-label">POWER-UPS</span>
+
+        <button
+          class="powerup-btn blackout-btn"
+          [class.used]="powerupsUsed.blackout"
+          [disabled]="powerupsUsed.blackout"
+          (click)="usePowerup('blackout')"
+          title="Cover all opponents' screens with an ad for 6 seconds"
+        >
+          <span class="powerup-icon">📺</span>
+          <span class="powerup-name">Ad Break</span>
+          <span class="powerup-badge" *ngIf="powerupsUsed.blackout">USED</span>
+        </button>
+
+        <button
+          class="powerup-btn peek-btn"
+          [class.used]="powerupsUsed.peek"
+          [disabled]="powerupsUsed.peek"
+          (click)="usePowerup('peek')"
+          title="Reveal one hidden column value from the answer"
+        >
+          <span class="powerup-icon">💡</span>
+          <span class="powerup-name">Peek</span>
+          <span class="powerup-badge" *ngIf="powerupsUsed.peek">USED</span>
+        </button>
+      </div>
+
+      <!-- Peek hint toast -->
+      <div class="powerup-hint-toast" *ngIf="powerupHint">
+        <span class="hint-icon">💡</span>
+        <span><strong>{{ powerupHint.column }}</strong> = <strong>{{ powerupHint.value }}</strong></span>
+      </div>
+
       <!-- Hidden correct-answer preview (dev only) -->
       <div *ngIf="!gameLoading && !gameError && correctAnswer?.values?.length" hidden>
         <div class="game-grid single-row">
@@ -161,3 +196,16 @@
   (returnHome)="quitGame()"
   (playAgain)="restartGame()"
 ></app-promptle-win-popup>
+
+<!-- ══ BLACKOUT OVERLAY ══ -->
+<div class="powerup-blackout-overlay" *ngIf="activePowerupEffect?.type === 'blackout'">
+  <div class="blackout-scanlines"></div>
+  <div class="blackout-content">
+    <div class="blackout-channel">📺</div>
+    <div class="blackout-logo">PROMPTLE AD</div>
+    <div class="blackout-headline">⚠ AD BREAK ⚠</div>
+    <div class="blackout-sub">{{ activePowerupEffect!.fromPlayerName }} disrupted your game!</div>
+    <div class="blackout-timer">{{ activePowerupEffect!.secondsLeft }}s</div>
+    <div class="blackout-tagline">You will return to your regularly scheduled guessing shortly.</div>
+  </div>
+</div>

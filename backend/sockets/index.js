@@ -61,6 +61,12 @@ export function setupSocket(server) {
       io.to(roomId).emit('game-started');
     });
 
+    socket.on('use-powerup', ({ roomId, type, playerName }) => {
+      console.log(`[BACKEND] ${playerName} used powerup "${type}" in ${roomId}`);
+      // Broadcast effect to everyone else in the room
+      socket.to(roomId).emit('powerup-effect', { type, fromPlayerName: playerName });
+    });
+
     socket.on('player-guess', ({ roomId, playerName, playerId, colors, isCorrect, finishTime }) => {
       // Increment guess count for this player
       playerGuesses.set(playerId, (playerGuesses.get(playerId) || 0) + 1);

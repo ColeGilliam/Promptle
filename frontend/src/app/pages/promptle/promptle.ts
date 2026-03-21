@@ -131,11 +131,19 @@ export class PromptleComponent implements OnInit, OnDestroy {
   myFinishTimeMs: number | null = null;
   private stopwatchInterval: ReturnType<typeof setInterval> | null = null;
 
+  // Power-ups
+  powerupsUsed = { blackout: false, peek: false };
+  activePowerupEffect: { type: string; fromPlayerName: string; secondsLeft: number } | null = null;
+  powerupHint: { column: string; value: string } | null = null;
+  private blackoutInterval: ReturnType<typeof setInterval> | null = null;
+  private powerupHintTimeout: ReturnType<typeof setTimeout> | null = null;
+
   private roomStateSub?:    Subscription;
   private opponentGuessSub?: Subscription;
   private playerWonSub?:    Subscription;
   private gameStartedSub?:  Subscription;
   private hostStatusSub?:   Subscription;
+  private powerupSub?:     Subscription;
 
   constructor(
     private dbGameService: DbGameService,
@@ -240,6 +248,12 @@ export class PromptleComponent implements OnInit, OnDestroy {
       console.log('[Promptle] Game started!');
       this.gameStarted = true;
       this.startStopwatch();
+      this.powerupsUsed = { blackout: false, peek: false };
+      this.cdr.detectChanges();
+    });
+
+    this.powerupSub = this.multiplayerService.onPowerupEffect().subscribe(data => {
+      if (data.type === 'blackout') this.startBlackout(data.fromPlayerName);
       this.cdr.detectChanges();
     });
   }
@@ -248,6 +262,51 @@ export class PromptleComponent implements OnInit, OnDestroy {
   hostStartGame() {
     if (!this.isHost || !this.currentRoom) return;
     this.multiplayerService.startGame(this.currentRoom);
+  }
+
+  usePowerup(type: 'blackout' | 'peek') {
+    if (this.powerupsUsed[type] || !this.isMultiplayer || !this.gameStarted || this.isGameOver) return;
+    this.powerupsUsed[type] = true;
+
+    if (type === 'blackout') {
+      this.multiplayerService.emitPowerup(this.currentRoom, 'blackout', this.myUsername);
+    } else {
+      const hint = this.getRevealHint();
+      if (hint) {
+        this.powerupHint = hint;
+        this.powerupHintTimeout = setTimeout(() => {
+          this.powerupHint = null;
+          this.cdr.detectChanges();
+        }, 9000);
+      }
+    }
+    this.cdr.detectChanges();
+  }
+
+  private getRevealHint(): { column: string; value: string } | null {
+    if (!this.correctAnswer?.values?.length || !this.headers?.length) return null;
+    const greenCols = new Set<number>();
+    this.submittedGuesses.forEach(g => g.colors.forEach((c, i) => { if (c === 'green') greenCols.add(i); }));
+    const candidates = this.headers.map((_, i) => i).filter(i => !greenCols.has(i));
+    if (!candidates.length) return null;
+    const idx = candidates[Math.floor(Math.random() * candidates.length)];
+    return { column: this.headers[idx], value: this.correctAnswer.values[idx] };
+  }
+
+  private startBlackout(fromPlayerName: string) {
+    const DURATION = 6;
+    this.activePowerupEffect = { type: 'blackout', fromPlayerName, secondsLeft: DURATION };
+    if (this.blackoutInterval) clearInterval(this.blackoutInterval);
+    this.blackoutInterval = setInterval(() => {
+      if (!this.activePowerupEffect) { clearInterval(this.blackoutInterval!); return; }
+      this.activePowerupEffect.secondsLeft--;
+      if (this.activePowerupEffect.secondsLeft <= 0) {
+        this.activePowerupEffect = null;
+        clearInterval(this.blackoutInterval!);
+        this.blackoutInterval = null;
+      }
+      this.cdr.detectChanges();
+    }, 1000);
   }
 
   // ─── Stopwatch helpers ────────────────────────────────────────────────
@@ -575,6 +634,9 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.roomStateSub?.unsubscribe();
     this.gameStartedSub?.unsubscribe();
     this.hostStatusSub?.unsubscribe();
+    this.powerupSub?.unsubscribe();
+    if (this.blackoutInterval) clearInterval(this.blackoutInterval);
+    if (this.powerupHintTimeout) clearTimeout(this.powerupHintTimeout);
     this.multiplayerService.leaveRoom();
   }
 }
