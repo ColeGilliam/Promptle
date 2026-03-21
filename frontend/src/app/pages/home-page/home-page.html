@@ -39,9 +39,8 @@
 
   <!-- Single-player actions: show Load/New when in single-player mode -->
   <div class="mode-actions-wrap" *ngIf="!isMultiplayer">
-    <div class="mode-actions-row">
+    <div class="mode-actions-row mode-actions-row--single">
       <button matButton="elevated" class="rect-btn promp2-btn mode-action-btn" (click)="onLoadClicked()" [disabled]="!hasSavedGame">LOAD GAME</button>
-      <button matButton="elevated" class="rect-btn promp2-btn mode-action-btn" (click)="newGame()">NEW GAME</button>
     </div>
   </div>
 
@@ -50,13 +49,16 @@
     <div class="mode-actions-row mode-actions-row--single">
       <button matButton="filled" class="rect-btn promp2-btn mode-action-btn" (click)="joinChatRoom()">JOIN MULTIPLAYER ROOM</button>
     </div>
-    <!-- Standard vs 1v1 sub-mode toggle -->
+    <!-- Sub-mode toggle: Standard / Chaos / 1v1 -->
     <div class="submode-row">
-      <button class="submode-btn" [class.submode-active]="!is1v1" (click)="is1v1 = false">
+      <button class="submode-btn" [class.submode-active]="multiplayerMode === 'standard'" (click)="multiplayerMode = 'standard'">
         👥 Standard
       </button>
-      <button class="submode-btn" [class.submode-active]="is1v1" (click)="is1v1 = true">
-        ⚔️ 1v1 Turn-Based
+      <button class="submode-btn submode-chaos" [class.submode-active]="multiplayerMode === 'chaos'" (click)="multiplayerMode = 'chaos'">
+        🔥 Chaos
+      </button>
+      <button class="submode-btn" [class.submode-active]="multiplayerMode === '1v1'" (click)="multiplayerMode = '1v1'">
+        ⚔️ 1v1
       </button>
     </div>
   </div>

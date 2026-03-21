@@ -137,6 +137,14 @@ export class PromptleComponent implements OnInit, OnDestroy {
   private blackoutInterval: ReturnType<typeof setInterval> | null = null;
   private powerupHintTimeout: ReturnType<typeof setTimeout> | null = null;
 
+  isChaos = false;  // true when mode === 'chaos' (has power-ups)
+
+  //─────────────────────────────────────
+  // === Spectate state ===
+  //─────────────────────────────────────
+  isSpectating = false;
+  spectateGuesses: { playerId: string; playerName: string; values: string[]; colors: string[]; isMe: boolean }[] = [];
+
   //─────────────────────────────────────
   // === 1v1 turn-based state ===
   //─────────────────────────────────────
@@ -280,7 +288,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
     });
 
     this.powerupSub = this.multiplayerService.onPowerupEffect().subscribe(data => {
-      if (data.type === 'blackout') this.startBlackout(data.fromPlayerName);
+      if (data.type === 'blackout' && !this.isSpectating) this.startBlackout(data.fromPlayerName);
       this.cdr.detectChanges();
     });
   }
@@ -322,8 +330,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
         isMe,
       });
       if (isMe) {
-        // Also track in submittedGuesses so win popup has correct count
-        this.submittedGuesses.push({ name: data.guesserName, values: data.guessValues, colors: data.guessColors });
+        // submittedGuesses was already updated optimistically in onSubmitGuess — skip re-add.
+        // Just update the player's color indicator in the player list.
         this.players = this.players.map(p =>
           p.id === myId ? { ...p, colors: data.guessColors, won: data.isCorrect } : p
         );
@@ -464,6 +472,15 @@ export class PromptleComponent implements OnInit, OnDestroy {
           ? { ...p, colors: data.colors, won: data.isCorrect }
           : p
       );
+      if (data.values?.length) {
+        this.spectateGuesses.push({
+          playerId: data.playerId,
+          playerName: data.playerName,
+          values: data.values,
+          colors: data.colors,
+          isMe: false
+        });
+      }
       this.cdr.detectChanges();
     });
 
@@ -621,9 +638,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.filterAnswers(this.guessQuery);
     this.correctAnswer = data.correctAnswer;
 
-    if (data.mode === '1v1') {
-      this.isOneVsOne = true;
-    }
+    if (data.mode === '1v1') this.isOneVsOne = true;
+    if (data.mode === 'chaos') this.isChaos = true;
 
     const correct = this.answers.find(a => a.name === this.correctAnswer.name);
     this.backendHeaders = correct ? [...this.headers] : [];
@@ -728,10 +744,12 @@ export class PromptleComponent implements OnInit, OnDestroy {
 
     this.selectedGuess = '';
     this.guessQuery    = '';
-    this.filterAnswers(this.guessQuery);
 
     if (this.isOneVsOne) {
-      // In 1v1 mode: emit to server; the broadcast '1v1-guess-made' will add to oneVsOneGuesses
+      // Add to submittedGuesses immediately so the dropdown filter removes this answer right away.
+      // on1v1GuessMade will handle adding to oneVsOneGuesses (the shared grid) once server confirms.
+      this.submittedGuesses.push({ name: guessed.name, values: [...guessed.values], colors });
+      this.filterAnswers(this.guessQuery);
       this.multiplayerService.emit1v1Guess(
         this.currentRoom, this.myUsername, guessed.values, colors, isCorrect, finishMs
       );
@@ -741,13 +759,21 @@ export class PromptleComponent implements OnInit, OnDestroy {
 
     // Standard (non-1v1) flow
     this.submittedGuesses.push({ name: guessed.name, values: [...guessed.values], colors });
+    this.filterAnswers(this.guessQuery);
 
     if (this.isMultiplayer && this.currentRoom) {
       const myId = this.multiplayerService.getSocketId();
       this.players = this.players.map(p =>
         p.id === myId ? { ...p, colors, won: isCorrect } : p
       );
-      this.multiplayerService.emitGuess(this.currentRoom, this.myUsername, colors, isCorrect, finishMs);
+      this.spectateGuesses.push({
+        playerId: myId,
+        playerName: this.myUsername,
+        values: [...guessed.values],
+        colors,
+        isMe: true
+      });
+      this.multiplayerService.emitGuess(this.currentRoom, this.myUsername, colors, isCorrect, finishMs, [...guessed.values]);
     }
 
     if (isCorrect) {
@@ -764,6 +790,11 @@ export class PromptleComponent implements OnInit, OnDestroy {
   }
 
   quitGame() { this.router.navigate(['/']); }
+
+  startSpectating() {
+    this.isSpectating = true;
+    this.cdr.detectChanges();
+  }
 
   ngOnDestroy() {
     this.stopStopwatch();

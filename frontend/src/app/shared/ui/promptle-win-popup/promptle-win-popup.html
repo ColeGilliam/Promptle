@@ -51,6 +51,15 @@
             {{ copied ? 'Copied!' : 'Share' }}
           </button>
         </ng-container>
+        <button
+          *ngIf="isMultiplayer"
+          matButton="filled"
+          class="rect-btn spectate-btn"
+          (click)="onSpectate()"
+        >
+          <mat-icon>visibility</mat-icon>
+          Spectate
+        </button>
       </div>
 
     </mat-card-content>

@@ -177,9 +177,9 @@ export class MultiplayerService {
     this.socket?.emit('start-game', { roomId, mode });
   }
 
-  emitGuess(roomId: string, playerName: string, colors: string[], isCorrect: boolean, finishTimeMs?: number) {
+  emitGuess(roomId: string, playerName: string, colors: string[], isCorrect: boolean, finishTimeMs?: number, values?: string[]) {
     this.socket?.emit('player-guess', {
-      roomId, playerName, playerId: this.mySocketId, colors, isCorrect, finishTime: finishTimeMs
+      roomId, playerName, playerId: this.mySocketId, colors, values, isCorrect, finishTime: finishTimeMs
     });
   }
 
@@ -201,7 +201,7 @@ export class MultiplayerService {
 
   // ── Observables ────────────────────────────────────────────────────────
 
-  onOpponentGuess(): Observable<{ playerName: string; colors: string[]; isCorrect: boolean; playerId: string; finishTime?: number }> {
+  onOpponentGuess(): Observable<{ playerName: string; colors: string[]; values?: string[]; isCorrect: boolean; playerId: string; finishTime?: number }> {
     return new Observable(observer => {
       const cb = (data: any) => observer.next(data);
       this.opponentGuessCallbacks.push(cb);

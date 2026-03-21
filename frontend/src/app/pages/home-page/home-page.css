@@ -431,6 +431,17 @@ h1 {
   color: white;
 }
 
+.submode-btn.submode-chaos.submode-active {
+  background: linear-gradient(135deg, #f97316, #ef4444);
+  border-color: transparent;
+  color: white;
+}
+
+.submode-btn.submode-chaos:not(.submode-active):hover {
+  border-color: #f97316;
+  color: #f97316;
+}
+
 :host-context(.dark) .submode-btn {
   border-color: #475569;
 }

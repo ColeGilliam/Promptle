@@ -732,6 +732,10 @@
   margin: 4px 0 8px;
 }
 
+.mode-badge-chaos {
+  background: linear-gradient(135deg, #f97316, #ef4444);
+}
+
 /* ── Loss overlay ──────────────────────────────────── */
 .loss-overlay {
   position: fixed;
@@ -790,4 +794,34 @@
 
 :host-context(.dark) .loss-card p {
   color: #94a3b8;
+}
+
+/* ── Spectate banner ──────────────────────────────── */
+.spectate-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(124, 58, 237, 0.1);
+  border: 1px solid rgba(124, 58, 237, 0.3);
+  border-radius: 8px;
+  padding: 10px 16px;
+  margin-bottom: 14px;
+  color: #6d28d9;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.spectate-banner mat-icon {
+  color: #7c3aed;
+  flex-shrink: 0;
+}
+
+:host-context(.dark) .spectate-banner {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.35);
+  color: #a78bfa;
+}
+
+:host-context(.dark) .spectate-banner mat-icon {
+  color: #a78bfa;
 }

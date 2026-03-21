@@ -193,11 +193,11 @@ export function setupSocket(server) {
       socket.to(roomId).emit('powerup-effect', { type, fromPlayerName: playerName });
     });
 
-    socket.on('player-guess', ({ roomId, playerName, playerId, colors, isCorrect, finishTime }) => {
+    socket.on('player-guess', ({ roomId, playerName, playerId, colors, values, isCorrect, finishTime }) => {
       playerGuesses.set(playerId, (playerGuesses.get(playerId) || 0) + 1);
       const guesses = playerGuesses.get(playerId);
 
-      socket.to(roomId).emit('opponent-guess', { playerName, playerId, colors, isCorrect, finishTime, guesses });
+      socket.to(roomId).emit('opponent-guess', { playerName, playerId, colors, values, isCorrect, finishTime, guesses });
 
       if (isCorrect) {
         io.to(roomId).emit('player-won', { playerName, playerId, guesses, finishTime });

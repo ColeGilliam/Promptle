@@ -8,7 +8,9 @@
   background: rgba(0, 0, 0, 0.62);
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;   /* don't try to center — let card grow naturally */
+  overflow-y: auto;           /* overlay scrolls when card is taller than viewport */
+  padding: 24px 14px;
   z-index: 1000;
 }
 
@@ -107,6 +109,12 @@
 /* Share button */
 .share-btn {
   background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+  color: white !important;
+}
+
+/* Spectate button */
+.spectate-btn {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9) !important;
   color: white !important;
 }
 

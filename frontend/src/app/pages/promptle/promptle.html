@@ -31,6 +31,7 @@
             <h3>You are the host</h3>
             <p>{{ players.length }} player{{ players.length === 1 ? '' : 's' }} in room — start whenever you're ready</p>
             <p *ngIf="isOneVsOne" class="mode-badge">⚔️ 1v1 Turn-Based Mode</p>
+            <p *ngIf="isChaos" class="mode-badge mode-badge-chaos">🔥 Chaos Mode — Power-Ups Enabled</p>
             <button
               matButton="filled"
               class="rect-btn promp1-btn start-game-btn"
@@ -47,6 +48,7 @@
             <h3>Waiting for host to start…</h3>
             <p>{{ players.length }} player{{ players.length === 1 ? '' : 's' }} in room</p>
             <p *ngIf="isOneVsOne" class="mode-badge">⚔️ 1v1 Turn-Based Mode</p>
+            <p *ngIf="isChaos" class="mode-badge mode-badge-chaos">🔥 Chaos Mode — Power-Ups Enabled</p>
           </div>
 
         </mat-card-content>
@@ -84,8 +86,8 @@
         </button>
       </div>
 
-      <!-- ══ POWER-UPS (standard multiplayer only — not in 1v1) ══ -->
-      <div class="powerup-bar" *ngIf="isMultiplayer && !isOneVsOne && gameStarted && !isGameOver">
+      <!-- ══ POWER-UPS (chaos mode only — not while spectating) ══ -->
+      <div class="powerup-bar" *ngIf="isChaos && gameStarted && !isGameOver && !isSpectating">
         <span class="powerup-label">POWER-UPS</span>
 
         <button
@@ -129,10 +131,10 @@
         </div>
       </div>
 
-      <!-- ══ GUESS INPUT (hidden until game starts in MP) ══ -->
+      <!-- ══ GUESS INPUT (hidden until game starts in MP, hidden while spectating) ══ -->
       <mat-card
         class="guess-actions-card"
-        *ngIf="answers.length && (!isMultiplayer || gameStarted)"
+        *ngIf="answers.length && (!isMultiplayer || gameStarted) && !isSpectating"
         [@cardEnter]
       >
         <mat-card-content>
@@ -222,10 +224,58 @@
         </mat-card-content>
       </mat-card>
 
-      <!-- ══ STANDARD GAME GRID (non-1v1) ══ -->
+      <!-- ══ SPECTATE GRID (standard MP only, shown while spectating) ══ -->
+      <mat-card
+        class="game-grid-card spectate-grid-card"
+        *ngIf="isSpectating && !isOneVsOne && headers.length"
+        [@cardEnterDelayed]
+      >
+        <mat-card-content>
+          <div class="spectate-banner">
+            <mat-icon>visibility</mat-icon>
+            <span>You are spectating — watching other players' guesses live</span>
+          </div>
+
+          <div class="game-grid-meta">
+            <p class="game-grid-subtitle" *ngIf="spectateGuesses.length === 0">Waiting for guesses…</p>
+            <p class="game-grid-subtitle" *ngIf="spectateGuesses.length > 0">{{ spectateGuesses.length }} guess{{ spectateGuesses.length === 1 ? '' : 'es' }} made.</p>
+          </div>
+
+          <div class="game-grid-scroll">
+            <div class="game-grid">
+              <!-- Player label column -->
+              <div class="column player-label-column">
+                <div class="header">Player</div>
+                <div
+                  class="guess-cell player-label-cell"
+                  *ngFor="let guess of spectateGuesses"
+                  [@cardEnter]
+                  [class.my-guess-label]="guess.isMe"
+                >
+                  {{ guess.isMe ? 'You' : guess.playerName }}
+                </div>
+              </div>
+              <!-- Data columns -->
+              <div class="column" *ngFor="let header of headers; let i = index">
+                <div class="header">{{ header }}</div>
+                <div
+                  class="guess-cell"
+                  *ngFor="let guess of spectateGuesses"
+                  [@cardEnter]
+                  [style.background-color]="guess.colors[i]"
+                >
+                  {{ guess.values[i] }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- ══ STANDARD GAME GRID (non-1v1, hidden while spectating) ══ -->
       <mat-card
         class="game-grid-card"
-        *ngIf="!isOneVsOne && headers.length && (!isMultiplayer || gameStarted)"
+        *ngIf="!isOneVsOne && !isSpectating && headers.length && (!isMultiplayer || gameStarted)"
         [@cardEnterDelayed]
       >
         <mat-card-content>
@@ -258,7 +308,7 @@
 
 <!-- Win overlay -->
 <app-promptle-win-popup
-  *ngIf="isGameOver && !iLost"
+  *ngIf="isGameOver && !iLost && !isSpectating"
   [answerName]="correctAnswer.name"
   [isMultiplayer]="isMultiplayer"
   [finishTimeMs]="myFinishTimeMs"
@@ -267,6 +317,7 @@
   [shareUrl]="shareUrl"
   (returnHome)="quitGame()"
   (playAgain)="restartGame()"
+  (spectate)="startSpectating()"
 ></app-promptle-win-popup>
 
 <!-- ══ LOSS OVERLAY (1v1 only) ══ -->
@@ -281,8 +332,8 @@
   </div>
 </div>
 
-<!-- ══ BLACKOUT OVERLAY ══ -->
-<div class="powerup-blackout-overlay" *ngIf="activePowerupEffect?.type === 'blackout'">
+<!-- ══ BLACKOUT OVERLAY (never shown to spectators) ══ -->
+<div class="powerup-blackout-overlay" *ngIf="activePowerupEffect?.type === 'blackout' && !isSpectating">
   <div class="blackout-scanlines"></div>
   <div class="blackout-content">
     <div class="blackout-channel">📺</div>
