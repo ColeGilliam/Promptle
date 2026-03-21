@@ -20,6 +20,7 @@ export interface LobbyRoom {
   playerCount: number;
   createdAt: string;
   source: 'ai' | 'db';
+  mode: string;
 }
 
 @Component({

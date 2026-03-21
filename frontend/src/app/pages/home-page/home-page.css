@@ -398,3 +398,50 @@ h1 {
   font-size: 0.9rem;
   padding: 8px 20px;
 }
+
+/* Multiplayer sub-mode toggle (Standard / 1v1) */
+.submode-row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.submode-btn {
+  font-family: inherit;
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: 2px solid #94a3b8;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: inherit;
+}
+
+.submode-btn:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.submode-btn.submode-active {
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  border-color: transparent;
+  color: white;
+}
+
+:host-context(.dark) .submode-btn {
+  border-color: #475569;
+}
+
+:host-context(.dark) .submode-btn:hover {
+  border-color: #818cf8;
+  color: #818cf8;
+}
+
+:host-context(.dark) .submode-btn.submode-active {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border-color: transparent;
+  color: white;
+}

@@ -45,10 +45,19 @@
     </div>
   </div>
 
-  <!-- Multiplayer actions: show lobby button when in multiplayer mode -->
+  <!-- Multiplayer actions: show lobby button + game-mode sub-toggle when in multiplayer mode -->
   <div class="mode-actions-wrap" *ngIf="isMultiplayer">
     <div class="mode-actions-row mode-actions-row--single">
       <button matButton="filled" class="rect-btn promp2-btn mode-action-btn" (click)="joinChatRoom()">JOIN MULTIPLAYER ROOM</button>
+    </div>
+    <!-- Standard vs 1v1 sub-mode toggle -->
+    <div class="submode-row">
+      <button class="submode-btn" [class.submode-active]="!is1v1" (click)="is1v1 = false">
+        👥 Standard
+      </button>
+      <button class="submode-btn" [class.submode-active]="is1v1" (click)="is1v1 = true">
+        ⚔️ 1v1 Turn-Based
+      </button>
     </div>
   </div>
 

@@ -98,7 +98,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
     const p = new URLSearchParams({ topicname: this.topic, grid });
     if (this.shareIdParam) p.set('id', this.shareIdParam);
     if (this.shareTopicParam) p.set('topic', this.shareTopicParam);
-    // Encode the correct answer so "Play This Game" loads the same answer
     if (this.shareIdParam && this.correctAnswer.name) p.set('answer', this.correctAnswer.name);
     p.set('guesses', String(this.submittedGuesses.length));
     if (this.myFinishTimeMs !== null) p.set('time', String(this.myFinishTimeMs));
@@ -138,12 +137,34 @@ export class PromptleComponent implements OnInit, OnDestroy {
   private blackoutInterval: ReturnType<typeof setInterval> | null = null;
   private powerupHintTimeout: ReturnType<typeof setTimeout> | null = null;
 
+  //─────────────────────────────────────
+  // === 1v1 turn-based state ===
+  //─────────────────────────────────────
+  isOneVsOne = false;
+  isMyTurn = false;
+  turnTimeLeft = 30;
+  currentTurnSocketId = '';
+  currentTurnPlayerName = '';
+  iLost = false;
+  oneVsOneWinnerName = '';
+  skipTurnUsed = false;   // 1v1 skip-turn power-up (once per game)
+  oneVsOneGuesses: {
+    guesserSocketId: string;
+    guesserName: string;
+    values: string[];
+    colors: string[];
+    isMe: boolean;
+  }[] = [];
+  private turnCountdownInterval: ReturnType<typeof setInterval> | null = null;
+  private oneVsOneSubs: Subscription[] = [];
+
   private roomStateSub?:    Subscription;
   private opponentGuessSub?: Subscription;
   private playerWonSub?:    Subscription;
   private gameStartedSub?:  Subscription;
   private hostStatusSub?:   Subscription;
-  private powerupSub?:     Subscription;
+  private powerupSub?:      Subscription;
+  private joinErrorSub?:    Subscription;
 
   constructor(
     private dbGameService: DbGameService,
@@ -159,6 +180,12 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.subscribeToRoomUpdates();
     this.subscribeToOpponentEvents();
     this.subscribeToGameFlow();
+    this.subscribeToOneVsOne();
+    this.joinErrorSub = this.multiplayerService.onJoinError().subscribe(data => {
+      this.gameError = data.message || 'Could not join room.';
+      this.gameLoading = false;
+      this.cdr.detectChanges();
+    });
 
     this.route.queryParamMap.subscribe(params => {
       const loadSaved    = params.get('loadSaved');
@@ -245,7 +272,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
     });
 
     this.gameStartedSub = this.multiplayerService.onGameStarted().subscribe(() => {
-      console.log('[Promptle] Game started!');
+      console.log('[Promptle] Game started (standard)!');
       this.gameStarted = true;
       this.startStopwatch();
       this.powerupsUsed = { blackout: false, peek: false };
@@ -258,10 +285,88 @@ export class PromptleComponent implements OnInit, OnDestroy {
     });
   }
 
+  // ─── 1v1 subscriptions ────────────────────────────────────────────────
+  private subscribeToOneVsOne() {
+    const sub1 = this.multiplayerService.on1v1Started().subscribe(data => {
+      console.log('[Promptle] 1v1 started! First turn:', data.currentTurnPlayerName);
+      this.gameStarted = true;
+      this.powerupsUsed = { blackout: false, peek: false };
+      this.skipTurnUsed = false;
+      this.currentTurnSocketId = data.currentTurnSocketId;
+      this.currentTurnPlayerName = data.currentTurnPlayerName;
+      const myId = this.multiplayerService.getSocketId() || this.mySocketId;
+      this.isMyTurn = data.currentTurnSocketId === myId;
+      this.startTurnCountdown();  // always run on both screens
+      this.cdr.detectChanges();
+    });
+
+    const sub2 = this.multiplayerService.on1v1TurnChange().subscribe(data => {
+      this.stopTurnCountdown();
+      this.currentTurnSocketId = data.currentTurnSocketId;
+      this.currentTurnPlayerName = data.currentTurnPlayerName;
+      this.turnTimeLeft = 30;
+      const myId = this.multiplayerService.getSocketId() || this.mySocketId;
+      this.isMyTurn = data.currentTurnSocketId === myId;
+      this.startTurnCountdown();  // always run on both screens
+      this.cdr.detectChanges();
+    });
+
+    const sub3 = this.multiplayerService.on1v1GuessMade().subscribe(data => {
+      const myId = this.multiplayerService.getSocketId() || this.mySocketId;
+      const isMe = data.guesserSocketId === myId;
+      this.oneVsOneGuesses.push({
+        guesserSocketId: data.guesserSocketId,
+        guesserName: data.guesserName,
+        values: data.guessValues,
+        colors: data.guessColors,
+        isMe,
+      });
+      if (isMe) {
+        // Also track in submittedGuesses so win popup has correct count
+        this.submittedGuesses.push({ name: data.guesserName, values: data.guessValues, colors: data.guessColors });
+        this.players = this.players.map(p =>
+          p.id === myId ? { ...p, colors: data.guessColors, won: data.isCorrect } : p
+        );
+      }
+      this.cdr.detectChanges();
+    });
+
+    const sub4 = this.multiplayerService.on1v1GameOver().subscribe(data => {
+      this.stopTurnCountdown();
+      const myId = this.multiplayerService.getSocketId() || this.mySocketId;
+      this.oneVsOneWinnerName = data.winnerName;
+      if (data.winnerId === myId) {
+        this.myFinishTimeMs = data.finishMs ?? this.stopwatchMs;
+        this.handleWin();
+      } else {
+        this.iLost = true;
+        this.isGameOver = true;
+        this.stopStopwatch();
+      }
+      this.cdr.detectChanges();
+    });
+
+    const sub5 = this.multiplayerService.on1v1PlayerDisconnected().subscribe(data => {
+      console.log('[Promptle] 1v1 player disconnected:', data.playerName);
+      this.cdr.detectChanges();
+    });
+
+    this.oneVsOneSubs = [sub1, sub2, sub3, sub4, sub5];
+  }
+
   // ─── Host action: start game ──────────────────────────────────────────
   hostStartGame() {
     if (!this.isHost || !this.currentRoom) return;
-    this.multiplayerService.startGame(this.currentRoom);
+    const mode = this.isOneVsOne ? '1v1' : 'standard';
+    this.multiplayerService.startGame(this.currentRoom, mode);
+  }
+
+  // ─── 1v1 skip-turn power-up ───────────────────────────────────────────
+  useSkipTurn() {
+    if (this.skipTurnUsed || !this.isOneVsOne || this.isMyTurn || !this.gameStarted || this.isGameOver) return;
+    this.skipTurnUsed = true;
+    this.multiplayerService.emitSkipTurn(this.currentRoom);
+    this.cdr.detectChanges();
   }
 
   usePowerup(type: 'blackout' | 'peek') {
@@ -331,6 +436,23 @@ export class PromptleComponent implements OnInit, OnDestroy {
     const sec      = totalSec % 60;
     const tenths   = Math.floor((ms % 1000) / 100);
     return `${min}:${String(sec).padStart(2, '0')}.${tenths}`;
+  }
+
+  // ─── Turn countdown helpers (1v1) ─────────────────────────────────────
+  private startTurnCountdown() {
+    this.turnTimeLeft = 30;
+    this.turnCountdownInterval = setInterval(() => {
+      this.turnTimeLeft--;
+      if (this.turnTimeLeft <= 0) this.stopTurnCountdown();
+      this.cdr.detectChanges();
+    }, 1000);
+  }
+
+  private stopTurnCountdown() {
+    if (this.turnCountdownInterval) {
+      clearInterval(this.turnCountdownInterval);
+      this.turnCountdownInterval = null;
+    }
   }
 
   // ─── Opponent events ─────────────────────────────────────────────────
@@ -499,6 +621,10 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.filterAnswers(this.guessQuery);
     this.correctAnswer = data.correctAnswer;
 
+    if (data.mode === '1v1') {
+      this.isOneVsOne = true;
+    }
+
     const correct = this.answers.find(a => a.name === this.correctAnswer.name);
     this.backendHeaders = correct ? [...this.headers] : [];
     this.backendRow     = correct ? [...correct.values] : [];
@@ -574,7 +700,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
 
   onSubmitGuess() {
     if (!this.selectedGuess || this.isGameOver) return;
-    if (this.isMultiplayer && !this.gameStarted) return;   // block before game starts
+    if (this.isMultiplayer && !this.gameStarted) return;
+    if (this.isOneVsOne && !this.isMyTurn) return;  // block if not player's turn
     if (this.isAlreadyGuessed(this.selectedGuess)) {
       this.selectedGuess = '';
       this.guessQuery    = '';
@@ -599,6 +726,20 @@ export class PromptleComponent implements OnInit, OnDestroy {
     const isCorrect = this.selectedGuess === this.correctAnswer.name;
     const finishMs  = isCorrect ? this.stopwatchMs : undefined;
 
+    this.selectedGuess = '';
+    this.guessQuery    = '';
+    this.filterAnswers(this.guessQuery);
+
+    if (this.isOneVsOne) {
+      // In 1v1 mode: emit to server; the broadcast '1v1-guess-made' will add to oneVsOneGuesses
+      this.multiplayerService.emit1v1Guess(
+        this.currentRoom, this.myUsername, guessed.values, colors, isCorrect, finishMs
+      );
+      if (this.isMultiplayer) this.cdr.detectChanges();
+      return;
+    }
+
+    // Standard (non-1v1) flow
     this.submittedGuesses.push({ name: guessed.name, values: [...guessed.values], colors });
 
     if (this.isMultiplayer && this.currentRoom) {
@@ -614,9 +755,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
       this.handleWin();
     }
 
-    this.selectedGuess = '';
-    this.guessQuery    = '';
-    this.filterAnswers(this.guessQuery);
     if (this.isMultiplayer) this.cdr.detectChanges();
   }
 
@@ -629,12 +767,15 @@ export class PromptleComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.stopStopwatch();
+    this.stopTurnCountdown();
     this.opponentGuessSub?.unsubscribe();
     this.playerWonSub?.unsubscribe();
     this.roomStateSub?.unsubscribe();
     this.gameStartedSub?.unsubscribe();
     this.hostStatusSub?.unsubscribe();
     this.powerupSub?.unsubscribe();
+    this.oneVsOneSubs.forEach(s => s.unsubscribe());
+    this.joinErrorSub?.unsubscribe();
     if (this.blackoutInterval) clearInterval(this.blackoutInterval);
     if (this.powerupHintTimeout) clearTimeout(this.powerupHintTimeout);
     this.multiplayerService.leaveRoom();

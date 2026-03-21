@@ -113,6 +113,8 @@
                 <span class="badge badge-db" *ngIf="room.source === 'db'">
                   <mat-icon>storage</mat-icon>DB
                 </span>
+                <span class="badge badge-1v1" *ngIf="room.mode === '1v1'">⚔️ 1v1</span>
+                <span class="badge badge-standard" *ngIf="room.mode !== '1v1'">👥 Standard</span>
                 <span class="badge badge-players">
                   <mat-icon>person</mat-icon>
                   {{ room.playerCount }} {{ room.playerCount === 1 ? 'player' : 'players' }}

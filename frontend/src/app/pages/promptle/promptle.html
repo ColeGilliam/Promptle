@@ -30,6 +30,7 @@
             <mat-icon class="pregame-icon host-icon">sports_esports</mat-icon>
             <h3>You are the host</h3>
             <p>{{ players.length }} player{{ players.length === 1 ? '' : 's' }} in room — start whenever you're ready</p>
+            <p *ngIf="isOneVsOne" class="mode-badge">⚔️ 1v1 Turn-Based Mode</p>
             <button
               matButton="filled"
               class="rect-btn promp1-btn start-game-btn"
@@ -45,19 +46,46 @@
             <mat-icon class="pregame-icon waiting-icon">hourglass_top</mat-icon>
             <h3>Waiting for host to start…</h3>
             <p>{{ players.length }} player{{ players.length === 1 ? '' : 's' }} in room</p>
+            <p *ngIf="isOneVsOne" class="mode-badge">⚔️ 1v1 Turn-Based Mode</p>
           </div>
 
         </mat-card-content>
       </mat-card>
 
-      <!-- ══ STOPWATCH (shown while multiplayer game is running) ══ -->
-      <div class="stopwatch-bar" *ngIf="!gameLoading && gameStarted && !isGameOver">
+      <!-- ══ STOPWATCH (standard mode only — not shown in 1v1) ══ -->
+      <div class="stopwatch-bar" *ngIf="!isOneVsOne && !gameLoading && gameStarted && !isGameOver">
         <mat-icon>timer</mat-icon>
         <span class="stopwatch-value">{{ formatTime(stopwatchMs) }}</span>
       </div>
 
-      <!-- ══ POWER-UPS (multiplayer only) ══ -->
-      <div class="powerup-bar" *ngIf="isMultiplayer && gameStarted && !isGameOver">
+      <!-- ══ TURN INDICATOR (1v1 only) ══ -->
+      <div class="turn-indicator-bar" *ngIf="isOneVsOne && gameStarted && !isGameOver">
+        <div class="turn-status" [class.my-turn]="isMyTurn" [class.opponent-turn]="!isMyTurn">
+          <mat-icon>{{ isMyTurn ? 'sports_esports' : 'hourglass_top' }}</mat-icon>
+          <span *ngIf="isMyTurn">Your turn — {{ turnTimeLeft }}s remaining</span>
+          <span *ngIf="!isMyTurn">{{ currentTurnPlayerName }}'s turn — {{ turnTimeLeft }}s remaining</span>
+        </div>
+      </div>
+
+      <!-- ══ 1v1 SKIP-TURN POWER-UP ══ -->
+      <div class="skip-turn-bar" *ngIf="isOneVsOne && gameStarted && !isGameOver">
+        <button
+          class="powerup-btn skip-turn-btn"
+          [class.used]="skipTurnUsed"
+          [class.unavailable]="isMyTurn"
+          [disabled]="skipTurnUsed || isMyTurn"
+          (click)="useSkipTurn()"
+          title="End the opponent's turn and play again immediately"
+        >
+          <span class="powerup-icon">⚡</span>
+          <span class="powerup-name">Skip Turn</span>
+          <span class="powerup-badge" *ngIf="skipTurnUsed">USED</span>
+          <span class="powerup-badge unavail-badge" *ngIf="!skipTurnUsed && isMyTurn">YOUR TURN</span>
+        </button>
+      </div>
+
+      <!-- ══ POWER-UPS (standard multiplayer only — not in 1v1) ══ -->
+      <div class="powerup-bar" *ngIf="isMultiplayer && !isOneVsOne && gameStarted && !isGameOver">
         <span class="powerup-label">POWER-UPS</span>
 
         <button
@@ -118,6 +146,7 @@
                 [(ngModel)]="guessQuery"
                 (ngModelChange)="onGuessQueryChange($event)"
                 placeholder="Start typing a guess"
+                [disabled]="isOneVsOne && !isMyTurn"
               >
               <mat-autocomplete
                 #guessAuto="matAutocomplete"
@@ -135,7 +164,7 @@
             <button
               matButton="filled"
               class="rect-btn promp1-btn"
-              [disabled]="!selectedGuess || isGameOver"
+              [disabled]="!selectedGuess || isGameOver || (isOneVsOne && !isMyTurn)"
               (click)="onSubmitGuess()"
             >
               SUBMIT
@@ -150,10 +179,53 @@
         </mat-card-content>
       </mat-card>
 
-      <!-- ══ GAME GRID (hidden until game starts in MP) ══ -->
+      <!-- ══ 1v1 SHARED GUESS GRID ══ -->
       <mat-card
         class="game-grid-card"
-        *ngIf="headers.length && (!isMultiplayer || gameStarted)"
+        *ngIf="isOneVsOne && headers.length && gameStarted"
+        [@cardEnterDelayed]
+      >
+        <mat-card-content>
+          <div class="game-grid-meta">
+            <p class="game-grid-subtitle" *ngIf="oneVsOneGuesses.length === 0">Waiting for first guess…</p>
+            <p class="game-grid-subtitle" *ngIf="oneVsOneGuesses.length > 0">{{ oneVsOneGuesses.length }} guess{{ oneVsOneGuesses.length === 1 ? '' : 'es' }} made.</p>
+          </div>
+
+          <div class="game-grid-scroll">
+            <div class="game-grid">
+              <!-- Player label column -->
+              <div class="column player-label-column">
+                <div class="header">Player</div>
+                <div
+                  class="guess-cell player-label-cell"
+                  *ngFor="let guess of oneVsOneGuesses"
+                  [@cardEnter]
+                  [class.my-guess-label]="guess.isMe"
+                >
+                  {{ guess.isMe ? 'You' : guess.guesserName }}
+                </div>
+              </div>
+              <!-- Data columns -->
+              <div class="column" *ngFor="let header of headers; let i = index">
+                <div class="header">{{ header }}</div>
+                <div
+                  class="guess-cell"
+                  *ngFor="let guess of oneVsOneGuesses"
+                  [@cardEnter]
+                  [style.background-color]="guess.colors[i]"
+                >
+                  {{ guess.values[i] }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- ══ STANDARD GAME GRID (non-1v1) ══ -->
+      <mat-card
+        class="game-grid-card"
+        *ngIf="!isOneVsOne && headers.length && (!isMultiplayer || gameStarted)"
         [@cardEnterDelayed]
       >
         <mat-card-content>
@@ -186,7 +258,7 @@
 
 <!-- Win overlay -->
 <app-promptle-win-popup
-  *ngIf="isGameOver"
+  *ngIf="isGameOver && !iLost"
   [answerName]="correctAnswer.name"
   [isMultiplayer]="isMultiplayer"
   [finishTimeMs]="myFinishTimeMs"
@@ -196,6 +268,18 @@
   (returnHome)="quitGame()"
   (playAgain)="restartGame()"
 ></app-promptle-win-popup>
+
+<!-- ══ LOSS OVERLAY (1v1 only) ══ -->
+<div class="loss-overlay" *ngIf="iLost && isGameOver">
+  <div class="loss-card">
+    <mat-icon class="loss-icon">sentiment_very_dissatisfied</mat-icon>
+    <h2>Better luck next time!</h2>
+    <p>{{ oneVsOneWinnerName }} wins!</p>
+    <div class="loss-actions">
+      <button matButton="filled" class="rect-btn promp2-btn" (click)="quitGame()">RETURN HOME</button>
+    </div>
+  </div>
+</div>
 
 <!-- ══ BLACKOUT OVERLAY ══ -->
 <div class="powerup-blackout-overlay" *ngIf="activePowerupEffect?.type === 'blackout'">

@@ -9,6 +9,7 @@ export interface GameData {
   headers: string[];
   answers: { name: string; values: string[] }[];
   correctAnswer: { name: string; values: string[] };
+  mode?: string;
 }
 
 @Injectable({ providedIn: 'root' })

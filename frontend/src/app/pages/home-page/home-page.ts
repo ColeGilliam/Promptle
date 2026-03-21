@@ -54,6 +54,7 @@ export class HomePage implements OnInit, AfterViewInit {
   customTopic = '';
 
   isMultiplayer = false;  // false = single-player, true = multiplayer
+  is1v1 = false;          // only relevant when isMultiplayer = true
   isCreatingRoom = false; // true while waiting for MP room creation API
   createRoomError = '';
 
@@ -106,6 +107,7 @@ export class HomePage implements OnInit, AfterViewInit {
   // ────────────────────────────────────────────────
   onModeChange(isSingle: boolean) {
     this.isMultiplayer = !isSingle;
+    if (!this.isMultiplayer) this.is1v1 = false;
     console.log('Mode changed to:', this.isMultiplayer ? 'Multiplayer' : 'Singleplayer');
   }
 
@@ -126,6 +128,7 @@ export class HomePage implements OnInit, AfterViewInit {
 
     if (this.isMultiplayer) {
       // MULTIPLAYER: create room on backend (may take several seconds for AI generation)
+      payload.mode = this.is1v1 ? '1v1' : 'standard';
       this.isCreatingRoom = true;
       this.createRoomError = '';
       this.http.post<{ roomId: string }>('/api/game/multiplayer', payload)

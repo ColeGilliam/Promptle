@@ -116,7 +116,7 @@ export async function startGame(req, res) {
         return res.status(403).json({ error: 'This game has already started and cannot be joined' });
       }
 
-      // Remove internal fields before sending
+      // Remove internal fields before sending (keep mode)
       delete gameData._id;
       delete gameData.createdAt;
       delete gameData.expiresAt;
@@ -142,7 +142,7 @@ export async function startGame(req, res) {
 // ────────────────────────────────────────────────
 export const createMultiplayerGame = async (req, res) => {
   try {
-    const { topic, id } = req.body;
+    const { topic, id, mode } = req.body;
 
     let gameData;
 
@@ -207,6 +207,7 @@ export const createMultiplayerGame = async (req, res) => {
       expiresAt: new Date(Date.now() + 20 * 60 * 1000),  // 20min TTL (unstarted)
       started: false,
       isMultiplayer: true,
+      mode: mode || 'standard',
       source: topic ? 'ai' : 'db'
     });
 
@@ -232,7 +233,7 @@ export async function listRooms(req, res) {
     // MongoDB driver v6 requires cursor methods instead of a second options arg
     const rooms = await coll
       .find({ expiresAt: { $gt: now }, started: { $ne: true } })
-      .project({ _id: 1, topic: 1, createdAt: 1, source: 1 })
+      .project({ _id: 1, topic: 1, createdAt: 1, source: 1, mode: 1 })
       .sort({ createdAt: -1 })
       .limit(50)
       .toArray();
@@ -253,6 +254,7 @@ export async function listRooms(req, res) {
         playerCount,
         createdAt: room.createdAt,
         source: room.source || 'db',
+        mode: room.mode || 'standard',
       };
     });
 
@@ -266,6 +268,19 @@ export async function listRooms(req, res) {
 // ────────────────────────────────────────────────
 // Mark a room as started (called by socket handler)
 // ────────────────────────────────────────────────
+// ────────────────────────────────────────────────
+// Get a room's game mode (used by socket handler)
+// ────────────────────────────────────────────────
+export async function getRoomMode(roomId) {
+  try {
+    const coll = getMultiplayerGamesColl();
+    const doc = await coll.findOne({ _id: roomId }, { projection: { mode: 1 } });
+    return doc?.mode || 'standard';
+  } catch {
+    return 'standard';
+  }
+}
+
 export async function markRoomStarted(roomId) {
   try {
     const coll = getMultiplayerGamesColl();
