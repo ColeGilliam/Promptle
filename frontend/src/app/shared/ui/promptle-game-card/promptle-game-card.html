@@ -54,9 +54,12 @@
             [style.background-color]="color"
           ></span>
         </div>
-        <!-- Guess count -->
+        <!-- Guess count + finish time -->
         <span class="guess-count" *ngIf="player.guesses">
           {{ player.guesses }} guess{{ player.guesses === 1 ? '' : 'es' }}
+        </span>
+        <span class="finish-time" *ngIf="player.finishTime">
+          ⏱ {{ player.finishTime }}
         </span>
 
 

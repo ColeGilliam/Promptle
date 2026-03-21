@@ -43,6 +43,7 @@ export class PromptleGameCard {
     colors?: string[];
     won?: boolean;
     isMe?: boolean;
+    finishTime?: string;
   }[] = [];
 
   get playerNamesText(): string {

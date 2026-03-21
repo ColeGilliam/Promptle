@@ -1,7 +1,8 @@
 // controllers/gameController.js
-import { getTopicCollection, getGuessesCollection, getMultiplayerGamesCollection } 
+import { getTopicCollection, getGuessesCollection, getMultiplayerGamesCollection }
 from '../config/db.js';
 import { generateSubjects } from './subjectController.js';  // adjust path if needed
+import { getIo } from '../sockets/socketState.js';
 
 // Cache collections (your existing pattern)
 let cachedTopicCollection = null;
@@ -26,7 +27,7 @@ function getMultiplayerGamesColl() {
 // ────────────────────────────────────────────────
 // Shared logic: build full game data from a topic
 // ────────────────────────────────────────────────
-async function buildGameData(topicIdentifier, isNumericId = true) {
+async function buildGameData(topicIdentifier, isNumericId = true, answerOverride = null) {
   const topicColl = getTopicColl();
   const guessesColl = getGuessesColl();
 
@@ -64,8 +65,11 @@ async function buildGameData(topicIdentifier, isNumericId = true) {
     return { name: doc.name, values };
   });
 
-  // Pick one correct answer (random once per room)
-  const correctAnswer = answers[Math.floor(Math.random() * answers.length)];
+  // Pick correct answer — use override if provided (share link seeding), else random
+  const overrideMatch = answerOverride
+    ? answers.find(a => a.name === answerOverride)
+    : null;
+  const correctAnswer = overrideMatch ?? answers[Math.floor(Math.random() * answers.length)];
 
   return {
     topic: topicName,
@@ -95,7 +99,7 @@ async function roomExists(roomId) {
 // ────────────────────────────────────────────────
 export async function startGame(req, res) {
   try {
-    const { topicId, room } = req.query;
+    const { topicId, room, answer } = req.query;
 
     let gameData;
 
@@ -108,15 +112,20 @@ export async function startGame(req, res) {
         return res.status(404).json({ error: 'Room not found or expired' });
       }
 
+      if (gameData.started) {
+        return res.status(403).json({ error: 'This game has already started and cannot be joined' });
+      }
+
       // Remove internal fields before sending
       delete gameData._id;
       delete gameData.createdAt;
       delete gameData.expiresAt;
+      delete gameData.started;
       delete gameData.isMultiplayer;
 
     } else if (topicId) {
-      // Single-player classic mode
-      gameData = await buildGameData(topicId, true);
+      // Single-player classic mode (answer param seeds a specific correct answer)
+      gameData = await buildGameData(topicId, true, answer || null);
     } else {
       return res.status(400).json({ error: 'Missing topicId or room' });
     }
@@ -195,9 +204,10 @@ export const createMultiplayerGame = async (req, res) => {
       _id: roomId,
       ...gameData,
       createdAt: new Date(),
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),  // 24h TTL
+      expiresAt: new Date(Date.now() + 20 * 60 * 1000),  // 20min TTL (unstarted)
+      started: false,
       isMultiplayer: true,
-      source: topic ? 'ai' : 'db'   // optional: track how it was created
+      source: topic ? 'ai' : 'db'
     });
 
     console.log(`Multiplayer room created: ${roomId} (${topic ? 'AI' : 'DB'})`);
@@ -210,3 +220,58 @@ export const createMultiplayerGame = async (req, res) => {
     res.status(500).json({ error: 'Failed to create multiplayer game: ' + (error.message || 'unknown') });
   }
 };
+
+// ────────────────────────────────────────────────
+// List all active (non-expired) multiplayer rooms
+// ────────────────────────────────────────────────
+export async function listRooms(req, res) {
+  try {
+    const coll = getMultiplayerGamesColl();
+    const now = new Date();
+
+    // MongoDB driver v6 requires cursor methods instead of a second options arg
+    const rooms = await coll
+      .find({ expiresAt: { $gt: now }, started: { $ne: true } })
+      .project({ _id: 1, topic: 1, createdAt: 1, source: 1 })
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .toArray();
+
+    console.log(`[listRooms] Found ${rooms.length} active room(s)`);
+
+    // Enrich with live player count from the socket.io adapter
+    const io = getIo();
+    const enriched = rooms.map(room => {
+      let playerCount = 0;
+      if (io) {
+        const socketRoom = io.sockets.adapter.rooms.get(room._id);
+        playerCount = socketRoom ? socketRoom.size : 0;
+      }
+      return {
+        roomId: room._id,
+        topic: room.topic,
+        playerCount,
+        createdAt: room.createdAt,
+        source: room.source || 'db',
+      };
+    });
+
+    res.json(enriched);
+  } catch (err) {
+    console.error('listRooms error:', err);
+    res.status(500).json({ error: 'Failed to list rooms' });
+  }
+}
+
+// ────────────────────────────────────────────────
+// Mark a room as started (called by socket handler)
+// ────────────────────────────────────────────────
+export async function markRoomStarted(roomId) {
+  try {
+    const coll = getMultiplayerGamesColl();
+    await coll.updateOne({ _id: roomId }, { $set: { started: true } });
+    console.log(`[markRoomStarted] Room ${roomId} marked as started`);
+  } catch (err) {
+    console.error('[markRoomStarted] error:', err);
+  }
+}

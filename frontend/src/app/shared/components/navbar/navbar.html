@@ -27,9 +27,9 @@
 
 <mat-menu #mainMenu="matMenu">
   <button mat-menu-item routerLink="">
-      <mat-icon>home</mat-icon>
-      <span>Home</span>
-    </button>
+    <mat-icon>home</mat-icon>
+    <span>Home</span>
+  </button>
   <!-- Is not logged in-->
   <button mat-menu-item *ngIf="!isLoggedIn" class="login-button" (click)="toggleLogin()" mat-menu-item aria-label="Login">
     <mat-icon>login</mat-icon>

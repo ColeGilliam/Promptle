@@ -25,7 +25,9 @@ export class MultiplayerService {
 
   // Callback arrays so listeners survive across Observable subscriptions
   private opponentGuessCallbacks: ((data: any) => void)[] = [];
-  private playerWonCallbacks: ((data: any) => void)[] = [];
+  private playerWonCallbacks:     ((data: any) => void)[] = [];
+  private gameStartedCallbacks:   ((data: any) => void)[] = [];
+  private hostStatusCallbacks:    ((data: any) => void)[] = [];
 
   constructor() {}
 
@@ -52,7 +54,7 @@ export class MultiplayerService {
       console.log(`[Service] ✅ CONNECTED! Socket ID: ${this.mySocketId}`);
       this.socket!.emit('join-room', { roomId, playerName });
 
-      // Register game event listeners AFTER socket is connected
+      // Register all game-event listeners after socket is connected
       this.socket!.on('opponent-guess', (data) => {
         console.log('[Service] opponent-guess received:', data);
         this.opponentGuessCallbacks.forEach(cb => cb(data));
@@ -61,6 +63,16 @@ export class MultiplayerService {
       this.socket!.on('player-won', (data) => {
         console.log('[Service] player-won received:', data);
         this.playerWonCallbacks.forEach(cb => cb(data));
+      });
+
+      this.socket!.on('game-started', () => {
+        console.log('[Service] game-started received');
+        this.gameStartedCallbacks.forEach(cb => cb({}));
+      });
+
+      this.socket!.on('host-status', (data: { isHost: boolean }) => {
+        console.log('[Service] host-status received:', data);
+        this.hostStatusCallbacks.forEach(cb => cb(data));
       });
     });
 
@@ -105,31 +117,82 @@ export class MultiplayerService {
     }
     this.roomStateSubject.next(null);
     this.opponentGuessCallbacks = [];
-    this.playerWonCallbacks = [];
+    this.playerWonCallbacks     = [];
+    this.gameStartedCallbacks   = [];
+    this.hostStatusCallbacks    = [];
   }
 
-  emitGuess(roomId: string, playerName: string, colors: string[], isCorrect: boolean) {
-    console.log('[Service] Emitting player-guess:', { roomId, playerName, colors, isCorrect });
-    this.socket?.emit('player-guess', { roomId, playerName, playerId: this.mySocketId, colors, isCorrect });
+  /** Host-only: tell all players in the room to start the game. */
+  startGame(roomId: string) {
+    console.log('[Service] Emitting start-game for room:', roomId);
+    this.socket?.emit('start-game', { roomId });
   }
 
-  onOpponentGuess(): Observable<{ playerName: string; colors: string[]; isCorrect: boolean; playerId: string }> {
+  emitGuess(
+    roomId: string,
+    playerName: string,
+    colors: string[],
+    isCorrect: boolean,
+    finishTimeMs?: number
+  ) {
+    console.log('[Service] Emitting player-guess:', { roomId, playerName, colors, isCorrect, finishTimeMs });
+    this.socket?.emit('player-guess', {
+      roomId,
+      playerName,
+      playerId: this.mySocketId,
+      colors,
+      isCorrect,
+      finishTime: finishTimeMs
+    });
+  }
+
+  onOpponentGuess(): Observable<{
+    playerName: string;
+    colors: string[];
+    isCorrect: boolean;
+    playerId: string;
+    finishTime?: number;
+  }> {
     return new Observable(observer => {
       const cb = (data: any) => observer.next(data);
       this.opponentGuessCallbacks.push(cb);
-      // Cleanup when unsubscribed
       return () => {
         this.opponentGuessCallbacks = this.opponentGuessCallbacks.filter(c => c !== cb);
       };
     });
   }
 
-  onPlayerWon(): Observable<{ playerName: string; playerId: string; guesses: number }> {
+  onPlayerWon(): Observable<{
+    playerName: string;
+    playerId: string;
+    guesses: number;
+    finishTime?: number;
+  }> {
     return new Observable(observer => {
       const cb = (data: any) => observer.next(data);
       this.playerWonCallbacks.push(cb);
       return () => {
         this.playerWonCallbacks = this.playerWonCallbacks.filter(c => c !== cb);
+      };
+    });
+  }
+
+  onGameStarted(): Observable<void> {
+    return new Observable(observer => {
+      const cb = () => observer.next();
+      this.gameStartedCallbacks.push(cb);
+      return () => {
+        this.gameStartedCallbacks = this.gameStartedCallbacks.filter(c => c !== cb);
+      };
+    });
+  }
+
+  onHostStatus(): Observable<{ isHost: boolean }> {
+    return new Observable(observer => {
+      const cb = (data: { isHost: boolean }) => observer.next(data);
+      this.hostStatusCallbacks.push(cb);
+      return () => {
+        this.hostStatusCallbacks = this.hostStatusCallbacks.filter(c => c !== cb);
       };
     });
   }

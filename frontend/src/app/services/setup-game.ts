@@ -17,10 +17,11 @@ export class DbGameService {
 
   constructor(private http: HttpClient) {}
 
-  // Database-backed game fetch (numeric topicId)
-  fetchGameByTopic(topicId: number): Observable<GameData> {
+  // Database-backed game fetch (numeric topicId, optional answer seed)
+  fetchGameByTopic(topicId: number, answer?: string): Observable<GameData> {
+    const answerParam = answer ? `&answer=${encodeURIComponent(answer)}` : '';
     return this.http.get<GameData>(
-      `${this.apiBaseUrl}/game/start?topicId=${topicId}`
+      `${this.apiBaseUrl}/game/start?topicId=${topicId}${answerParam}`
     );
   }
 
@@ -47,23 +48,23 @@ export class DbGameService {
    * - room (string) → multiplayer saved game (/game/start?room=...)
    */
   fetchGame(params: {
-  topic?: string;
-  topicId?: number;
-  room?: string;
-}): Observable<GameData> {
-  if (params.topic && params.topic.trim()) {
-    return this.generateAiGame(params.topic.trim());
-  }
+    topic?: string;
+    topicId?: number;
+    room?: string;
+    answer?: string;
+  }): Observable<GameData> {
+    if (params.topic && params.topic.trim()) {
+      return this.generateAiGame(params.topic.trim());
+    }
 
-  if (params.room && params.room.trim()) {
-    return this.fetchGameByRoom(params.room.trim());
-  }
+    if (params.room && params.room.trim()) {
+      return this.fetchGameByRoom(params.room.trim());
+    }
 
-  // Type guard: only proceed if topicId is defined and finite
-  if (params.topicId !== undefined && Number.isFinite(params.topicId)) {
-    return this.fetchGameByTopic(params.topicId);  // now TS knows it's number
-  }
+    if (params.topicId !== undefined && Number.isFinite(params.topicId)) {
+      return this.fetchGameByTopic(params.topicId, params.answer);
+    }
 
-  return throwError(() => new Error('Missing valid topic, topicId, or room'));
-}
+    return throwError(() => new Error('Missing valid topic, topicId, or room'));
+  }
 }

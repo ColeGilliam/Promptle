@@ -1,0 +1,55 @@
+<div class="share-view">
+  <app-navbar></app-navbar>
+
+  <div class="share-main">
+    <div class="share-card-wrap">
+      <mat-card class="share-card">
+        <mat-card-content>
+
+          <div class="share-header">
+            <div class="share-logo">🏆</div>
+            <h1 class="share-title">Shared Result</h1>
+            <p class="share-topic">{{ topicName }}</p>
+          </div>
+
+          <!-- Stats -->
+          <div class="share-stats">
+            <div class="share-stat">
+              <mat-icon>quiz</mat-icon>
+              <span>{{ guessCount }} guess{{ guessCount === 1 ? '' : 'es' }}</span>
+            </div>
+            <div class="share-stat" *ngIf="timeMs !== null">
+              <mat-icon>timer</mat-icon>
+              <span>{{ formatTime(timeMs) }}</span>
+            </div>
+          </div>
+
+          <!-- Spoiler-free grid -->
+          <div class="share-grid" *ngIf="grid.length > 0">
+            <div class="share-grid-row" *ngFor="let row of grid">
+              <span
+                class="share-cell"
+                *ngFor="let cell of row"
+                [ngClass]="cellColor(cell)"
+              ></span>
+            </div>
+          </div>
+
+          <p class="share-hint">Colors only — no spoilers!</p>
+
+          <div class="share-actions">
+            <button matButton="filled" class="rect-btn promp1-btn" (click)="playGame()">
+              <mat-icon>sports_esports</mat-icon>
+              Play This Game
+            </button>
+            <button matButton="outlined" class="rect-btn" (click)="goHome()">
+              <mat-icon>home</mat-icon>
+              Home
+            </button>
+          </div>
+
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>

@@ -15,6 +15,7 @@ import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { NavbarComponent } from '../../shared/components/navbar/navbar';
 import { UniFooterComponent } from '../../shared/ui/uni-footer/uni-footer';
@@ -34,6 +35,7 @@ import { LoadSavedGameCard } from '../../shared/ui/load-saved-game-card/load-sav
     MatSelectModule,
     MatChipsModule,
     MatButtonModule,
+    MatProgressSpinnerModule,
     NavbarComponent,
     UniFooterComponent,
     MatAutocompleteModule,
@@ -52,6 +54,8 @@ export class HomePage implements OnInit, AfterViewInit {
   customTopic = '';
 
   isMultiplayer = false;  // false = single-player, true = multiplayer
+  isCreatingRoom = false; // true while waiting for MP room creation API
+  createRoomError = '';
 
   // UI state for load-confirmation overlay (single-player only)
   showLoadConfirm = false;
@@ -121,17 +125,21 @@ export class HomePage implements OnInit, AfterViewInit {
     }
 
     if (this.isMultiplayer) {
-      // MULTIPLAYER: create room on backend
+      // MULTIPLAYER: create room on backend (may take several seconds for AI generation)
+      this.isCreatingRoom = true;
+      this.createRoomError = '';
       this.http.post<{ roomId: string }>('/api/game/multiplayer', payload)
         .subscribe({
           next: (res) => {
+            this.isCreatingRoom = false;
             this.router.navigate(['/game'], {
               queryParams: { room: res.roomId }
             });
           },
           error: (err) => {
+            this.isCreatingRoom = false;
+            this.createRoomError = 'Could not create multiplayer room. Please try again.';
             console.error('Failed to create multiplayer room:', err);
-            alert('Could not create multiplayer room. Check backend.');
           }
         });
     } else {
@@ -354,6 +362,6 @@ export class HomePage implements OnInit, AfterViewInit {
   }
 
   joinChatRoom() {
-    this.router.navigate(['/chat']);
+    this.router.navigate(['/lobby']);
   }
 }

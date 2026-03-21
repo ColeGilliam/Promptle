@@ -1,14 +1,58 @@
 <div class="win-overlay" role="dialog" aria-modal="true" aria-labelledby="win-popup-title">
   <mat-card class="win-card">
     <mat-card-content>
-      <h2 id="win-popup-title">🏆 Victory!</h2>
-      <p>The correct answer was <strong>{{ answerName }}</strong></p>
+
+      <div class="win-trophy">🏆</div>
+      <h2 id="win-popup-title">Victory!</h2>
+      <p class="win-answer">The answer was <strong>{{ answerName }}</strong></p>
+
+      <!-- Stats row -->
+      <div class="win-stats" *ngIf="guessCount > 0 || finishTimeMs !== null">
+        <div class="win-stat" *ngIf="guessCount > 0">
+          <mat-icon>quiz</mat-icon>
+          <span>{{ guessCount }} guess{{ guessCount === 1 ? '' : 'es' }}</span>
+        </div>
+        <div class="win-stat" *ngIf="finishTimeMs !== null">
+          <mat-icon>timer</mat-icon>
+          <span>{{ formatTime(finishTimeMs) }}</span>
+        </div>
+      </div>
+
+      <!-- Spoiler-free color grid -->
+      <div class="win-grid" *ngIf="guessColors.length > 0">
+        <div class="win-grid-row" *ngFor="let row of guessColors">
+          <span
+            class="win-cell"
+            *ngFor="let color of row"
+            [class.cell-green]="color === 'green'"
+            [class.cell-yellow]="color === 'yellow'"
+            [class.cell-gray]="color === 'gray'"
+          ></span>
+        </div>
+      </div>
+
       <div class="win-actions">
-        <button matButton="filled" class="rect-btn promp2-btn" (click)="onReturnHome()">Return Home</button>
+        <button matButton="filled" class="rect-btn promp2-btn" (click)="onReturnHome()">
+          <mat-icon>home</mat-icon>
+          Return Home
+        </button>
         <ng-container *ngIf="!isMultiplayer">
-          <button matButton="filled" class="rect-btn promp1-btn" (click)="onPlayAgain()">Play Again (Different Answer)</button>
+          <button matButton="filled" class="rect-btn promp1-btn" (click)="onPlayAgain()">
+            <mat-icon>replay</mat-icon>
+            Play Again
+          </button>
+          <button
+            matButton="filled"
+            class="rect-btn share-btn"
+            (click)="copyShare()"
+            *ngIf="shareUrl"
+          >
+            <mat-icon>{{ copied ? 'check' : 'share' }}</mat-icon>
+            {{ copied ? 'Copied!' : 'Share' }}
+          </button>
         </ng-container>
       </div>
+
     </mat-card-content>
   </mat-card>
 </div>

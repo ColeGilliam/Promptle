@@ -1,0 +1,148 @@
+<div class="lobby-view">
+  <app-navbar></app-navbar>
+
+  <div class="lobby-main">
+
+    <!-- Page header -->
+    <div class="lobby-header">
+      <h1 class="lobby-title">Multiplayer Lobby</h1>
+      <p class="lobby-subtitle">
+        Browse open rooms and jump in, or enter a room code to join a specific game.
+      </p>
+    </div>
+
+    <!-- Enter room code card -->
+    <mat-card class="code-card">
+      <mat-card-content>
+        <div class="code-join-inner">
+          <mat-icon class="code-icon">meeting_room</mat-icon>
+          <div class="code-join-content">
+            <h2>Have a Room Code?</h2>
+            <p class="code-hint">Enter the 6-character code shared by your host</p>
+            <div class="code-input-row">
+              <mat-form-field appearance="fill" class="code-field">
+                <mat-label>Room Code</mat-label>
+                <input
+                  matInput
+                  [(ngModel)]="roomCodeInput"
+                  (ngModelChange)="onCodeInput()"
+                  placeholder="e.g. ABC123"
+                  maxlength="6"
+                  (keyup.enter)="joinByCode()"
+                  class="code-input-text"
+                >
+              </mat-form-field>
+              <button
+                matButton="filled"
+                class="rect-btn promp1-btn join-code-btn"
+                (click)="joinByCode()"
+              >
+                <mat-icon>login</mat-icon>
+                JOIN
+              </button>
+            </div>
+            <p class="code-error" *ngIf="codeError">
+              <mat-icon class="error-icon">error_outline</mat-icon>
+              {{ codeError }}
+            </p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Active rooms section -->
+    <div class="rooms-section">
+
+      <div class="rooms-header">
+        <div class="rooms-title-group">
+          <h2 class="rooms-title">
+            Active Rooms
+            <span class="room-count" *ngIf="!isLoading">&nbsp;({{ rooms.length }})</span>
+          </h2>
+          <p class="rooms-refresh-hint" *ngIf="lastRefreshed">
+            Updated {{ timeAgo(lastRefreshed.toISOString()) }} · auto-refreshes every 10s
+          </p>
+        </div>
+        <button matButton class="rect-btn refresh-btn" (click)="fetchRooms()">
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+      </div>
+
+      <!-- Loading -->
+      <div class="state-panel" *ngIf="isLoading">
+        <mat-spinner diameter="44"></mat-spinner>
+        <p>Loading rooms…</p>
+      </div>
+
+      <!-- Error -->
+      <div class="state-panel" *ngIf="errorMsg && !isLoading">
+        <mat-icon class="state-icon error-icon-lg">cloud_off</mat-icon>
+        <p>{{ errorMsg }}</p>
+        <button matButton="filled" class="rect-btn promp2-btn" (click)="fetchRooms()">
+          Retry
+        </button>
+      </div>
+
+      <!-- Empty -->
+      <div class="state-panel" *ngIf="!isLoading && !errorMsg && rooms.length === 0">
+        <mat-icon class="state-icon">group_off</mat-icon>
+        <h3>No open rooms right now</h3>
+        <p>Create one from the home page and it will appear here instantly.</p>
+        <button matButton="filled" class="rect-btn promp1-btn" routerLink="/">
+          <mat-icon>home</mat-icon>
+          Go to Home
+        </button>
+      </div>
+
+      <!-- Room grid -->
+      <div class="rooms-grid" *ngIf="!isLoading && !errorMsg && rooms.length > 0">
+        <mat-card
+          class="room-card"
+          *ngFor="let room of rooms"
+          (click)="joinRoom(room.roomId)"
+        >
+          <mat-card-content>
+
+            <!-- Top row: badges + age -->
+            <div class="room-card-top">
+              <div class="room-badges">
+                <span class="badge badge-ai" *ngIf="room.source === 'ai'">
+                  <mat-icon>auto_awesome</mat-icon>AI
+                </span>
+                <span class="badge badge-db" *ngIf="room.source === 'db'">
+                  <mat-icon>storage</mat-icon>DB
+                </span>
+                <span class="badge badge-players">
+                  <mat-icon>person</mat-icon>
+                  {{ room.playerCount }} {{ room.playerCount === 1 ? 'player' : 'players' }}
+                </span>
+              </div>
+              <span class="room-time">{{ timeAgo(room.createdAt) }}</span>
+            </div>
+
+            <!-- Topic -->
+            <h3 class="room-topic">{{ room.topic }}</h3>
+
+            <!-- Room code pill -->
+            <div class="room-code-pill">{{ room.roomId }}</div>
+
+            <!-- Join button -->
+            <button
+              matButton="filled"
+              class="rect-btn promp1-btn join-room-btn"
+              (click)="joinRoom(room.roomId); $event.stopPropagation()"
+            >
+              <mat-icon>play_arrow</mat-icon>
+              Join Room
+            </button>
+
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+    </div>
+  </div>
+
+  <app-uni-footer></app-uni-footer>
+</div>

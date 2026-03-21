@@ -242,3 +242,16 @@
   position: relative;
   top: -4px;
 }
+
+.finish-time {
+  font-size: 0.78rem;
+  color: #3c91f1;
+  font-weight: 600;
+  vertical-align: top;
+  position: relative;
+  top: -4px;
+}
+
+:host-context(.dark) .finish-time {
+  color: #7671fc;
+}

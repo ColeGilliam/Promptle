@@ -5,6 +5,19 @@
 html, body { min-height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 
+/* Smooth scrolling */
+html { scroll-behavior: smooth; }
+
+/* Better selection color */
+::selection {
+  background: rgba(74, 123, 255, 0.25);
+  color: inherit;
+}
+
+body.dark ::selection {
+  background: rgba(139, 92, 246, 0.35);
+}
+
 :root {
   --rect-btn-radius: 8px; /* change once to control all rectangular buttons */
 }

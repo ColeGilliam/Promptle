@@ -6,6 +6,8 @@ import { AboutComponent } from './pages/about/about';
 import { Testing } from './pages/testing/testing';
 import { ProfileComponent } from './pages/profile/profile';
 import { ChatRoomTest } from './pages/chat-room-test/chat-room-test';
+import { LobbyComponent } from './pages/lobby/lobby';
+import { ShareComponent } from './pages/share/share';
 
 export const routes: Routes = [
   {path: '', component: HomePage},
@@ -14,5 +16,7 @@ export const routes: Routes = [
   {path: 'game', component: PromptleComponent},
   {path: 'testing', component: Testing},
   {path: 'profile', component: ProfileComponent },
-  {path: 'chat', component: ChatRoomTest}
+  {path: 'chat', component: ChatRoomTest},
+  {path: 'lobby', component: LobbyComponent},
+  {path: 'share', component: ShareComponent},
 ];

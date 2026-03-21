@@ -1,4 +1,6 @@
 import { Server } from "socket.io";
+import { setIo } from "./socketState.js";
+import { markRoomStarted } from "../controllers/gameController.js";
 
 export function setupSocket(server) {
   const io = new Server(server, {
@@ -12,6 +14,8 @@ export function setupSocket(server) {
     },
     allowEIO3: true,
   });
+
+  setIo(io);
 
   const playerNames = new Map();   // socketId → playerName
   const roomHosts = new Map();     // roomId → host socketId
@@ -53,6 +57,7 @@ export function setupSocket(server) {
     socket.on('start-game', ({ roomId }) => {
       if (roomHosts.get(roomId) !== socket.id) return;
       console.log(`[BACKEND] Game started in ${roomId} by host ${socket.id}`);
+      markRoomStarted(roomId);
       io.to(roomId).emit('game-started');
     });
 
@@ -64,7 +69,7 @@ export function setupSocket(server) {
       socket.to(roomId).emit('opponent-guess', { playerName, playerId, colors, isCorrect, finishTime, guesses });
 
       if (isCorrect) {
-        io.to(roomId).emit('player-won', { playerName, playerId, guesses });
+        io.to(roomId).emit('player-won', { playerName, playerId, guesses, finishTime });
       }
     });
 

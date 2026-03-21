@@ -1,4 +1,21 @@
 <div class="home-first-view">
+
+  <!-- Floating letter background -->
+  <div class="letters-bg" aria-hidden="true">
+    <span class="fl fl-1">P</span>
+    <span class="fl fl-2">R</span>
+    <span class="fl fl-3">O</span>
+    <span class="fl fl-4">M</span>
+    <span class="fl fl-5">P</span>
+    <span class="fl fl-6">T</span>
+    <span class="fl fl-7">L</span>
+    <span class="fl fl-8">E</span>
+    <span class="fl fl-9">?</span>
+    <span class="fl fl-10">P</span>
+    <span class="fl fl-11">R</span>
+    <span class="fl fl-12">O</span>
+  </div>
+
   <app-navbar></app-navbar>
 
   <!-- PROMPTLE LOGO -->
@@ -28,11 +45,10 @@
     </div>
   </div>
 
-  <!-- Multiplayer actions: show Join/Create when in multiplayer mode -->
+  <!-- Multiplayer actions: show lobby button when in multiplayer mode -->
   <div class="mode-actions-wrap" *ngIf="isMultiplayer">
-    <div class="mode-actions-row">
-      <button matButton="filled" class="rect-btn promp2-btn mode-action-btn" (click)="joinChatRoom()">JOIN CHAT ROOM</button>
-      <button matButton="filled" class="rect-btn promp2-btn mode-action-btn" (click)="createRoom()">CREATE ROOM</button>
+    <div class="mode-actions-row mode-actions-row--single">
+      <button matButton="filled" class="rect-btn promp2-btn mode-action-btn" (click)="joinChatRoom()">JOIN MULTIPLAYER ROOM</button>
     </div>
   </div>
 
@@ -75,8 +91,8 @@
               as it pulls from the MongoDB database
             </p>
 
-            <button matButton="filled" class="rect-btn promp1-btn" 
-                    [disabled]="!selectedTopic" 
+            <button matButton="filled" class="rect-btn promp1-btn"
+                    [disabled]="!selectedTopic || isCreatingRoom"
                     (click)="startGame()">
               {{ isMultiplayer ? 'CREATE MULTIPLAYER ROOM' : 'PLAY THIS TOPIC' }}
             </button>
@@ -103,8 +119,8 @@
               Uses AI to generate a new Promptle on the fly
             </p>
 
-            <button matButton="filled" class="rect-btn promp1-btn" 
-                    [disabled]="!customTopic.trim()" 
+            <button matButton="filled" class="rect-btn promp1-btn"
+                    [disabled]="!customTopic.trim() || isCreatingRoom"
                     (click)="startAiGame()">
               {{ isMultiplayer ? 'CREATE MULTIPLAYER AI ROOM' : 'GENERATE AI GAME' }}
             </button>
@@ -126,6 +142,22 @@
     (deleteClicked)="deleteSavedConfirm()"
   ></app-load-saved-game-card>
   </div>
+</div>
+
+<!-- Multiplayer room creation loading overlay -->
+<div class="creating-overlay" *ngIf="isCreatingRoom" aria-live="polite">
+  <mat-card class="creating-card">
+    <mat-card-content>
+      <mat-spinner diameter="48"></mat-spinner>
+      <h3>Creating your multiplayer room…</h3>
+      <p>Generating game content with AI — this takes a few seconds.</p>
+    </mat-card-content>
+  </mat-card>
+</div>
+
+<!-- Error message if room creation failed -->
+<div class="create-error" *ngIf="createRoomError && !isCreatingRoom">
+  {{ createRoomError }}
 </div>
 
 <app-uni-footer></app-uni-footer>
