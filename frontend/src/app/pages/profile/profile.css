@@ -152,9 +152,3 @@
   border-bottom-color: rgba(255, 255, 255, 0.07);
 }
 
-/* Responsive: stack on small screens */
-@media (max-width: 768px) {
-  .profile-content {
-    flex-direction: column;
-  }
-}

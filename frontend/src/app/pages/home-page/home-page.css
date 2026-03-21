@@ -351,17 +351,7 @@ h1 {
   transform: scale(0.96);
 }
 
-@media (max-width: 860px) {
-  .home-main {
-    min-height: clamp(320px, 48vh, 560px);
-  }
-}
 
-@media (max-width: 520px) {
-  .mode-actions-row {
-    grid-template-columns: minmax(170px, 280px);
-  }
-}
 
 /* ── MP room creation loading overlay ── */
 .creating-overlay {

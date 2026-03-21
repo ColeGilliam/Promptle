@@ -87,10 +87,3 @@
   border-color: rgba(255, 255, 255, 0.12);
 }
 
-@media (max-width: 860px) {
-  .uni-footer-grid {
-    grid-template-columns: 1fr;
-    gap: 18px;
-    padding: 20px 16px;
-  }
-}

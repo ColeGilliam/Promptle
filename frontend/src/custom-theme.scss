@@ -36,6 +36,9 @@ html {
   /* Light mode base background (visible through transparent body) */
   background-color: #f3f4f6;
 
+  /* Allow scrolling when content is wider than the viewport */
+  overflow-x: auto;
+
   /* App primary role used by components with color="primary". */
   --mat-sys-primary: #2b5fb8;
   --mat-sys-on-primary: #ffffff;
@@ -59,6 +62,9 @@ body {
 
   // Reset the user agent margin.
   margin: 0;
+
+  // Lock layout at desktop width — narrower viewports scroll instead of reflow
+  min-width: 900px;
 }
 
 body.dark {

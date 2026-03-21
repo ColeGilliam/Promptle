@@ -51,11 +51,16 @@
 }
 
 .game-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  display: flex;
+  flex-wrap: nowrap;
   gap: 14px;
-  width: 100%;
-  min-width: 720px;
+  width: max-content;
+  min-width: 100%;
+}
+
+.game-grid .column {
+  flex: 0 0 160px;
+  width: 160px;
 }
 
 .column {
@@ -394,21 +399,3 @@
   display: block;
 }
 
-@media (max-width: 700px) {
-  .guess-input {
-    flex-wrap: wrap;
-  }
-
-  .guess-select-field {
-    min-width: 0;
-    width: 100%;
-  }
-
-  .saved-status-inline {
-    width: 100%;
-  }
-
-  .game-grid {
-    min-width: 520px;
-  }
-}

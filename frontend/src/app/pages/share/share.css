@@ -139,16 +139,3 @@
   flex-wrap: wrap;
 }
 
-@media (max-width: 480px) {
-  .share-card mat-card-content {
-    padding: 24px 16px 20px;
-  }
-
-  .share-actions {
-    flex-direction: column;
-  }
-
-  .share-actions button {
-    width: 100%;
-  }
-}

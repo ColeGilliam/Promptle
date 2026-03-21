@@ -374,30 +374,3 @@
   gap: 6px;
 }
 
-/* ── Responsive ── */
-@media (max-width: 600px) {
-  .lobby-main {
-    padding: 24px 16px 40px;
-  }
-
-  .code-join-inner {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .code-icon {
-    display: none;
-  }
-
-  .code-input-row {
-    flex-direction: column;
-  }
-
-  .code-field {
-    width: 100%;
-  }
-
-  .join-code-btn {
-    width: 100%;
-  }
-}

@@ -179,37 +179,6 @@
   color: #7e7afc;
 }
 
-@media (max-width: 700px) {
-  .split-topic-card {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
-  .game-topic-left {
-    padding-right: 0;
-  }
-
-  .split-topic-card .game-topic-left {
-    padding-right: 44px;
-  }
-
-  .game-topic-right {
-    border-left: none;
-    border-top: 1px solid rgba(60, 145, 241, 0.32);
-    padding-left: 0;
-    padding-top: 10px;
-  }
-
-  .game-topic-logo {
-    width: 150px;
-  }
-}
-
-@media (max-width: 700px) {
-  :host-context(.dark) .game-topic-right {
-    border-top-color: rgba(139, 92, 246, 0.35);
-  }
-}
 
 .player-row {
   display: flex;

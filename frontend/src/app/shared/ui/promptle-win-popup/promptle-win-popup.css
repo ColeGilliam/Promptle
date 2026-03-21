@@ -137,24 +137,3 @@
   color: #c7d2e8;
 }
 
-@media (max-width: 700px) {
-  .win-card {
-    width: min(680px, calc(100% - 16px));
-    min-width: 0;
-    border-radius: 10px;
-  }
-
-  .win-card mat-card-content {
-    padding: 20px 16px;
-  }
-
-  .win-actions {
-    width: 100%;
-    flex-direction: column;
-  }
-
-  .win-actions .rect-btn.promp1-btn,
-  .win-actions .rect-btn.promp2-btn {
-    width: 100%;
-  }
-}
