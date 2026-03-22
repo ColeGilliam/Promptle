@@ -1,59 +1,78 @@
 <div class="lobby-view">
+
+  <!-- Floating letter background -->
+  <div class="letters-bg" aria-hidden="true">
+    <span class="fl fl-1">P</span>
+    <span class="fl fl-2">R</span>
+    <span class="fl fl-3">O</span>
+    <span class="fl fl-4">M</span>
+    <span class="fl fl-5">P</span>
+    <span class="fl fl-6">T</span>
+    <span class="fl fl-7">L</span>
+    <span class="fl fl-8">E</span>
+    <span class="fl fl-9">?</span>
+    <span class="fl fl-10">P</span>
+    <span class="fl fl-11">R</span>
+    <span class="fl fl-12">O</span>
+  </div>
+  <div class="page-glow" aria-hidden="true"></div>
+
   <app-navbar></app-navbar>
 
+  <!-- ══ HERO ══ -->
+  <section class="lobby-hero">
+    <div class="lobby-hero-glow" aria-hidden="true"></div>
+    <div class="lobby-hero-content">
+      <div class="lobby-header-icon"><mat-icon>sports_esports</mat-icon></div>
+      <h1 class="lobby-title">Multiplayer Lobby</h1>
+      <p class="lobby-subtitle">Browse open rooms and jump in, or enter a room code to join a specific game.</p>
+    </div>
+  </section>
+
+  <!-- ══ MAIN ══ -->
   <div class="lobby-main">
 
-    <!-- Page header -->
-    <div class="lobby-header">
-      <h1 class="lobby-title">Multiplayer Lobby</h1>
-      <p class="lobby-subtitle">
-        Browse open rooms and jump in, or enter a room code to join a specific game.
-      </p>
-    </div>
-
     <!-- Enter room code card -->
-    <mat-card class="code-card">
-      <mat-card-content>
-        <div class="code-join-inner">
-          <mat-icon class="code-icon">meeting_room</mat-icon>
-          <div class="code-join-content">
-            <h2>Have a Room Code?</h2>
-            <p class="code-hint">Enter the 6-character code shared by your host</p>
-            <div class="code-input-row">
-              <mat-form-field appearance="fill" class="code-field">
-                <mat-label>Room Code</mat-label>
-                <input
-                  matInput
-                  [(ngModel)]="roomCodeInput"
-                  (ngModelChange)="onCodeInput()"
-                  placeholder="e.g. ABC123"
-                  maxlength="6"
-                  (keyup.enter)="joinByCode()"
-                  class="code-input-text"
-                >
-              </mat-form-field>
-              <button
-                matButton="filled"
-                class="rect-btn promp1-btn join-code-btn"
-                (click)="joinByCode()"
-              >
-                <mat-icon>login</mat-icon>
-                JOIN
-              </button>
-            </div>
-            <p class="code-error" *ngIf="codeError">
-              <mat-icon class="error-icon">error_outline</mat-icon>
-              {{ codeError }}
-            </p>
-          </div>
+    <div class="code-card reveal">
+      <div class="code-card-icon-wrap">
+        <mat-icon>meeting_room</mat-icon>
+      </div>
+      <div class="code-card-body">
+        <h2 class="code-card-title">Have a Room Code?</h2>
+        <p class="code-hint">Enter the 6-character code shared by your host</p>
+        <div class="code-input-row">
+          <mat-form-field appearance="fill" class="code-field" subscriptSizing="dynamic">
+            <mat-label>Room Code</mat-label>
+            <input
+              matInput
+              [(ngModel)]="roomCodeInput"
+              (ngModelChange)="onCodeInput()"
+              placeholder="e.g. ABC123"
+              maxlength="6"
+              (keyup.enter)="joinByCode()"
+              class="code-input-text"
+            >
+          </mat-form-field>
+          <button
+            matButton="filled"
+            class="rect-btn promp1-btn join-code-btn"
+            (click)="joinByCode()"
+          >
+            <mat-icon>login</mat-icon>
+            JOIN
+          </button>
         </div>
-      </mat-card-content>
-    </mat-card>
+        <p class="code-error" *ngIf="codeError">
+          <mat-icon class="error-icon">error_outline</mat-icon>
+          {{ codeError }}
+        </p>
+      </div>
+    </div>
 
     <!-- Active rooms section -->
     <div class="rooms-section">
 
-      <div class="rooms-header">
+      <div class="rooms-header reveal">
         <div class="rooms-title-group">
           <h2 class="rooms-title">
             Active Rooms
@@ -77,82 +96,88 @@
 
       <!-- Error -->
       <div class="state-panel" *ngIf="errorMsg && !isLoading">
-        <mat-icon class="state-icon error-icon-lg">cloud_off</mat-icon>
+        <div class="state-icon-wrap state-icon-wrap--error">
+          <mat-icon>cloud_off</mat-icon>
+        </div>
+        <h3>Couldn't load rooms</h3>
         <p>{{ errorMsg }}</p>
-        <button matButton="filled" class="rect-btn promp2-btn" (click)="fetchRooms()">
+        <button matButton="filled" class="rect-btn promp1-btn" (click)="fetchRooms()">
+          <mat-icon>refresh</mat-icon>
           Retry
         </button>
       </div>
 
       <!-- Empty -->
       <div class="state-panel" *ngIf="!isLoading && !errorMsg && rooms.length === 0">
-        <mat-icon class="state-icon">group_off</mat-icon>
+        <div class="state-icon-wrap">
+          <mat-icon>group_off</mat-icon>
+        </div>
         <h3>No open rooms right now</h3>
         <p>Create one from the home page and it will appear here instantly.</p>
-        <button matButton="filled" class="rect-btn promp1-btn" routerLink="/">
+        <a matButton="filled" class="rect-btn promp1-btn" routerLink="/">
           <mat-icon>home</mat-icon>
           Go to Home
-        </button>
+        </a>
       </div>
 
       <!-- Room grid -->
       <div class="rooms-grid" *ngIf="!isLoading && !errorMsg && rooms.length > 0">
-        <mat-card
-          class="room-card"
-          *ngFor="let room of rooms"
+        <div
+          class="room-card reveal"
+          [class.room-card--chaos]="room.mode === 'chaos'"
+          [class.room-card--1v1]="room.mode === '1v1'"
+          *ngFor="let room of rooms; let i = index"
+          [style.--delay]="(i * 60) + 'ms'"
           (click)="joinRoom(room.roomId)"
         >
-          <mat-card-content>
-
-            <!-- Top row: badges + age -->
-            <div class="room-card-top">
-              <div class="room-badges">
-                <span class="badge badge-ai" *ngIf="room.source === 'ai'">
-                  <mat-icon>auto_awesome</mat-icon>AI
-                </span>
-                <span class="badge badge-db" *ngIf="room.source === 'db'">
-                  <mat-icon>storage</mat-icon>DB
-                </span>
-                <span class="badge badge-1v1"      *ngIf="room.mode === '1v1'">⚔️ 1v1</span>
-                <span class="badge badge-chaos"    *ngIf="room.mode === 'chaos'">🔥 Chaos</span>
-                <span class="badge badge-standard" *ngIf="room.mode !== '1v1' && room.mode !== 'chaos'">👥 Standard</span>
-                <span class="badge badge-players">
-                  <mat-icon>person</mat-icon>
-                  {{ room.playerCount }} {{ room.playerCount === 1 ? 'player' : 'players' }}
-                </span>
-              </div>
-              <span class="room-time">{{ timeAgo(room.createdAt) }}</span>
+          <!-- Top row: badges + age -->
+          <div class="room-card-top">
+            <div class="room-badges">
+              <span class="badge badge-ai" *ngIf="room.source === 'ai'">
+                <mat-icon>auto_awesome</mat-icon>AI
+              </span>
+              <span class="badge badge-db" *ngIf="room.source === 'db'">
+                <mat-icon>storage</mat-icon>DB
+              </span>
+              <span class="badge badge-1v1"      *ngIf="room.mode === '1v1'">1v1</span>
+              <span class="badge badge-chaos"    *ngIf="room.mode === 'chaos'">Chaos</span>
+              <span class="badge badge-standard" *ngIf="room.mode !== '1v1' && room.mode !== 'chaos'">Standard</span>
+              <span class="badge badge-players">
+                <mat-icon>person</mat-icon>
+                {{ room.playerCount }} {{ room.playerCount === 1 ? 'player' : 'players' }}
+              </span>
             </div>
+            <span class="room-time">{{ timeAgo(room.createdAt) }}</span>
+          </div>
 
-            <!-- Topic -->
-            <h3 class="room-topic">{{ room.topic }}</h3>
+          <!-- Topic -->
+          <h3 class="room-topic">{{ room.topic }}</h3>
 
-            <!-- Room code pill -->
-            <div class="room-code-pill">{{ room.roomId }}</div>
+          <!-- Room code pill -->
+          <div class="room-code-pill">{{ room.roomId }}</div>
 
-            <!-- Join button -->
-            <div class="room-card-actions">
-              <button
-                matButton="filled"
-                class="rect-btn promp1-btn join-room-btn"
-                (click)="joinRoom(room.roomId); $event.stopPropagation()"
-              >
-                <mat-icon>play_arrow</mat-icon>
-                Join Room
-              </button>
-              <button
-                *ngIf="isDevAccount"
-                matButton
-                class="rect-btn delete-room-btn"
-                (click)="deleteRoom(room.roomId, $event)"
-                aria-label="Delete room"
-              >
-                <mat-icon>delete</mat-icon>
-              </button>
-            </div>
+          <!-- Join button -->
+          <div class="room-card-actions">
+            <button
+              matButton="filled"
+              class="rect-btn promp1-btn join-room-btn"
+              (click)="joinRoom(room.roomId); $event.stopPropagation()"
+            >
+              <mat-icon>play_arrow</mat-icon>
+              Join Room
+            </button>
+            <button
+              *ngIf="isDevAccount"
+              matButton
+              class="rect-btn delete-room-btn"
+              (click)="deleteRoom(room.roomId, $event)"
+              aria-label="Delete room"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
 
-          </mat-card-content>
-        </mat-card>
+        </div>
       </div>
 
     </div>

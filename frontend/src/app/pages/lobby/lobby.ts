@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -6,7 +6,6 @@ import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { AuthenticationService } from '../../services/authentication.service';
 import { take } from 'rxjs';
 
-import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -33,7 +32,6 @@ export interface LobbyRoom {
     FormsModule,
     RouterModule,
     HttpClientModule,
-    MatCardModule,
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
@@ -45,7 +43,7 @@ export interface LobbyRoom {
   templateUrl: './lobby.html',
   styleUrls: ['./lobby.css'],
 })
-export class LobbyComponent implements OnInit, OnDestroy {
+export class LobbyComponent implements OnInit, AfterViewInit, OnDestroy {
   rooms: LobbyRoom[] = [];
   roomCodeInput = '';
   isLoading = true;
@@ -56,6 +54,7 @@ export class LobbyComponent implements OnInit, OnDestroy {
   myAuth0Id = '';
 
   private pollInterval: ReturnType<typeof setInterval> | null = null;
+  private revealObserver?: IntersectionObserver;
 
   constructor(
     private http: HttpClient,
@@ -75,8 +74,31 @@ export class LobbyComponent implements OnInit, OnDestroy {
     });
   }
 
+  ngAfterViewInit() {
+    this.setupRevealObserver();
+  }
+
   ngOnDestroy() {
     if (this.pollInterval) clearInterval(this.pollInterval);
+    this.revealObserver?.disconnect();
+  }
+
+  private setupRevealObserver() {
+    this.revealObserver?.disconnect();
+    this.revealObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            (entry.target as HTMLElement).classList.add('reveal--visible');
+            this.revealObserver?.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.08, rootMargin: '0px 0px -30px 0px' }
+    );
+    document.querySelectorAll('.reveal:not(.reveal--visible)').forEach(el => {
+      this.revealObserver!.observe(el);
+    });
   }
 
   fetchRooms() {
@@ -86,6 +108,7 @@ export class LobbyComponent implements OnInit, OnDestroy {
         this.isLoading = false;
         this.errorMsg = '';
         this.lastRefreshed = new Date();
+        setTimeout(() => this.setupRevealObserver(), 50);
       },
       error: () => {
         this.isLoading = false;
@@ -114,7 +137,6 @@ export class LobbyComponent implements OnInit, OnDestroy {
 
   onCodeInput() {
     if (this.codeError) this.codeError = '';
-    // Force uppercase display
     this.roomCodeInput = this.roomCodeInput.toUpperCase();
   }
 

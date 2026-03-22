@@ -1,13 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-promptle-win-popup',
   standalone: true,
-  imports: [CommonModule, MatCardModule, MatButtonModule, MatIconModule],
+  imports: [CommonModule, MatButtonModule, MatIconModule],
   templateUrl: './promptle-win-popup.html',
   styleUrls: ['./promptle-win-popup.css']
 })
@@ -16,7 +15,7 @@ export class PromptleWinPopup {
   @Input() isMultiplayer = false;
   @Input() finishTimeMs: number | null = null;
   @Input() guessCount = 0;
-  @Input() guessColors: string[][] = [];   // [[color,...], ...]
+  @Input() guessColors: string[][] = [];
   @Input() shareUrl = '';
 
   @Output() returnHome = new EventEmitter<void>();

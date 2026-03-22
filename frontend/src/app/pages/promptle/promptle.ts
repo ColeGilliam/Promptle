@@ -16,7 +16,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { MatCardModule } from '@angular/material/card';
 import { animate, style, transition, trigger } from '@angular/animations';
 
 import { MultiplayerService } from '../../services/multiplayer-promptle';
@@ -37,7 +36,6 @@ import { PromptleWinPopup } from '../../shared/ui/promptle-win-popup/promptle-wi
     MatFormFieldModule,
     MatInputModule,
     MatAutocompleteModule,
-    MatCardModule,
     PromptleGameCard,
     PromptleWinPopup,
     NavbarComponent
@@ -528,7 +526,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
     });
 
     this.playerWonSub = this.multiplayerService.onPlayerWon().subscribe(data => {
-      const formattedTime = data.finishTime != null ? this.formatTime(data.finishTime) : undefined;
+      const finishSecs = data.finishTime != null ? Math.round(data.finishTime / 1000) : null;
+      const formattedTime = finishSecs != null ? `${finishSecs} second${finishSecs === 1 ? '' : 's'}` : undefined;
       this.players = this.players.map(p =>
         p.id === data.playerId
           ? { ...p, won: true, guesses: data.guesses, finishTime: formattedTime }
@@ -545,10 +544,11 @@ export class PromptleComponent implements OnInit, OnDestroy {
       if (state) {
         const myId = this.multiplayerService.getSocketId();
         this.players = state.players.map(newPlayer => {
+          const isMe = newPlayer.id === myId;
           const existing = this.players.find(p => p.id === newPlayer.id);
           return existing
-            ? { ...existing, ...newPlayer, isMe: newPlayer.id === myId }
-            : { ...newPlayer, isMe: newPlayer.id === myId };
+            ? { ...existing, ...newPlayer, isMe }
+            : { ...newPlayer, isMe };
         });
         this.currentRoom = state.roomId;
       } else {

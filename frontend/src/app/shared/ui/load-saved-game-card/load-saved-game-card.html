@@ -1,14 +1,56 @@
-<mat-card class="load-confirm-card">
-  <mat-card-content>
-    <h3>Saved game found</h3>
-    <p *ngIf="topic">Topic: <strong>{{ topic }}</strong></p>
-    <p *ngIf="savedAt" class="load-confirm-meta">Saved: {{ savedAt }}</p>
+<div class="saved-card">
 
-    <div class="load-confirm-actions">
-      <button matButton="filled" class="rect-btn promp1-btn" (click)="onContinueClicked()">Continue Saved Game</button>
-      <button matButton="outlined" class="rect-btn promp2-btn" (click)="onCancelClicked()">Cancel</button>
-      <button matButton="text" class="rect-btn promp2-btn" (click)="onStartNewClicked()">Start New Game</button>
-      <button matButton="filled" class="rect-btn promp2-btn" color="warn" (click)="onDeleteClicked()">Delete Saved Game</button>
+  <!-- Icon + header -->
+  <div class="saved-header">
+    <div class="saved-icon-wrap">
+      <mat-icon class="saved-icon">save</mat-icon>
     </div>
-  </mat-card-content>
-</mat-card>
+    <div class="saved-header-text">
+      <h3 class="saved-title">Continue Your Game</h3>
+      <p class="saved-topic" *ngIf="topic">{{ topic }}</p>
+      <p class="saved-meta" *ngIf="savedAt">
+        <mat-icon class="meta-icon">schedule</mat-icon>
+        Saved {{ savedAt }}
+      </p>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="saved-actions">
+    <button
+      matButton="filled"
+      class="rect-btn saved-btn saved-btn--primary"
+      (click)="onContinueClicked()"
+    >
+      <mat-icon>play_arrow</mat-icon>
+      Continue
+    </button>
+
+    <button
+      matButton="outlined"
+      class="rect-btn saved-btn saved-btn--new"
+      (click)="onStartNewClicked()"
+    >
+      <mat-icon>add</mat-icon>
+      New Game
+    </button>
+
+    <button
+      matButton="outlined"
+      class="rect-btn saved-btn saved-btn--cancel"
+      (click)="onCancelClicked()"
+    >
+      Cancel
+    </button>
+
+    <button
+      matButton="outlined"
+      class="rect-btn saved-btn saved-btn--delete"
+      (click)="onDeleteClicked()"
+    >
+      <mat-icon>delete_outline</mat-icon>
+      Delete Save
+    </button>
+  </div>
+
+</div>
