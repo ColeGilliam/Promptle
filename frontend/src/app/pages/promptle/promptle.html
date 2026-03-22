@@ -113,6 +113,25 @@
           <span class="powerup-name">Peek</span>
           <span class="powerup-badge" *ngIf="powerupsUsed.peek">USED</span>
         </button>
+
+        <button
+          class="powerup-btn freeze-btn"
+          [class.used]="powerupsUsed.freeze"
+          [disabled]="powerupsUsed.freeze"
+          (click)="usePowerup('freeze')"
+          title="Lock all opponents' guess input for 8 seconds"
+        >
+          <span class="powerup-icon">🧊</span>
+          <span class="powerup-name">Freeze</span>
+          <span class="powerup-badge" *ngIf="powerupsUsed.freeze">USED</span>
+        </button>
+
+      </div>
+
+      <!-- Freeze effect banner -->
+      <div class="chaos-effect-banner freeze-effect-banner" *ngIf="isFrozen">
+        <span class="chaos-effect-icon">🧊</span>
+        <span><strong>Frozen!</strong> Your input is locked — {{ freezeSecondsLeft }}s remaining</span>
       </div>
 
       <!-- Peek hint toast -->
@@ -148,7 +167,7 @@
                 [(ngModel)]="guessQuery"
                 (ngModelChange)="onGuessQueryChange($event)"
                 placeholder="Start typing a guess"
-                [disabled]="isOneVsOne && !isMyTurn"
+                [disabled]="(isOneVsOne && !isMyTurn) || isFrozen"
               >
               <mat-autocomplete
                 #guessAuto="matAutocomplete"
@@ -166,7 +185,7 @@
             <button
               matButton="filled"
               class="rect-btn promp1-btn"
-              [disabled]="!selectedGuess || isGameOver || (isOneVsOne && !isMyTurn)"
+              [disabled]="!selectedGuess || isGameOver || (isOneVsOne && !isMyTurn) || isFrozen"
               (click)="onSubmitGuess()"
             >
               SUBMIT

@@ -131,11 +131,16 @@ export class PromptleComponent implements OnInit, OnDestroy {
   private stopwatchInterval: ReturnType<typeof setInterval> | null = null;
 
   // Power-ups
-  powerupsUsed = { blackout: false, peek: false };
+  powerupsUsed = { blackout: false, peek: false, freeze: false };
   activePowerupEffect: { type: string; fromPlayerName: string; secondsLeft: number } | null = null;
   powerupHint: { column: string; value: string } | null = null;
   private blackoutInterval: ReturnType<typeof setInterval> | null = null;
   private powerupHintTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  // Chaos incoming effects (shown to the victim)
+  isFrozen = false;
+  freezeSecondsLeft = 0;
+  private freezeInterval: ReturnType<typeof setInterval> | null = null;
 
   isChaos = false;  // true when mode === 'chaos' (has power-ups)
 
@@ -283,12 +288,15 @@ export class PromptleComponent implements OnInit, OnDestroy {
       console.log('[Promptle] Game started (standard)!');
       this.gameStarted = true;
       this.startStopwatch();
-      this.powerupsUsed = { blackout: false, peek: false };
+      this.powerupsUsed = { blackout: false, peek: false, freeze: false };
+      this.isFrozen = false;
       this.cdr.detectChanges();
     });
 
     this.powerupSub = this.multiplayerService.onPowerupEffect().subscribe(data => {
-      if (data.type === 'blackout' && !this.isSpectating) this.startBlackout(data.fromPlayerName);
+      if (this.isSpectating) return;
+      if (data.type === 'blackout') this.startBlackout(data.fromPlayerName);
+      if (data.type === 'freeze')   this.startFreeze(data.fromPlayerName);
       this.cdr.detectChanges();
     });
   }
@@ -298,7 +306,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
     const sub1 = this.multiplayerService.on1v1Started().subscribe(data => {
       console.log('[Promptle] 1v1 started! First turn:', data.currentTurnPlayerName);
       this.gameStarted = true;
-      this.powerupsUsed = { blackout: false, peek: false };
+      this.powerupsUsed = { blackout: false, peek: false, freeze: false };
       this.skipTurnUsed = false;
       this.currentTurnSocketId = data.currentTurnSocketId;
       this.currentTurnPlayerName = data.currentTurnPlayerName;
@@ -377,13 +385,16 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  usePowerup(type: 'blackout' | 'peek') {
+  usePowerup(type: 'blackout' | 'peek' | 'freeze') {
     if (this.powerupsUsed[type] || !this.isMultiplayer || !this.gameStarted || this.isGameOver) return;
     this.powerupsUsed[type] = true;
 
     if (type === 'blackout') {
       this.multiplayerService.emitPowerup(this.currentRoom, 'blackout', this.myUsername);
+    } else if (type === 'freeze') {
+      this.multiplayerService.emitPowerup(this.currentRoom, 'freeze', this.myUsername);
     } else {
+      // peek — local only
       const hint = this.getRevealHint();
       if (hint) {
         this.powerupHint = hint;
@@ -417,6 +428,22 @@ export class PromptleComponent implements OnInit, OnDestroy {
         this.activePowerupEffect = null;
         clearInterval(this.blackoutInterval!);
         this.blackoutInterval = null;
+      }
+      this.cdr.detectChanges();
+    }, 1000);
+  }
+
+  private startFreeze(fromPlayerName: string) {
+    const DURATION = 8;
+    this.isFrozen = true;
+    this.freezeSecondsLeft = DURATION;
+    if (this.freezeInterval) clearInterval(this.freezeInterval);
+    this.freezeInterval = setInterval(() => {
+      this.freezeSecondsLeft--;
+      if (this.freezeSecondsLeft <= 0) {
+        this.isFrozen = false;
+        clearInterval(this.freezeInterval!);
+        this.freezeInterval = null;
       }
       this.cdr.detectChanges();
     }, 1000);
@@ -675,9 +702,10 @@ export class PromptleComponent implements OnInit, OnDestroy {
     const guessed   = this.getGuessedNamesLowercase();
     const available = this.answers.filter(a => !guessed.has(a.name.toLowerCase()));
     const norm      = query.trim().toLowerCase();
-    this.filteredAnswers = norm
+    const result = norm
       ? available.filter(a => a.name.toLowerCase().includes(norm))
       : [...available];
+    this.filteredAnswers = result;
   }
 
   private getGuessedNamesLowercase(): Set<string> {
@@ -808,6 +836,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.oneVsOneSubs.forEach(s => s.unsubscribe());
     this.joinErrorSub?.unsubscribe();
     if (this.blackoutInterval) clearInterval(this.blackoutInterval);
+    if (this.freezeInterval) clearInterval(this.freezeInterval);
     if (this.powerupHintTimeout) clearTimeout(this.powerupHintTimeout);
     this.multiplayerService.leaveRoom();
   }

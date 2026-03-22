@@ -411,7 +411,7 @@
   background: rgba(99, 102, 241, 0.07);
   border: 1px solid rgba(99, 102, 241, 0.2);
   box-sizing: border-box;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 }
 
 .powerup-label {
@@ -474,6 +474,10 @@
 .peek-btn { border-color: rgba(234, 179, 8, 0.5); color: #713f12; }
 .peek-btn:hover:not(:disabled) { box-shadow: 0 4px 14px rgba(234, 179, 8, 0.3); }
 
+/* Freeze button accent */
+.freeze-btn { border-color: rgba(6, 182, 212, 0.5); color: #0e7490; }
+.freeze-btn:hover:not(:disabled) { box-shadow: 0 4px 14px rgba(6, 182, 212, 0.35); }
+
 :host-context(.dark) .powerup-bar {
   background: rgba(99, 102, 241, 0.1);
   border-color: rgba(99, 102, 241, 0.28);
@@ -483,8 +487,9 @@
   color: #c7d2e8;
   border-color: rgba(99, 102, 241, 0.4);
 }
-:host-context(.dark) .blackout-btn { border-color: rgba(239, 68, 68, 0.45); color: #fca5a5; }
-:host-context(.dark) .peek-btn    { border-color: rgba(234, 179, 8, 0.45); color: #fde68a; }
+:host-context(.dark) .blackout-btn  { border-color: rgba(239, 68, 68, 0.45);  color: #fca5a5; }
+:host-context(.dark) .peek-btn     { border-color: rgba(234, 179, 8, 0.45);  color: #fde68a; }
+:host-context(.dark) .freeze-btn   { border-color: rgba(6, 182, 212, 0.45);  color: #67e8f9; }
 
 /* ── 1v1 Skip-Turn power-up bar ────────────────────── */
 .skip-turn-bar {
@@ -554,6 +559,35 @@
 @keyframes hint-slide-in {
   from { opacity: 0; transform: translateY(-8px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ══ Chaos incoming-effect banners ══ */
+.chaos-effect-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 12px 18px;
+  border-radius: var(--rect-btn-radius, 8px);
+  font-size: 0.95rem;
+  font-weight: 500;
+  animation: hint-slide-in 0.3s ease-out;
+  box-sizing: border-box;
+}
+
+.chaos-effect-icon { font-size: 1.2rem; }
+
+.freeze-effect-banner {
+  background: linear-gradient(135deg, rgba(6,182,212,0.14), rgba(14,116,144,0.08));
+  border: 1.5px solid rgba(6, 182, 212, 0.45);
+  color: #0e7490;
+}
+
+:host-context(.dark) .freeze-effect-banner {
+  background: linear-gradient(135deg, rgba(6,182,212,0.12), rgba(8,145,178,0.08));
+  border-color: rgba(6, 182, 212, 0.4);
+  color: #67e8f9;
 }
 
 /* ══ Blackout overlay ══ */
@@ -726,7 +760,7 @@
   padding: 4px 14px;
   border-radius: 20px;
   background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: white;
+  color: white !important;   /* override parent p color */
   font-size: 0.85rem;
   font-weight: 700;
   margin: 4px 0 8px;
