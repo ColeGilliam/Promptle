@@ -78,6 +78,18 @@ export class HomePage implements OnInit, AfterViewInit {
   isDevAccount = false;
   myAuth0Id = '';
 
+  // Dev settings (fetched from backend)
+  allowGuestsCreateRooms = false;
+  allowAllAIGeneration = false;
+
+  get canCreateRooms(): boolean {
+    return this.isDevAccount || this.allowGuestsCreateRooms;
+  }
+
+  get canUseAI(): boolean {
+    return this.isDevAccount || this.allowAllAIGeneration;
+  }
+
   constructor(
     private topicsService: TopicsListService,
     private router: Router,
@@ -88,6 +100,7 @@ export class HomePage implements OnInit, AfterViewInit {
   ngOnInit() {
     this.getTopics();
     this.refreshSavedGameState(); // Single-player init
+    this.loadDevSettings();
 
     // Subscribe to Auth0's real authentication state
     this.auth.isAuthenticated$.subscribe((status) => {
@@ -106,6 +119,16 @@ export class HomePage implements OnInit, AfterViewInit {
 
   ngAfterViewInit() {
     this.refreshSavedGameState();
+  }
+
+  loadDevSettings() {
+    this.http.get<any>('/api/dev-settings').subscribe({
+      next: (data) => {
+        this.allowGuestsCreateRooms = data.allowGuestsCreateRooms ?? false;
+        this.allowAllAIGeneration = data.allowAllAIGeneration ?? false;
+      },
+      error: () => { /* silently fall back to defaults */ }
+    });
   }
 
   // ────────────────────────────────────────────────

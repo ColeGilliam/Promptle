@@ -1,0 +1,287 @@
+.dev-settings-view {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.dev-settings-main {
+  flex: 1;
+  max-width: 680px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 40px 20px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* ── Header ── */
+.dev-settings-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dev-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #6366f1;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.22);
+  border-radius: 6px;
+  padding: 3px 10px;
+  width: fit-content;
+}
+
+.dev-badge mat-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+}
+
+:host-context(.dark) .dev-badge {
+  color: #a5b4fc;
+  background: rgba(165, 180, 252, 0.1);
+  border-color: rgba(165, 180, 252, 0.22);
+}
+
+.dev-settings-title {
+  margin: 0;
+  font-size: clamp(1.5rem, 4vw, 2.2rem);
+  font-weight: 800;
+  background: linear-gradient(135deg, #3b82f6, #6366f1, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  padding: 4px 2px;
+  line-height: 1.2;
+}
+
+.dev-settings-subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+:host-context(.dark) .dev-settings-subtitle {
+  color: #94a3b8;
+}
+
+/* ── Loading state ── */
+.state-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 24px;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.spin-icon {
+  animation: spin 1s linear infinite;
+  color: #6366f1;
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── Settings card ── */
+.settings-card {
+  border-radius: 18px;
+  border: 1.5px solid rgba(99, 102, 241, 0.18);
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 4px 24px rgba(99, 102, 241, 0.08);
+  overflow: hidden;
+}
+
+:host-context(.dark) .settings-card {
+  background: rgba(15, 23, 42, 0.72);
+  border-color: rgba(129, 140, 248, 0.22);
+}
+
+.settings-section {
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #6366f1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.section-title mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+:host-context(.dark) .section-title {
+  color: #a5b4fc;
+}
+
+.settings-divider {
+  height: 1px;
+  background: rgba(99, 102, 241, 0.12);
+  margin: 0 28px;
+}
+
+:host-context(.dark) .settings-divider {
+  background: rgba(129, 140, 248, 0.15);
+}
+
+.setting-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.setting-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.setting-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+:host-context(.dark) .setting-label {
+  color: #e2e8f0;
+}
+
+.setting-desc {
+  font-size: 0.8rem;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+:host-context(.dark) .setting-desc {
+  color: #94a3b8;
+}
+
+.setting-control {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.status-pill {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.status-on {
+  color: #166534;
+  background: rgba(22, 101, 52, 0.1);
+  border: 1px solid rgba(22, 101, 52, 0.25);
+}
+
+.status-off {
+  color: #9f1239;
+  background: rgba(159, 18, 57, 0.08);
+  border: 1px solid rgba(159, 18, 57, 0.2);
+}
+
+:host-context(.dark) .status-on {
+  color: #86efac;
+  background: rgba(134, 239, 172, 0.1);
+  border-color: rgba(134, 239, 172, 0.2);
+}
+
+:host-context(.dark) .status-off {
+  color: #fda4af;
+  background: rgba(253, 164, 175, 0.08);
+  border-color: rgba(253, 164, 175, 0.18);
+}
+
+/* ── Footer ── */
+.settings-footer {
+  padding: 20px 28px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  border-top: 1px solid rgba(99, 102, 241, 0.1);
+  flex-wrap: wrap;
+}
+
+:host-context(.dark) .settings-footer {
+  border-top-color: rgba(129, 140, 248, 0.13);
+}
+
+.save-btn {
+  gap: 6px;
+}
+
+.save-feedback {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  flex: 1;
+}
+
+.save-feedback.success {
+  color: #166534;
+}
+
+.save-feedback.error {
+  color: #9f1239;
+}
+
+:host-context(.dark) .save-feedback.success {
+  color: #86efac;
+}
+
+:host-context(.dark) .save-feedback.error {
+  color: #fda4af;
+}
+
+/* ── Shared button style (must match rest of app) ── */
+.rect-btn {
+  border-radius: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  padding: 0 20px !important;
+  height: 40px !important;
+}
+
+.promp1-btn {
+  background: linear-gradient(135deg, #3b82f6, #6366f1) !important;
+  color: white !important;
+}

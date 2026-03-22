@@ -3,6 +3,7 @@ import { getTopicCollection, getGuessesCollection, getMultiplayerGamesCollection
 from '../config/db.js';
 import { generateSubjects } from './subjectController.js';  // adjust path if needed
 import { getIo } from '../sockets/socketState.js';
+import { fetchDevSettings } from './devSettingsController.js';
 
 const DEV_EMAIL = 'promptle99@gmail.com';
 
@@ -156,9 +157,16 @@ export const createMultiplayerGame = async (req, res) => {
   try {
     const { topic, id, mode, auth0Id } = req.body;
 
-    // ── All multiplayer room creation is restricted to the dev account ──
-    if (!(await isDevAccount(auth0Id))) {
-      return res.status(403).json({ error: 'Multiplayer room creation is restricted to the dev account.' });
+    const isDevUser = await isDevAccount(auth0Id);
+
+    if (!isDevUser) {
+      const settings = await fetchDevSettings();
+      if (topic && !settings.allowAllAIGeneration) {
+        return res.status(403).json({ error: 'AI game generation is restricted to the dev account.' });
+      }
+      if (id && !settings.allowGuestsCreateRooms) {
+        return res.status(403).json({ error: 'Multiplayer room creation is restricted to the dev account.' });
+      }
     }
 
     let gameData;

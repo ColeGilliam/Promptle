@@ -2,6 +2,7 @@
 import OpenAI from 'openai';
 import { OPENAI_API_KEY } from '../config/config.js';
 import { getUsersCollection } from '../config/db.js';
+import { fetchDevSettings } from './devSettingsController.js';
 
 const DEV_EMAIL = 'promptle99@gmail.com';
 
@@ -32,8 +33,12 @@ export function createGenerateSubjectsHandler({
       return res.status(400).json({ error: 'Please provide a topic in the request body.' });
     }
 
-    if (!(await isDevAccount(auth0Id))) {
-      return res.status(403).json({ error: 'AI game generation is restricted to the dev account.' });
+    const isDevUser = await isDevAccount(auth0Id);
+    if (!isDevUser) {
+      const settings = await fetchDevSettings();
+      if (!settings.allowAllAIGeneration) {
+        return res.status(403).json({ error: 'AI game generation is restricted to the dev account.' });
+      }
     }
 
     if (!openaiClient || !apiKey) {

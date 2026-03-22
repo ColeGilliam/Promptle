@@ -6,6 +6,7 @@ import { startGame, createMultiplayerGame, listRooms, deleteRoom } from '../cont
 import { authUser, deleteUserAccount, incrementWin } from '../controllers/authController.js';
 import { getProfile, updateProfile } from '../controllers/userController.js';
 import { saveGame, loadGame, deleteSavedGame } from '../controllers/saveController.js';
+import { getDevSettings, updateDevSettings } from '../controllers/devSettingsController.js';
 
 
 const router = express.Router();
@@ -28,5 +29,7 @@ router.delete('/api/delete-saved-game/:auth0Id', deleteSavedGame);
 router.post('/api/game/multiplayer', createMultiplayerGame);
 router.get('/api/game/rooms', listRooms);
 router.delete('/api/game/rooms/:roomId', deleteRoom);
+router.get('/api/dev-settings', getDevSettings);
+router.put('/api/dev-settings', updateDevSettings);
 
 export default router;

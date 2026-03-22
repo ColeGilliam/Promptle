@@ -27,6 +27,7 @@ import { HttpClient } from '@angular/common/http';
 export class NavbarComponent implements OnInit {
   isLoggedIn = false;
   isDarkTheme = false;
+  isDevAccount = false;
   dbUsername = '';
   dbProfilePic = '';
   private readonly themeStorageKey = 'promptle-theme';
@@ -38,6 +39,7 @@ export class NavbarComponent implements OnInit {
     this.auth.isAuthenticated$.subscribe(status => this.isLoggedIn = status);
     this.auth.user$.subscribe(user => {
       if (user?.sub) {
+        this.isDevAccount = user.email === 'promptle99@gmail.com';
         this.http.get(`/api/profile/${user.sub}`)
           .subscribe((data: any) => {
             this.dbUsername = data?.username;

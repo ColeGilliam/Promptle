@@ -124,6 +124,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
 
   private myUsername = '';
   private mySocketId = '';
+  isDevAccount = false;
+  private myAuth0Id = '';
 
   // Stopwatch
   stopwatchMs = 0;
@@ -198,6 +200,17 @@ export class PromptleComponent implements OnInit, OnDestroy {
       this.gameError = data.message || 'Could not join room.';
       this.gameLoading = false;
       this.cdr.detectChanges();
+    });
+
+    this.multiplayerService.onRoomDeleted().subscribe(() => {
+      this.router.navigate(['/']);
+    });
+
+    this.auth.user$.pipe(take(1)).subscribe(user => {
+      if (user) {
+        this.isDevAccount = user.email === 'promptle99@gmail.com';
+        this.myAuth0Id = user.sub ?? '';
+      }
     });
 
     this.route.queryParamMap.subscribe(params => {
@@ -821,6 +834,18 @@ export class PromptleComponent implements OnInit, OnDestroy {
   }
 
   quitGame() { this.router.navigate(['/']); }
+
+  deleteCurrentRoom() {
+    if (!this.isDevAccount || !this.currentRoom) return;
+    if (!confirm(`Delete room ${this.currentRoom}? All players will be removed.`)) return;
+    this.http.delete(`/api/game/rooms/${this.currentRoom}`, { body: { auth0Id: this.myAuth0Id } }).subscribe({
+      next: () => {
+        this.multiplayerService.emitDeleteRoom(this.currentRoom);
+        this.router.navigate(['/']);
+      },
+      error: (err) => alert(err?.error?.error || 'Failed to delete room.'),
+    });
+  }
 
   startSpectating() {
     this.isSpectating = true;

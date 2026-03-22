@@ -9,12 +9,20 @@ let guessesCollection;
 let usersCollection;
 
 let cachedMultiplayerGamesCollection = null;
+let cachedDevSettingsCollection = null;
 
 export function getMultiplayerGamesCollection() {
   if (!cachedMultiplayerGamesCollection) {
     cachedMultiplayerGamesCollection = db.collection('multiplayerGames');
   }
   return cachedMultiplayerGamesCollection;
+}
+
+export function getDevSettingsCollection() {
+  if (!cachedDevSettingsCollection) {
+    cachedDevSettingsCollection = db.collection('devSettings');
+  }
+  return cachedDevSettingsCollection;
 }
 
 export async function connectDB() {

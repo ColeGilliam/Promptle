@@ -42,6 +42,12 @@
     Profile
   </button>
 
+  <!-- Dev Settings — dev account only -->
+  <button *ngIf="isDevAccount" mat-menu-item routerLink="/dev-settings" aria-label="Dev Settings">
+    <mat-icon>developer_mode</mat-icon>
+    Dev Settings
+  </button>
+
   <!-- Is logged in -->
   <button *ngIf="isLoggedIn" class="logout-button" (click)="toggleLogin()" mat-menu-item aria-label="Logout">
      <mat-icon>logout</mat-icon>

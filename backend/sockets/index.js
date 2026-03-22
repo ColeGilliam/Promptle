@@ -218,6 +218,19 @@ export function setupSocket(server) {
       io.to(room).emit('chat message', message);
     });
 
+    socket.on('delete-room', ({ roomId }) => {
+      if (!roomId) return;
+      console.log(`[BACKEND] Room ${roomId} deleted by ${socket.id}`);
+      io.to(roomId).emit('room-deleted');
+      // Disconnect all sockets from the room
+      const roomSockets = io.sockets.adapter.rooms.get(roomId);
+      if (roomSockets) {
+        roomSockets.forEach(socketId => {
+          io.sockets.sockets.get(socketId)?.leave(roomId);
+        });
+      }
+    });
+
     socket.on('disconnect', () => {
       console.log('[BACKEND] Player disconnected:', socket.id);
 

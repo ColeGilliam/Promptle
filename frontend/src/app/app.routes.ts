@@ -8,6 +8,7 @@ import { ProfileComponent } from './pages/profile/profile';
 import { ChatRoomTest } from './pages/chat-room-test/chat-room-test';
 import { LobbyComponent } from './pages/lobby/lobby';
 import { ShareComponent } from './pages/share/share';
+import { DevSettingsComponent } from './pages/dev-settings/dev-settings';
 
 export const routes: Routes = [
   {path: '', component: HomePage},
@@ -19,4 +20,5 @@ export const routes: Routes = [
   {path: 'chat', component: ChatRoomTest},
   {path: 'lobby', component: LobbyComponent},
   {path: 'share', component: ShareComponent},
+  {path: 'dev-settings', component: DevSettingsComponent},
 ];

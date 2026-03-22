@@ -66,8 +66,8 @@
   <!-- Topic selection cards (shared, but text/buttons adapt to mode) -->
   <div class="topic-selection" *ngIf="!showLoadConfirm">
 
-    <!-- Non-dev multiplayer: join-only panel -->
-    <div class="mp-join-only-panel" *ngIf="isMultiplayer && !isDevAccount">
+    <!-- Non-dev multiplayer: join-only panel (shown only when user can't create any type of room) -->
+    <div class="mp-join-only-panel" *ngIf="isMultiplayer && !canCreateRooms && !canUseAI">
       <mat-icon class="mp-join-icon">sports_esports</mat-icon>
       <h2 class="mp-join-title">Join a Game</h2>
       <p class="mp-join-sub">Browse open rooms or enter a room code to jump in.</p>
@@ -77,10 +77,10 @@
       </button>
     </div>
 
-    <div class="columns" *ngIf="!isMultiplayer || isDevAccount">
+    <div class="columns" *ngIf="!isMultiplayer || canCreateRooms || canUseAI">
 
-      <!-- LEFT: Popular Topics -->
-      <div class="column">
+      <!-- LEFT: Popular Topics (hidden in multiplayer if user can't create DB rooms) -->
+      <div class="column" *ngIf="!isMultiplayer || canCreateRooms">
         <mat-card class="option-card">
           <mat-card-content>
             <h2>Choose from Popular Topics</h2>
@@ -122,8 +122,8 @@
         </mat-card>
       </div>
 
-      <!-- RIGHT: Create Unique (AI) — dev account only -->
-      <div class="column" *ngIf="isDevAccount">
+      <!-- RIGHT: Create Unique (AI) -->
+      <div class="column" *ngIf="canUseAI">
         <mat-card class="option-card">
           <mat-card-content>
             <h2>Create Unique</h2>

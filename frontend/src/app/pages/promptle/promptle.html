@@ -32,14 +32,25 @@
             <p>{{ players.length }} player{{ players.length === 1 ? '' : 's' }} in room — start whenever you're ready</p>
             <p *ngIf="isOneVsOne" class="mode-badge">⚔️ 1v1 Turn-Based Mode</p>
             <p *ngIf="isChaos" class="mode-badge mode-badge-chaos">🔥 Chaos Mode — Power-Ups Enabled</p>
-            <button
-              matButton="filled"
-              class="rect-btn promp1-btn start-game-btn"
-              (click)="hostStartGame()"
-            >
-              <mat-icon>play_arrow</mat-icon>
-              START GAME
-            </button>
+            <div class="host-actions">
+              <button
+                matButton="filled"
+                class="rect-btn promp1-btn start-game-btn"
+                (click)="hostStartGame()"
+              >
+                <mat-icon>play_arrow</mat-icon>
+                START GAME
+              </button>
+              <button
+                *ngIf="isDevAccount"
+                matButton
+                class="rect-btn delete-room-btn"
+                (click)="deleteCurrentRoom()"
+              >
+                <mat-icon>delete</mat-icon>
+                DELETE ROOM
+              </button>
+            </div>
           </div>
 
           <!-- Non-host waiting view -->
@@ -53,6 +64,14 @@
 
         </mat-card-content>
       </mat-card>
+
+      <!-- ══ DEV: Delete room (in-game) ══ -->
+      <div class="dev-delete-bar" *ngIf="isDevAccount && isMultiplayer && gameStarted">
+        <button matButton class="rect-btn delete-room-btn" (click)="deleteCurrentRoom()">
+          <mat-icon>delete</mat-icon>
+          DELETE ROOM
+        </button>
+      </div>
 
       <!-- ══ STOPWATCH (standard mode only — not shown in 1v1) ══ -->
       <div class="stopwatch-bar" *ngIf="!isOneVsOne && !gameLoading && gameStarted && !isGameOver">

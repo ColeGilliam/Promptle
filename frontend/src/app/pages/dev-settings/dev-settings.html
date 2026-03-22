@@ -1,0 +1,103 @@
+<div class="dev-settings-view">
+  <app-navbar></app-navbar>
+
+  <div class="dev-settings-main">
+
+    <div class="dev-settings-header">
+      <div class="dev-badge">
+        <mat-icon>developer_mode</mat-icon>
+        Dev Account
+      </div>
+      <h1 class="dev-settings-title">Dev Settings</h1>
+      <p class="dev-settings-subtitle">
+        Control access permissions for all users. Changes take effect immediately.
+      </p>
+    </div>
+
+    <!-- Loading -->
+    <div class="state-panel" *ngIf="isLoading">
+      <mat-icon class="spin-icon">sync</mat-icon>
+      <p>Loading settings…</p>
+    </div>
+
+    <!-- Settings card -->
+    <div class="settings-card" *ngIf="!isLoading">
+
+      <div class="settings-section">
+        <h2 class="section-title">
+          <mat-icon>group</mat-icon>
+          Multiplayer Room Creation
+        </h2>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-label">Allow guests &amp; other accounts to create popular topic rooms</span>
+            <span class="setting-desc">
+              When enabled, anyone can create multiplayer rooms using popular topics.
+              When disabled, only the dev account can create rooms.
+            </span>
+          </div>
+          <div class="setting-control">
+            <span class="status-pill" [class.status-on]="allowGuestsCreateRooms" [class.status-off]="!allowGuestsCreateRooms">
+              {{ allowGuestsCreateRooms ? 'Enabled' : 'Disabled' }}
+            </span>
+            <mat-slide-toggle
+              [(ngModel)]="allowGuestsCreateRooms"
+              color="primary"
+            ></mat-slide-toggle>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-divider"></div>
+
+      <div class="settings-section">
+        <h2 class="section-title">
+          <mat-icon>auto_awesome</mat-icon>
+          AI Game Generation
+        </h2>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-label">Allow all accounts to generate AI games</span>
+            <span class="setting-desc">
+              When enabled, anyone can generate AI topics for singleplayer and multiplayer.
+              When disabled, only the dev account can use AI generation.
+            </span>
+          </div>
+          <div class="setting-control">
+            <span class="status-pill" [class.status-on]="allowAllAIGeneration" [class.status-off]="!allowAllAIGeneration">
+              {{ allowAllAIGeneration ? 'Enabled' : 'Disabled' }}
+            </span>
+            <mat-slide-toggle
+              [(ngModel)]="allowAllAIGeneration"
+              color="primary"
+            ></mat-slide-toggle>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-footer">
+        <div class="save-feedback success" *ngIf="saveSuccess">
+          <mat-icon>check_circle</mat-icon>
+          Settings saved successfully.
+        </div>
+        <div class="save-feedback error" *ngIf="errorMsg">
+          <mat-icon>error_outline</mat-icon>
+          {{ errorMsg }}
+        </div>
+        <button
+          matButton="filled"
+          class="rect-btn promp1-btn save-btn"
+          (click)="saveSettings()"
+          [disabled]="isSaving"
+        >
+          <mat-icon>save</mat-icon>
+          {{ isSaving ? 'Saving…' : 'Save Settings' }}
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+</div>

@@ -36,6 +36,7 @@ export class MultiplayerService {
   private oneVsOneGameOverCallbacks:     ((data: any) => void)[] = [];
   private oneVsOneDisconnectedCallbacks: ((data: any) => void)[] = [];
   private joinErrorCallbacks:            ((data: any) => void)[] = [];
+  private roomDeletedCallbacks:          (() => void)[] = [];
 
   constructor() {}
 
@@ -113,6 +114,11 @@ export class MultiplayerService {
     this.socket.on('join-error', (data) => {
       console.warn('[Service] join-error received:', data);
       this.joinErrorCallbacks.forEach(cb => cb(data));
+    });
+
+    this.socket.on('room-deleted', () => {
+      console.warn('[Service] room-deleted received');
+      this.roomDeletedCallbacks.forEach(cb => cb());
     });
 
     // ── Connection lifecycle ────────────────────────────────────────────
@@ -287,5 +293,17 @@ export class MultiplayerService {
       this.joinErrorCallbacks.push(cb);
       return () => { this.joinErrorCallbacks = this.joinErrorCallbacks.filter(c => c !== cb); };
     });
+  }
+
+  onRoomDeleted(): Observable<void> {
+    return new Observable(observer => {
+      const cb = () => observer.next();
+      this.roomDeletedCallbacks.push(cb);
+      return () => { this.roomDeletedCallbacks = this.roomDeletedCallbacks.filter(c => c !== cb); };
+    });
+  }
+
+  emitDeleteRoom(roomId: string): void {
+    this.socket?.emit('delete-room', { roomId });
   }
 }
