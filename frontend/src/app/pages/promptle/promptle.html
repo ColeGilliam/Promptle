@@ -49,8 +49,8 @@
           <h3>You are the host</h3>
           <p>{{ players.length }} player{{ players.length === 1 ? '' : 's' }} in room — start whenever you're ready</p>
           <div class="pregame-mode-badges">
-            <span *ngIf="isOneVsOne" class="mode-badge">⚔️ 1v1 Turn-Based Mode</span>
-            <span *ngIf="isChaos" class="mode-badge mode-badge-chaos">🔥 Chaos Mode — Power-Ups Enabled</span>
+            <span *ngIf="isOneVsOne" class="mode-badge">1v1 Turn-Based Mode</span>
+            <span *ngIf="isChaos" class="mode-badge mode-badge-chaos">Chaos Mode — Power-Ups Enabled</span>
           </div>
           <button
             matButton="filled"
@@ -70,8 +70,8 @@
           <h3>Waiting for host to start…</h3>
           <p>{{ players.length }} player{{ players.length === 1 ? '' : 's' }} in room</p>
           <div class="pregame-mode-badges">
-            <span *ngIf="isOneVsOne" class="mode-badge">⚔️ 1v1 Turn-Based Mode</span>
-            <span *ngIf="isChaos" class="mode-badge mode-badge-chaos">🔥 Chaos Mode — Power-Ups Enabled</span>
+            <span *ngIf="isOneVsOne" class="mode-badge">1v1 Turn-Based Mode</span>
+            <span *ngIf="isChaos" class="mode-badge mode-badge-chaos">Chaos Mode — Power-Ups Enabled</span>
           </div>
         </div>
       </div>
@@ -101,7 +101,7 @@
           (click)="useSkipTurn()"
           title="End the opponent's turn and play again immediately"
         >
-          <span class="powerup-icon">⚡</span>
+          <mat-icon class="powerup-icon">bolt</mat-icon>
           <span class="powerup-name">Skip Turn</span>
           <span class="powerup-badge" *ngIf="skipTurnUsed">USED</span>
           <span class="powerup-badge unavail-badge" *ngIf="!skipTurnUsed && isMyTurn">YOUR TURN</span>
@@ -119,7 +119,7 @@
           (click)="usePowerup('blackout')"
           title="Cover all opponents' screens with an ad for 6 seconds"
         >
-          <span class="powerup-icon">📺</span>
+          <mat-icon class="powerup-icon">tv</mat-icon>
           <span class="powerup-name">Ad Break</span>
           <span class="powerup-badge" *ngIf="powerupsUsed.blackout">USED</span>
         </button>
@@ -131,7 +131,7 @@
           (click)="usePowerup('peek')"
           title="Reveal one hidden column value from the answer"
         >
-          <span class="powerup-icon">💡</span>
+          <mat-icon class="powerup-icon">lightbulb</mat-icon>
           <span class="powerup-name">Peek</span>
           <span class="powerup-badge" *ngIf="powerupsUsed.peek">USED</span>
         </button>
@@ -143,7 +143,7 @@
           (click)="usePowerup('freeze')"
           title="Lock all opponents' guess input for 8 seconds"
         >
-          <span class="powerup-icon">🧊</span>
+          <mat-icon class="powerup-icon">ac_unit</mat-icon>
           <span class="powerup-name">Freeze</span>
           <span class="powerup-badge" *ngIf="powerupsUsed.freeze">USED</span>
         </button>
@@ -151,13 +151,13 @@
 
       <!-- Freeze effect banner -->
       <div class="chaos-effect-banner freeze-effect-banner" *ngIf="isFrozen">
-        <span class="chaos-effect-icon">🧊</span>
+        <mat-icon class="chaos-effect-icon">ac_unit</mat-icon>
         <span><strong>Frozen!</strong> Your input is locked — {{ freezeSecondsLeft }}s remaining</span>
       </div>
 
       <!-- Peek hint toast -->
       <div class="powerup-hint-toast" *ngIf="powerupHint">
-        <span class="hint-icon">💡</span>
+        <mat-icon class="hint-icon">lightbulb</mat-icon>
         <span><strong>{{ powerupHint.column }}</strong> = <strong>{{ powerupHint.value }}</strong></span>
       </div>
 
@@ -372,9 +372,9 @@
 <div class="powerup-blackout-overlay" *ngIf="activePowerupEffect?.type === 'blackout' && !isSpectating">
   <div class="blackout-scanlines"></div>
   <div class="blackout-content">
-    <div class="blackout-channel">📺</div>
+    <div class="blackout-channel"><mat-icon>tv</mat-icon></div>
     <div class="blackout-logo">PROMPTLE AD</div>
-    <div class="blackout-headline">⚠ AD BREAK ⚠</div>
+    <div class="blackout-headline">AD BREAK</div>
     <div class="blackout-sub">{{ activePowerupEffect!.fromPlayerName }} disrupted your game!</div>
     <div class="blackout-timer">{{ activePowerupEffect!.secondsLeft }}s</div>
     <div class="blackout-tagline">You will return to your regularly scheduled guessing shortly.</div>

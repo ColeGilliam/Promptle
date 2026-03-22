@@ -31,7 +31,7 @@
       </div>
 
       <!-- Tagline -->
-      <p class="hero-tagline">Guess the answer. Beat your friends. Powered by AI.</p>
+      <p class="hero-tagline">Guess the answer. Beat your friends.</p>
 
       <!-- SP / MP toggle -->
       <div class="hero-toggle">
@@ -52,7 +52,6 @@
           (keyup.enter)="hasSavedGame && onLoadClicked()"
           aria-label="Load saved game"
         >
-          <span class="action-card-icon">💾</span>
           <div class="action-card-content">
             <h3 class="action-card-title">Load Saved Game</h3>
             <p class="action-card-desc">{{ hasSavedGame ? 'Continue your last game' : 'No saved game — start from the Play section below' }}</p>
@@ -71,7 +70,6 @@
           (keyup.enter)="joinChatRoom()"
           aria-label="Join multiplayer lobby"
         >
-          <span class="action-card-icon">🎮</span>
           <div class="action-card-content">
             <h3 class="action-card-title">Join Multiplayer Lobby</h3>
             <p class="action-card-desc">Browse open rooms and jump into a game</p>
@@ -103,7 +101,7 @@
         (keyup.enter)="multiplayerMode = 'standard'"
         aria-label="Standard mode"
       >
-        <div class="mode-card-icon mode-icon-standard">👥</div>
+        <div class="mode-card-icon mode-icon-standard"><mat-icon>group</mat-icon></div>
         <h3 class="mode-card-title">Standard</h3>
         <p class="mode-card-desc">Race the stopwatch. Fewest guesses in the fastest time wins.</p>
         <div class="mode-card-tag">Stopwatch · Guess count</div>
@@ -119,7 +117,7 @@
         (keyup.enter)="multiplayerMode = 'chaos'"
         aria-label="Chaos mode"
       >
-        <div class="mode-card-icon mode-icon-chaos">🔥</div>
+        <div class="mode-card-icon mode-icon-chaos"><mat-icon>whatshot</mat-icon></div>
         <h3 class="mode-card-title">Chaos</h3>
         <p class="mode-card-desc">Power-ups enabled. Freeze opponents, run ad breaks, and peek at answers.</p>
         <div class="mode-card-tag">Ad Break · Peek · Freeze</div>
@@ -135,7 +133,7 @@
         (keyup.enter)="multiplayerMode = '1v1'"
         aria-label="1v1 Turn-Based mode"
       >
-        <div class="mode-card-icon mode-icon-1v1">⚔️</div>
+        <div class="mode-card-icon mode-icon-1v1"><mat-icon>military_tech</mat-icon></div>
         <h3 class="mode-card-title">1v1 Turn-Based</h3>
         <p class="mode-card-desc">Take turns. 30 seconds per guess. First to get it right wins.</p>
         <div class="mode-card-tag">Turn timer · Skip power-up</div>
@@ -233,6 +231,7 @@
       </mat-card>
 
     </div>
+
   </section>
 
   <!-- Inline load-saved confirmation -->

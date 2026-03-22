@@ -32,7 +32,7 @@ export class NavbarComponent implements OnInit {
   showMenu = false;
   private readonly themeStorageKey = 'promptle-theme';
 
-  constructor(public auth: AuthenticationService, private http: HttpClient) {}
+  constructor(public auth: AuthenticationService, private http: HttpClient, public router: Router) {}
 
   ngOnInit() {
     this.initializeTheme();

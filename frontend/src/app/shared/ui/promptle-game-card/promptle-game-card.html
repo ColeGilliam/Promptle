@@ -53,7 +53,7 @@
           </div>
           <span class="player-name">
             {{ player.name }}{{ player.isMe ? ' (Me)' : '' }}
-            <span *ngIf="player.won" class="player-won-badge">🏆 Won!</span>
+            <span *ngIf="player.won" class="player-won-badge"><mat-icon>emoji_events</mat-icon> Won!</span>
           </span>
           <div class="player-colors" *ngIf="player.colors?.length">
             <span

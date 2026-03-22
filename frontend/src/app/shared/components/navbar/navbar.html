@@ -32,7 +32,7 @@
       </button>
 
       <div class="dropdown" [class.dropdown--open]="showMenu">
-        <a class="dropdown-item" routerLink="/" (click)="showMenu = false">
+        <a *ngIf="router.url !== '/'" class="dropdown-item" routerLink="/" (click)="showMenu = false">
           <mat-icon>home</mat-icon>
           <span>Home</span>
         </a>

@@ -50,8 +50,13 @@
 }
 
 .mode-pill-icon {
-  font-size: 1rem;
-  line-height: 1;
+  font-size: 1.1rem !important;
+  width: 1.1rem !important;
+  height: 1.1rem !important;
+  line-height: 1 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Dark mode */

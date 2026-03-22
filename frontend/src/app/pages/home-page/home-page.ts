@@ -116,7 +116,12 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
       (entries) => {
         entries.forEach(entry => {
           if (entry.isIntersecting) {
-            (entry.target as HTMLElement).classList.add('reveal--visible');
+            const el = entry.target as HTMLElement;
+            el.classList.add('reveal--visible');
+            el.addEventListener('animationend', () => {
+              el.classList.remove('reveal--visible');
+              el.style.opacity = '1';
+            }, { once: true });
             this.revealObserver?.unobserve(entry.target);
           }
         });

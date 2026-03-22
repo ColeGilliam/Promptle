@@ -23,7 +23,7 @@
   <section class="lobby-hero">
     <div class="lobby-hero-glow" aria-hidden="true"></div>
     <div class="lobby-hero-content">
-      <div class="lobby-header-icon">🎮</div>
+      <div class="lobby-header-icon"><mat-icon>sports_esports</mat-icon></div>
       <h1 class="lobby-title">Multiplayer Lobby</h1>
       <p class="lobby-subtitle">Browse open rooms and jump in, or enter a room code to join a specific game.</p>
     </div>
@@ -139,9 +139,9 @@
               <span class="badge badge-db" *ngIf="room.source === 'db'">
                 <mat-icon>storage</mat-icon>DB
               </span>
-              <span class="badge badge-1v1"      *ngIf="room.mode === '1v1'">⚔️ 1v1</span>
-              <span class="badge badge-chaos"    *ngIf="room.mode === 'chaos'">🔥 Chaos</span>
-              <span class="badge badge-standard" *ngIf="room.mode !== '1v1' && room.mode !== 'chaos'">👥 Standard</span>
+              <span class="badge badge-1v1"      *ngIf="room.mode === '1v1'">1v1</span>
+              <span class="badge badge-chaos"    *ngIf="room.mode === 'chaos'">Chaos</span>
+              <span class="badge badge-standard" *ngIf="room.mode !== '1v1' && room.mode !== 'chaos'">Standard</span>
               <span class="badge badge-players">
                 <mat-icon>person</mat-icon>
                 {{ room.playerCount }} {{ room.playerCount === 1 ? 'player' : 'players' }}
