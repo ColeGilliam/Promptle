@@ -1,6 +1,19 @@
 // controllers/subjectController.js
 import OpenAI from 'openai';
 import { OPENAI_API_KEY } from '../config/config.js';
+import { getUsersCollection } from '../config/db.js';
+
+const DEV_EMAIL = 'promptle99@gmail.com';
+
+async function isDevAccount(auth0Id) {
+  if (!auth0Id) return false;
+  try {
+    const user = await getUsersCollection().findOne({ auth0Id });
+    return user?.email === DEV_EMAIL;
+  } catch {
+    return false;
+  }
+}
 
 const openai = OPENAI_API_KEY ? new OpenAI({ apiKey: OPENAI_API_KEY }) : null;
 
@@ -10,13 +23,17 @@ export function createGenerateSubjectsHandler({
   logger = console,
 } = {}) {
   return async function generateSubjects(req, res) {
-    const { topic, minCategories = 6, maxCategories = 8 } = req.body || {};
+    const { topic, minCategories = 6, maxCategories = 8, auth0Id } = req.body || {};
     const MIN_COUNT = 7;
     const MAX_COUNT = 100;
     const TARGET_DEFAULT = 20;
 
     if (!topic) {
       return res.status(400).json({ error: 'Please provide a topic in the request body.' });
+    }
+
+    if (!(await isDevAccount(auth0Id))) {
+      return res.status(403).json({ error: 'AI game generation is restricted to the dev account.' });
     }
 
     if (!openaiClient || !apiKey) {

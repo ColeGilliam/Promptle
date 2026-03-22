@@ -1,8 +1,20 @@
 // controllers/gameController.js
-import { getTopicCollection, getGuessesCollection, getMultiplayerGamesCollection }
+import { getTopicCollection, getGuessesCollection, getMultiplayerGamesCollection, getUsersCollection }
 from '../config/db.js';
 import { generateSubjects } from './subjectController.js';  // adjust path if needed
 import { getIo } from '../sockets/socketState.js';
+
+const DEV_EMAIL = 'promptle99@gmail.com';
+
+async function isDevAccount(auth0Id) {
+  if (!auth0Id) return false;
+  try {
+    const user = await getUsersCollection().findOne({ auth0Id });
+    return user?.email === DEV_EMAIL;
+  } catch {
+    return false;
+  }
+}
 
 // Cache collections (your existing pattern)
 let cachedTopicCollection = null;
@@ -142,7 +154,12 @@ export async function startGame(req, res) {
 // ────────────────────────────────────────────────
 export const createMultiplayerGame = async (req, res) => {
   try {
-    const { topic, id, mode } = req.body;
+    const { topic, id, mode, auth0Id } = req.body;
+
+    // ── All multiplayer room creation is restricted to the dev account ──
+    if (!(await isDevAccount(auth0Id))) {
+      return res.status(403).json({ error: 'Multiplayer room creation is restricted to the dev account.' });
+    }
 
     let gameData;
 
@@ -288,5 +305,32 @@ export async function markRoomStarted(roomId) {
     console.log(`[markRoomStarted] Room ${roomId} marked as started`);
   } catch (err) {
     console.error('[markRoomStarted] error:', err);
+  }
+}
+
+// ────────────────────────────────────────────────
+// Delete a room (dev account only)
+// ────────────────────────────────────────────────
+export async function deleteRoom(req, res) {
+  try {
+    const { roomId } = req.params;
+    const { auth0Id } = req.body;
+
+    if (!(await isDevAccount(auth0Id))) {
+      return res.status(403).json({ error: 'Only the dev account can delete rooms.' });
+    }
+
+    const coll = getMultiplayerGamesColl();
+    const result = await coll.deleteOne({ _id: roomId });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ error: 'Room not found.' });
+    }
+
+    console.log(`[deleteRoom] Room ${roomId} deleted by dev account`);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('deleteRoom error:', err);
+    res.status(500).json({ error: 'Failed to delete room.' });
   }
 }

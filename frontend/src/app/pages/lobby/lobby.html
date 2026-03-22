@@ -131,14 +131,25 @@
             <div class="room-code-pill">{{ room.roomId }}</div>
 
             <!-- Join button -->
-            <button
-              matButton="filled"
-              class="rect-btn promp1-btn join-room-btn"
-              (click)="joinRoom(room.roomId); $event.stopPropagation()"
-            >
-              <mat-icon>play_arrow</mat-icon>
-              Join Room
-            </button>
+            <div class="room-card-actions">
+              <button
+                matButton="filled"
+                class="rect-btn promp1-btn join-room-btn"
+                (click)="joinRoom(room.roomId); $event.stopPropagation()"
+              >
+                <mat-icon>play_arrow</mat-icon>
+                Join Room
+              </button>
+              <button
+                *ngIf="isDevAccount"
+                matButton
+                class="rect-btn delete-room-btn"
+                (click)="deleteRoom(room.roomId, $event)"
+                aria-label="Delete room"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
 
           </mat-card-content>
         </mat-card>

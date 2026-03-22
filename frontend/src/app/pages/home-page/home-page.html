@@ -66,7 +66,18 @@
   <!-- Topic selection cards (shared, but text/buttons adapt to mode) -->
   <div class="topic-selection" *ngIf="!showLoadConfirm">
 
-    <div class="columns">
+    <!-- Non-dev multiplayer: join-only panel -->
+    <div class="mp-join-only-panel" *ngIf="isMultiplayer && !isDevAccount">
+      <mat-icon class="mp-join-icon">sports_esports</mat-icon>
+      <h2 class="mp-join-title">Join a Game</h2>
+      <p class="mp-join-sub">Browse open rooms or enter a room code to jump in.</p>
+      <button matButton="filled" class="rect-btn promp1-btn" (click)="joinChatRoom()">
+        <mat-icon>meeting_room</mat-icon>
+        Browse Lobby
+      </button>
+    </div>
+
+    <div class="columns" *ngIf="!isMultiplayer || isDevAccount">
 
       <!-- LEFT: Popular Topics -->
       <div class="column">
@@ -111,8 +122,8 @@
         </mat-card>
       </div>
 
-      <!-- RIGHT: Create Unique (AI) -->
-      <div class="column">
+      <!-- RIGHT: Create Unique (AI) — dev account only -->
+      <div class="column" *ngIf="isDevAccount">
         <mat-card class="option-card">
           <mat-card-content>
             <h2>Create Unique</h2>

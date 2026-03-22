@@ -2,7 +2,7 @@
 import express from 'express';
 import { generateSubjects } from '../controllers/subjectController.js';
 import { getHeaders, getPopularTopics } from '../controllers/topicController.js';
-import { startGame, createMultiplayerGame, listRooms } from '../controllers/gameController.js';
+import { startGame, createMultiplayerGame, listRooms, deleteRoom } from '../controllers/gameController.js';
 import { authUser, deleteUserAccount, incrementWin } from '../controllers/authController.js';
 import { getProfile, updateProfile } from '../controllers/userController.js';
 import { saveGame, loadGame, deleteSavedGame } from '../controllers/saveController.js';
@@ -27,5 +27,6 @@ router.get('/api/load-game/:auth0Id', loadGame);
 router.delete('/api/delete-saved-game/:auth0Id', deleteSavedGame);
 router.post('/api/game/multiplayer', createMultiplayerGame);
 router.get('/api/game/rooms', listRooms);
+router.delete('/api/game/rooms/:roomId', deleteRoom);
 
 export default router;

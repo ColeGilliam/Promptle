@@ -16,6 +16,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatIconModule } from '@angular/material/icon';
 
 import { NavbarComponent } from '../../shared/components/navbar/navbar';
 import { UniFooterComponent } from '../../shared/ui/uni-footer/uni-footer';
@@ -36,6 +37,7 @@ import { LoadSavedGameCard } from '../../shared/ui/load-saved-game-card/load-sav
     MatChipsModule,
     MatButtonModule,
     MatProgressSpinnerModule,
+    MatIconModule,
     NavbarComponent,
     UniFooterComponent,
     MatAutocompleteModule,
@@ -73,6 +75,8 @@ export class HomePage implements OnInit, AfterViewInit {
   // FAKE LOG IN STATE FOR UI
   isLoggedIn = false;
   displayName = 'future username display';
+  isDevAccount = false;
+  myAuth0Id = '';
 
   constructor(
     private topicsService: TopicsListService,
@@ -93,6 +97,8 @@ export class HomePage implements OnInit, AfterViewInit {
     this.auth.user$.subscribe((user) => {
       if (user) {
         this.displayName = user.name ?? '';
+        this.myAuth0Id = user.sub ?? '';
+        this.isDevAccount = user.email === 'promptle99@gmail.com';
         this.registerUser(user);
       }
     });
@@ -129,6 +135,7 @@ export class HomePage implements OnInit, AfterViewInit {
     if (this.isMultiplayer) {
       // MULTIPLAYER: create room on backend (may take several seconds for AI generation)
       payload.mode = this.multiplayerMode;
+      payload.auth0Id = this.myAuth0Id;
       this.isCreatingRoom = true;
       this.createRoomError = '';
       this.http.post<{ roomId: string }>('/api/game/multiplayer', payload)

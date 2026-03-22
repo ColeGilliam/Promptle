@@ -264,7 +264,10 @@ export class PromptleComponent implements OnInit, OnDestroy {
       if (aiTopic && aiTopic.trim()) {
         this.shareTopicParam = aiTopic.trim();
         this.shareIdParam = '';
-        this.loadGame({ topic: aiTopic.trim() }); return;
+        this.auth.user$.pipe(take(1)).subscribe(user => {
+          this.loadGame({ topic: aiTopic.trim(), auth0Id: user?.sub || '' });
+        });
+        return;
       }
       if (!isNaN(topicId)) {
         this.shareIdParam = String(topicId);
@@ -641,7 +644,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.startStopwatch();
   }
 
-  private loadGame(params: { topic?: string; topicId?: number; room?: string; answer?: string }) {
+  private loadGame(params: { topic?: string; topicId?: number; room?: string; answer?: string; auth0Id?: string }) {
     this.gameLoading = true;
     this.gameError   = '';
     this.dbGameService.fetchGame(params).subscribe({

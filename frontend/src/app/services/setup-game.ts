@@ -26,9 +26,9 @@ export class DbGameService {
     );
   }
 
-  // AI game generation (string topic)
-  generateAiGame(topic: string, options?: { minCategories?: number; maxCategories?: number }): Observable<GameData> {
-    const body: any = { topic: topic.trim() };
+  // AI game generation (string topic) — dev account only
+  generateAiGame(topic: string, auth0Id: string, options?: { minCategories?: number; maxCategories?: number }): Observable<GameData> {
+    const body: any = { topic: topic.trim(), auth0Id };
     if (options?.minCategories !== undefined) body.minCategories = options.minCategories;
     if (options?.maxCategories !== undefined) body.maxCategories = options.maxCategories;
 
@@ -53,9 +53,10 @@ export class DbGameService {
     topicId?: number;
     room?: string;
     answer?: string;
+    auth0Id?: string;
   }): Observable<GameData> {
     if (params.topic && params.topic.trim()) {
-      return this.generateAiGame(params.topic.trim());
+      return this.generateAiGame(params.topic.trim(), params.auth0Id || '');
     }
 
     if (params.room && params.room.trim()) {

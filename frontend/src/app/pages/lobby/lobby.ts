@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { AuthenticationService } from '../../services/authentication.service';
+import { take } from 'rxjs';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -50,14 +52,27 @@ export class LobbyComponent implements OnInit, OnDestroy {
   errorMsg = '';
   codeError = '';
   lastRefreshed: Date | null = null;
+  isDevAccount = false;
+  myAuth0Id = '';
 
   private pollInterval: ReturnType<typeof setInterval> | null = null;
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(
+    private http: HttpClient,
+    private router: Router,
+    private auth: AuthenticationService
+  ) {}
 
   ngOnInit() {
     this.fetchRooms();
     this.pollInterval = setInterval(() => this.fetchRooms(), 10000);
+
+    this.auth.user$.pipe(take(1)).subscribe(user => {
+      if (user) {
+        this.myAuth0Id = user.sub ?? '';
+        this.isDevAccount = user.email === 'promptle99@gmail.com';
+      }
+    });
   }
 
   ngOnDestroy() {
@@ -101,6 +116,15 @@ export class LobbyComponent implements OnInit, OnDestroy {
     if (this.codeError) this.codeError = '';
     // Force uppercase display
     this.roomCodeInput = this.roomCodeInput.toUpperCase();
+  }
+
+  deleteRoom(roomId: string, event: Event) {
+    event.stopPropagation();
+    if (!confirm(`Delete room ${roomId}?`)) return;
+    this.http.delete(`/api/game/rooms/${roomId}`, { body: { auth0Id: this.myAuth0Id } }).subscribe({
+      next: () => this.fetchRooms(),
+      error: (err) => alert(err?.error?.error || 'Failed to delete room.'),
+    });
   }
 
   timeAgo(dateStr: string): string {
