@@ -171,6 +171,7 @@
   padding: 6px;
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(0, 0, 0, 0.06);
   z-index: 199;
+  overflow: hidden;
   transform-origin: top right;
   transform: scale(0.88) translateY(-10px);
   opacity: 0;
@@ -207,6 +208,7 @@
   background: none;
   width: 100%;
   text-align: left;
+  outline-offset: -2px;
 }
 
 .dropdown-item mat-icon {

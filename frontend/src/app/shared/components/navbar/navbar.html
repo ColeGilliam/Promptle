@@ -44,6 +44,10 @@
           <mat-icon>face</mat-icon>
           <span>Profile</span>
         </a>
+        <a *ngIf="isDevAccount" class="dropdown-item" routerLink="/dev-settings" (click)="showMenu = false">
+          <mat-icon>settings</mat-icon>
+          <span>Dev Settings</span>
+        </a>
         <div *ngIf="isLoggedIn" class="dropdown-divider"></div>
         <a *ngIf="isLoggedIn" class="dropdown-item dropdown-item--danger" (click)="toggleLogin(); showMenu = false">
           <mat-icon>logout</mat-icon>

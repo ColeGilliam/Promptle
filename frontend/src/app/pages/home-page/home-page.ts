@@ -114,6 +114,8 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
         this.myAuth0Id = user.sub ?? '';
         this.isDevAccount = user.email === 'promptle99@gmail.com';
         this.registerUser(user);
+        // Re-run observer so AI card (now in DOM) gets picked up
+        setTimeout(() => this.setupRevealObserver(), 50);
       }
     });
   }
@@ -156,6 +158,8 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
       next: (data) => {
         this.allowGuestsCreateRooms = data.allowGuestsCreateRooms ?? false;
         this.allowAllAIGeneration = data.allowAllAIGeneration ?? false;
+        // Re-run observer so AI card (now in DOM) gets picked up
+        setTimeout(() => this.setupRevealObserver(), 50);
       },
       error: () => { /* silently fall back to defaults */ }
     });
