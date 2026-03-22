@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TopicsListService, TopicInfo } from '../../services/topics-list';
 import { Router } from '@angular/router';
@@ -16,6 +16,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatIconModule } from '@angular/material/icon';
 
 import { NavbarComponent } from '../../shared/components/navbar/navbar';
 import { UniFooterComponent } from '../../shared/ui/uni-footer/uni-footer';
@@ -36,6 +37,7 @@ import { LoadSavedGameCard } from '../../shared/ui/load-saved-game-card/load-sav
     MatChipsModule,
     MatButtonModule,
     MatProgressSpinnerModule,
+    MatIconModule,
     NavbarComponent,
     UniFooterComponent,
     MatAutocompleteModule,
@@ -45,7 +47,7 @@ import { LoadSavedGameCard } from '../../shared/ui/load-saved-game-card/load-sav
   templateUrl: './home-page.html',
   styleUrls: ['./home-page.css'],
 })
-export class HomePage implements OnInit, AfterViewInit {
+export class HomePage implements OnInit, AfterViewInit, OnDestroy {
   topicNames: string[] = [];
   allTopics: TopicInfo[] = [];
   selectedTopic: TopicInfo | null = null;
@@ -57,6 +59,7 @@ export class HomePage implements OnInit, AfterViewInit {
   multiplayerMode: 'standard' | 'chaos' | '1v1' = 'standard'; // only relevant when isMultiplayer = true
   isCreatingRoom = false; // true while waiting for MP room creation API
   createRoomError = '';
+  private revealObserver?: IntersectionObserver;
 
   // UI state for load-confirmation overlay (single-player only)
   showLoadConfirm = false;
@@ -100,6 +103,30 @@ export class HomePage implements OnInit, AfterViewInit {
 
   ngAfterViewInit() {
     this.refreshSavedGameState();
+    this.setupRevealObserver();
+  }
+
+  ngOnDestroy() {
+    this.revealObserver?.disconnect();
+  }
+
+  private setupRevealObserver() {
+    this.revealObserver?.disconnect();
+    this.revealObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            (entry.target as HTMLElement).classList.add('reveal--visible');
+            this.revealObserver?.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.08, rootMargin: '0px 0px -30px 0px' }
+    );
+
+    document.querySelectorAll('.reveal:not(.reveal--visible)').forEach(el => {
+      this.revealObserver!.observe(el);
+    });
   }
 
   // ────────────────────────────────────────────────
@@ -108,7 +135,11 @@ export class HomePage implements OnInit, AfterViewInit {
   onModeChange(isSingle: boolean) {
     this.isMultiplayer = !isSingle;
     if (!this.isMultiplayer) this.multiplayerMode = 'standard';
-    console.log('Mode changed to:', this.isMultiplayer ? 'Multiplayer' : 'Singleplayer');
+    // Reset reveal state so all cards animate in on every mode switch
+    document.querySelectorAll('.reveal--visible').forEach(el => {
+      el.classList.remove('reveal--visible');
+    });
+    setTimeout(() => this.setupRevealObserver(), 50);
   }
 
   // ────────────────────────────────────────────────
@@ -221,6 +252,7 @@ export class HomePage implements OnInit, AfterViewInit {
 
   cancelLoadConfirm() {
     this.showLoadConfirm = false;
+    setTimeout(() => this.setupRevealObserver(), 50);
   }
 
   continueSaved() {
@@ -246,6 +278,7 @@ export class HomePage implements OnInit, AfterViewInit {
             alert('Saved game deleted from your account.');
             this.showLoadConfirm = false;
             this.refreshSavedGameState();
+            setTimeout(() => this.setupRevealObserver(), 50);
           },
           error: (err) => {
             console.error('Failed to delete saved game on server', err);
@@ -258,6 +291,7 @@ export class HomePage implements OnInit, AfterViewInit {
           alert('Local saved game deleted.');
           this.showLoadConfirm = false;
           this.refreshSavedGameState();
+          setTimeout(() => this.setupRevealObserver(), 50);
         } catch (e) {
           console.error('Failed to delete local saved game', e);
           alert('Failed to delete local saved game.');

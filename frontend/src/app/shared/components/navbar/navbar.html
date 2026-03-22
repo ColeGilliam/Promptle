@@ -1,50 +1,55 @@
-<mat-toolbar class="topbar">
-  <button matMiniFab routerLink="/" aria-label="Go to homepage">
-    <mat-icon>home</mat-icon>
-  </button>
+<nav class="topbar">
+  <!-- Brand -->
+  <a class="brand" routerLink="/" aria-label="Promptle home">
+    <img [src]="isDarkTheme ? 'promptle_logo_dark.png' : 'PromptleLogoTransparent.png'" class="brand-logo" alt="">
+    <span class="brand-name">Promptle</span>
+  </a>
 
   <span class="spacer"></span>
 
-  <div *ngIf="isLoggedIn" class="user-nav-section">
-    <span class="nav-username">{{ dbUsername || 'User' }}</span>
-    <img [src]="dbProfilePic || 'assets/default-avatar.png'" class="nav-avatar">
+  <!-- User chip (logged in) -->
+  <div *ngIf="isLoggedIn" class="user-chip">
+    <img [src]="dbProfilePic || 'assets/default-avatar.png'" class="nav-avatar" alt="Avatar">
+    <span class="nav-username">{{ dbUsername || 'Player' }}</span>
   </div>
 
-  <div class="actions">
+  <!-- Right actions -->
+  <div class="nav-actions">
     <button
-      matMiniFab
+      class="icon-btn"
       (click)="toggleTheme()"
       [attr.aria-label]="isDarkTheme ? 'Switch to light mode' : 'Switch to dark mode'"
     >
       <mat-icon>{{ isDarkTheme ? 'light_mode' : 'dark_mode' }}</mat-icon>
     </button>
-    
-    <button matMiniFab [matMenuTriggerFor]="mainMenu" aria-label="Open menu">
-      <mat-icon>menu</mat-icon>
-    </button>
+
+    <div class="menu-wrap">
+      <!-- Backdrop to close menu on outside click -->
+      <div class="menu-backdrop" *ngIf="showMenu" (click)="showMenu = false"></div>
+
+      <button class="icon-btn" (click)="showMenu = !showMenu" aria-label="Open menu">
+        <mat-icon>{{ showMenu ? 'close' : 'menu' }}</mat-icon>
+      </button>
+
+      <div class="dropdown" [class.dropdown--open]="showMenu">
+        <a class="dropdown-item" routerLink="/" (click)="showMenu = false">
+          <mat-icon>home</mat-icon>
+          <span>Home</span>
+        </a>
+        <a *ngIf="!isLoggedIn" class="dropdown-item" (click)="toggleLogin(); showMenu = false">
+          <mat-icon>login</mat-icon>
+          <span>Login</span>
+        </a>
+        <a *ngIf="isLoggedIn" class="dropdown-item" routerLink="/profile" (click)="showMenu = false">
+          <mat-icon>face</mat-icon>
+          <span>Profile</span>
+        </a>
+        <div *ngIf="isLoggedIn" class="dropdown-divider"></div>
+        <a *ngIf="isLoggedIn" class="dropdown-item dropdown-item--danger" (click)="toggleLogin(); showMenu = false">
+          <mat-icon>logout</mat-icon>
+          <span>Logout</span>
+        </a>
+      </div>
+    </div>
   </div>
-</mat-toolbar>
-
-<mat-menu #mainMenu="matMenu">
-  <button mat-menu-item routerLink="">
-    <mat-icon>home</mat-icon>
-    <span>Home</span>
-  </button>
-  <!-- Is not logged in-->
-  <button mat-menu-item *ngIf="!isLoggedIn" class="login-button" (click)="toggleLogin()" mat-menu-item aria-label="Login">
-    <mat-icon>login</mat-icon>
-    Login
-  </button>
-
-  <!-- Profile button only if logged in-->
-  <button *ngIf="isLoggedIn" class="profile-button" mat-menu-item aria-label="Profile" routerLink="/profile">
-    <mat-icon>face</mat-icon>
-    Profile
-  </button>
-
-  <!-- Is logged in -->
-  <button *ngIf="isLoggedIn" class="logout-button" (click)="toggleLogin()" mat-menu-item aria-label="Logout">
-     <mat-icon>logout</mat-icon>
-    Logout
-  </button>
-</mat-menu>
+</nav>

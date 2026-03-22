@@ -1,10 +1,22 @@
-<mat-button-toggle-group
-  class="mode-toggle rect-btn promp1-btn"
-  [disabled]="disabled"
-  [value]="modeValue"
-  (valueChange)="onModeChange($event)"
-  aria-label="Select game mode"
-  name="gameMode">
-  <mat-button-toggle value="singleplayer">Singleplayer 👤</mat-button-toggle>
-  <mat-button-toggle value="multiplayer">Multiplayer 👥</mat-button-toggle>
-</mat-button-toggle-group>
+<div class="mode-pill-group" [class.is-disabled]="disabled" role="radiogroup" aria-label="Select game mode">
+  <button
+    class="mode-pill"
+    [class.mode-pill--active]="isSingleplayer"
+    [disabled]="disabled"
+    (click)="onModeChange('singleplayer')"
+    type="button"
+  >
+    <span class="mode-pill-icon">👤</span>
+    <span class="mode-pill-label">Singleplayer</span>
+  </button>
+  <button
+    class="mode-pill"
+    [class.mode-pill--active]="!isSingleplayer"
+    [disabled]="disabled"
+    (click)="onModeChange('multiplayer')"
+    type="button"
+  >
+    <span class="mode-pill-icon">👥</span>
+    <span class="mode-pill-label">Multiplayer</span>
+  </button>
+</div>

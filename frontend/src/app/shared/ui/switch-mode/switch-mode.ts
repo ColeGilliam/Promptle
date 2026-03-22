@@ -1,11 +1,10 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
 
 @Component({
   selector: 'app-switch-mode',
   standalone: true,
-  imports: [CommonModule, MatButtonToggleModule],
+  imports: [CommonModule],
   templateUrl: './switch-mode.html',
   styleUrl: './switch-mode.css',
 })

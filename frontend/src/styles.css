@@ -20,6 +20,14 @@ body.dark ::selection {
 
 :root {
   --rect-btn-radius: 8px; /* change once to control all rectangular buttons */
+  --navbar-height: 62px;
+}
+
+/* Reserve space for the fixed navbar so content doesn't hide under it */
+app-navbar {
+  display: block;
+  height: var(--navbar-height);
+  flex-shrink: 0;
 }
 
 .rect-btn {
@@ -40,5 +48,61 @@ body.dark ::selection {
   --mdc-outlined-button-container-shape: var(--rect-btn-radius);
   --mdc-text-button-container-shape: var(--rect-btn-radius);
   border-radius: var(--rect-btn-radius);
+}
+
+/* ── Global animated autocomplete / select dropdowns ── */
+@keyframes panel-reveal {
+  from {
+    opacity: 0;
+    transform: scaleY(0.88) translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1) translateY(0);
+  }
+}
+
+.mat-mdc-autocomplete-panel {
+  border-radius: 12px !important;
+  border: 1px solid rgba(99, 102, 241, 0.18) !important;
+  box-shadow: 0 8px 32px rgba(60, 145, 241, 0.16), 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+  transform-origin: top center;
+  animation: panel-reveal 0.2s cubic-bezier(0.2, 0, 0, 1) !important;
+  overflow: hidden;
+}
+
+body.dark .mat-mdc-autocomplete-panel {
+  background: rgba(12, 16, 28, 0.97) !important;
+  border-color: rgba(139, 92, 246, 0.28) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+.mat-mdc-autocomplete-panel .mat-mdc-option {
+  border-radius: 8px;
+  margin: 2px 4px;
+  font-size: 0.9rem;
+}
+
+.mat-mdc-autocomplete-panel .mat-mdc-option:hover {
+  background: rgba(99, 102, 241, 0.08) !important;
+}
+
+body.dark .mat-mdc-autocomplete-panel .mat-mdc-option:hover {
+  background: rgba(139, 92, 246, 0.14) !important;
+}
+
+/* Select panel */
+.mat-mdc-select-panel {
+  border-radius: 12px !important;
+  border: 1px solid rgba(99, 102, 241, 0.18) !important;
+  box-shadow: 0 8px 32px rgba(60, 145, 241, 0.16), 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+  animation: panel-reveal 0.2s cubic-bezier(0.2, 0, 0, 1) !important;
+  overflow: hidden;
+}
+
+body.dark .mat-mdc-select-panel {
+  background: rgba(12, 16, 28, 0.97) !important;
+  border-color: rgba(139, 92, 246, 0.28) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45) !important;
 }
 

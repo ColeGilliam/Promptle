@@ -1,5 +1,5 @@
 <div class="profile-view">
-  <app-navbar></app-navbar>
+  <div class="page-glow" aria-hidden="true"></div>
 
   <div class="letters-bg" aria-hidden="true">
     <span class="fl fl-1">P</span>
@@ -16,25 +16,33 @@
     <span class="fl fl-12">O</span>
   </div>
 
+  <app-navbar></app-navbar>
+
+  <!-- Hero header -->
+  <div class="profile-hero" *ngIf="isLoggedIn">
+    <div class="avatar-hero-wrap">
+      <img [src]="selectedImageBase64 || dbProfilePic || 'https://via.placeholder.com/150'"
+           class="hero-avatar" alt="User Avatar">
+      <div class="avatar-ring"></div>
+    </div>
+    <h1 class="profile-hero-name">{{ dbUsername || 'Player' }}</h1>
+    <p class="profile-hero-sub">Promptle Player</p>
+  </div>
+
   <div class="page-layout">
     <div class="profile-container" *ngIf="isLoggedIn">
 
-      <!-- Top row: Profile card + Stats side by side -->
       <div class="profile-content">
 
         <!-- LEFT: Profile Card -->
         <mat-card class="profile-card">
-          <mat-card-header>
-            <mat-card-title>Your Profile</mat-card-title>
-          </mat-card-header>
-
           <mat-card-content>
-            <div class="avatar-section">
-              <img [src]="selectedImageBase64 || dbProfilePic || 'https://via.placeholder.com/150'"
-                   class="profile-avatar" alt="User Avatar">
+            <h2 class="card-section-title">Edit Profile</h2>
+
+            <div class="upload-row">
               <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" hidden>
-              <button matButton="filled" class="promp2-btn rect-btn" (click)="fileInput.click()">
-                <mat-icon>upload</mat-icon> Upload Picture
+              <button matButton="outlined" class="rect-btn upload-btn" (click)="fileInput.click()">
+                <mat-icon>upload</mat-icon> Change Avatar
               </button>
             </div>
 
@@ -45,25 +53,32 @@
           </mat-card-content>
 
           <mat-card-actions class="actions">
-            <button matButton="filled" class="promp2-btn rect-btn" (click)="saveProfile()">
-              Save Changes
+            <button matButton="filled" class="promp1-btn rect-btn save-btn" (click)="saveProfile()">
+              <mat-icon>save</mat-icon> Save Changes
             </button>
-            <button matButton="filled" class="promp2-btn rect-btn" (click)="deleteAccount()">
-              Delete Account
+            <button matButton="outlined" class="danger-btn rect-btn" (click)="deleteAccount()">
+              <mat-icon>delete_forever</mat-icon> Delete Account
             </button>
           </mat-card-actions>
         </mat-card>
 
         <!-- RIGHT: Stats Card -->
         <mat-card class="stats-card">
-          <mat-card-header>
-            <mat-card-title>Player Stats</mat-card-title>
-          </mat-card-header>
-
           <mat-card-content>
-            <div class="stat-item">
-              <span class="stat-label">Total Wins:</span>
-              <span class="stat-value">{{ winCount }}</span>
+            <h2 class="card-section-title">Player Stats</h2>
+
+            <div class="stat-big">
+              <div class="stat-big-icon">🏆</div>
+              <div class="stat-big-value">{{ winCount }}</div>
+              <div class="stat-big-label">Total Wins</div>
+            </div>
+
+            <div class="stat-divider"></div>
+
+            <div class="stat-row">
+              <div class="stat-row-icon">🎮</div>
+              <span class="stat-row-label">Games Played</span>
+              <span class="stat-row-value">{{ winCount }}</span>
             </div>
           </mat-card-content>
         </mat-card>
@@ -73,7 +88,9 @@
 
     <!-- Not logged in message -->
     <div *ngIf="!isLoggedIn" class="not-logged-in">
-      <p>Please log in to view your profile.</p>
+      <mat-icon class="not-logged-icon">lock</mat-icon>
+      <h2>Sign in to view your profile</h2>
+      <p>Your stats and settings are stored securely with your account.</p>
     </div>
   </div>
 </div>

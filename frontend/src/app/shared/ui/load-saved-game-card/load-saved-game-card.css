@@ -3,50 +3,185 @@
   width: 100%;
 }
 
-.load-confirm-card {
-  width: min(760px, 100%);
-  max-width: 760px;
-  margin: 20px auto 0;
-  border-radius: 12px;
-  box-shadow: 0 0 20px rgba(60, 145, 241, 0.35);
-  border: 1px solid rgba(60, 145, 241, 0.32);
-  background: #ffffff;
-  color: #182337;
+.saved-card {
+  width: min(680px, 100%);
+  margin: 0 auto;
+  padding: 28px 28px 24px;
+  border-radius: 18px;
+  border: 1.5px solid rgba(99, 102, 241, 0.28);
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow:
+    0 0 0 4px rgba(99, 102, 241, 0.08),
+    0 8px 32px rgba(60, 145, 241, 0.16);
+  animation: card-pop-in 0.35s cubic-bezier(0.2, 0, 0, 1) both;
 }
 
-.load-confirm-card mat-card-content {
-  padding: 20px;
-  text-align: center;
+@keyframes card-pop-in {
+  from { opacity: 0; transform: scale(0.96) translateY(16px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0);    }
 }
 
-.load-confirm-card h3 {
-  margin: 0 0 10px;
+:host-context(.dark) .saved-card {
+  background: rgba(15, 23, 42, 0.75);
+  border-color: rgba(129, 140, 248, 0.35);
+  box-shadow:
+    0 0 0 4px rgba(99, 102, 241, 0.12),
+    0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
-.load-confirm-card p {
-  margin: 0 0 8px;
+/* ── Header row ── */
+.saved-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  margin-bottom: 22px;
 }
 
-.load-confirm-meta {
-  color: #66778f;
-  font-size: 0.9em;
+.saved-icon-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(99, 102, 241, 0.15));
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-.load-confirm-actions {
-  margin-top: 14px;
+.saved-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.saved-header-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.saved-title {
+  margin: 0 0 4px;
+  font-size: 1.15rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  padding: 1px 0;
+}
+
+:host-context(.dark) .saved-title {
+  background: linear-gradient(135deg, #93c5fd, #a5b4fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.saved-topic {
+  margin: 0 0 5px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+:host-context(.dark) .saved-topic {
+  color: #e2e8f0;
+}
+
+.saved-meta {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.82rem;
+  color: #94a3b8;
+}
+
+.meta-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+  line-height: 14px;
+  opacity: 0.7;
+}
+
+/* ── Action buttons ── */
+.saved-actions {
   display: flex;
   gap: 10px;
-  justify-content: center;
   flex-wrap: wrap;
 }
 
-:host-context(.dark) .load-confirm-card {
-  border-color: rgba(192, 198, 208, 0.62);
-  box-shadow: 0 0 20px rgba(192, 198, 208, 0.25);
-  background: #1f2733;
-  color: #e3eaf7;
+.saved-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 42px;
+  font-size: 0.875rem !important;
 }
 
-:host-context(.dark) .load-confirm-meta {
-  color: #b9c8e4;
+.saved-btn--primary {
+  background: linear-gradient(135deg, #3b82f6, #6366f1) !important;
+  color: white !important;
+  border: none !important;
+  box-shadow: 0 3px 10px rgba(99, 102, 241, 0.35) !important;
+}
+
+.saved-btn--primary:hover {
+  filter: brightness(1.08);
+}
+
+.saved-btn--new {
+  color: #6366f1 !important;
+  border-color: rgba(99, 102, 241, 0.4) !important;
+}
+
+.saved-btn--new:hover {
+  background: rgba(99, 102, 241, 0.07) !important;
+}
+
+.saved-btn--cancel {
+  color: #64748b !important;
+  border-color: rgba(100, 116, 139, 0.35) !important;
+}
+
+.saved-btn--cancel:hover {
+  background: rgba(100, 116, 139, 0.07) !important;
+}
+
+.saved-btn--delete {
+  color: #dc2626 !important;
+  border-color: rgba(220, 38, 38, 0.35) !important;
+  margin-left: auto;
+}
+
+.saved-btn--delete:hover {
+  background: rgba(220, 38, 38, 0.07) !important;
+}
+
+:host-context(.dark) .saved-btn--new {
+  color: #818cf8 !important;
+  border-color: rgba(129, 140, 248, 0.4) !important;
+}
+
+:host-context(.dark) .saved-btn--cancel {
+  color: #94a3b8 !important;
+  border-color: rgba(148, 163, 184, 0.3) !important;
+}
+
+:host-context(.dark) .saved-btn--delete {
+  color: #fca5a5 !important;
+  border-color: rgba(252, 165, 165, 0.35) !important;
+}
+
+@media (max-width: 520px) {
+  .saved-card {
+    padding: 20px 16px 18px;
+  }
+
+  .saved-btn--delete {
+    margin-left: 0;
+  }
 }

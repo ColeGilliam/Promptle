@@ -1,4 +1,19 @@
 <div class="game-first-view">
+  <!-- Floating letter background -->
+  <div class="letters-bg" aria-hidden="true">
+    <span class="fl fl-1">P</span>
+    <span class="fl fl-2">R</span>
+    <span class="fl fl-3">O</span>
+    <span class="fl fl-4">M</span>
+    <span class="fl fl-5">P</span>
+    <span class="fl fl-6">T</span>
+    <span class="fl fl-7">L</span>
+    <span class="fl fl-8">E</span>
+    <span class="fl fl-9">?</span>
+  </div>
+
+  <div class="page-glow" aria-hidden="true"></div>
+
   <app-navbar></app-navbar>
 
   <div class="game-main">
@@ -15,44 +30,51 @@
       ></app-promptle-game-card>
 
       <!-- Error -->
-      <div *ngIf="gameError" class="error">{{ gameError }}</div>
+      <div *ngIf="gameError" class="error-banner">
+        <mat-icon>error_outline</mat-icon>
+        {{ gameError }}
+      </div>
 
       <!-- ══ MULTIPLAYER PRE-GAME PANEL ══ -->
-      <mat-card
+      <div
         class="mp-pregame-card"
         *ngIf="isMultiplayer && !gameStarted && !gameLoading && !gameError"
         [@cardEnter]
       >
-        <mat-card-content>
-
-          <!-- Host view -->
-          <div class="mp-host-panel" *ngIf="isHost">
-            <mat-icon class="pregame-icon host-icon">sports_esports</mat-icon>
-            <h3>You are the host</h3>
-            <p>{{ players.length }} player{{ players.length === 1 ? '' : 's' }} in room — start whenever you're ready</p>
-            <p *ngIf="isOneVsOne" class="mode-badge">⚔️ 1v1 Turn-Based Mode</p>
-            <p *ngIf="isChaos" class="mode-badge mode-badge-chaos">🔥 Chaos Mode — Power-Ups Enabled</p>
-            <button
-              matButton="filled"
-              class="rect-btn promp1-btn start-game-btn"
-              (click)="hostStartGame()"
-            >
-              <mat-icon>play_arrow</mat-icon>
-              START GAME
-            </button>
+        <!-- Host view -->
+        <div class="mp-host-panel" *ngIf="isHost">
+          <div class="pregame-icon-wrap pregame-icon-wrap--host">
+            <mat-icon>sports_esports</mat-icon>
           </div>
-
-          <!-- Non-host waiting view -->
-          <div class="mp-waiting-panel" *ngIf="!isHost">
-            <mat-icon class="pregame-icon waiting-icon">hourglass_top</mat-icon>
-            <h3>Waiting for host to start…</h3>
-            <p>{{ players.length }} player{{ players.length === 1 ? '' : 's' }} in room</p>
-            <p *ngIf="isOneVsOne" class="mode-badge">⚔️ 1v1 Turn-Based Mode</p>
-            <p *ngIf="isChaos" class="mode-badge mode-badge-chaos">🔥 Chaos Mode — Power-Ups Enabled</p>
+          <h3>You are the host</h3>
+          <p>{{ players.length }} player{{ players.length === 1 ? '' : 's' }} in room — start whenever you're ready</p>
+          <div class="pregame-mode-badges">
+            <span *ngIf="isOneVsOne" class="mode-badge">⚔️ 1v1 Turn-Based Mode</span>
+            <span *ngIf="isChaos" class="mode-badge mode-badge-chaos">🔥 Chaos Mode — Power-Ups Enabled</span>
           </div>
+          <button
+            matButton="filled"
+            class="rect-btn promp1-btn start-game-btn"
+            (click)="hostStartGame()"
+          >
+            <mat-icon>play_arrow</mat-icon>
+            START GAME
+          </button>
+        </div>
 
-        </mat-card-content>
-      </mat-card>
+        <!-- Non-host waiting view -->
+        <div class="mp-waiting-panel" *ngIf="!isHost">
+          <div class="pregame-icon-wrap pregame-icon-wrap--waiting">
+            <mat-icon>hourglass_top</mat-icon>
+          </div>
+          <h3>Waiting for host to start…</h3>
+          <p>{{ players.length }} player{{ players.length === 1 ? '' : 's' }} in room</p>
+          <div class="pregame-mode-badges">
+            <span *ngIf="isOneVsOne" class="mode-badge">⚔️ 1v1 Turn-Based Mode</span>
+            <span *ngIf="isChaos" class="mode-badge mode-badge-chaos">🔥 Chaos Mode — Power-Ups Enabled</span>
+          </div>
+        </div>
+      </div>
 
       <!-- ══ STOPWATCH (standard mode only — not shown in 1v1) ══ -->
       <div class="stopwatch-bar" *ngIf="!isOneVsOne && !gameLoading && gameStarted && !isGameOver">
@@ -125,7 +147,6 @@
           <span class="powerup-name">Freeze</span>
           <span class="powerup-badge" *ngIf="powerupsUsed.freeze">USED</span>
         </button>
-
       </div>
 
       <!-- Freeze effect banner -->
@@ -150,176 +171,166 @@
         </div>
       </div>
 
-      <!-- ══ GUESS INPUT (hidden until game starts in MP, hidden while spectating) ══ -->
-      <mat-card
+      <!-- ══ GUESS INPUT ══ -->
+      <div
         class="guess-actions-card"
         *ngIf="answers.length && (!isMultiplayer || gameStarted) && !isSpectating"
         [@cardEnter]
       >
-        <mat-card-content>
-          <div class="guess-input">
-            <mat-form-field appearance="fill" class="guess-select-field" subscriptSizing="dynamic">
-              <mat-label>Select a Guess</mat-label>
-              <input
-                type="text"
-                matInput
-                [matAutocomplete]="guessAuto"
-                [(ngModel)]="guessQuery"
-                (ngModelChange)="onGuessQueryChange($event)"
-                placeholder="Start typing a guess"
-                [disabled]="(isOneVsOne && !isMyTurn) || isFrozen"
-              >
-              <mat-autocomplete
-                #guessAuto="matAutocomplete"
-                (optionSelected)="onGuessOptionSelected($event.option.value)"
-              >
-                <mat-option *ngFor="let answer of filteredAnswers" [value]="answer.name">
-                  {{ answer.name }}
-                </mat-option>
-                <mat-option *ngIf="filteredAnswers.length === 0" disabled>
-                  No guesses found
-                </mat-option>
-              </mat-autocomplete>
-            </mat-form-field>
-
-            <button
-              matButton="filled"
-              class="rect-btn promp1-btn"
-              [disabled]="!selectedGuess || isGameOver || (isOneVsOne && !isMyTurn) || isFrozen"
-              (click)="onSubmitGuess()"
+        <div class="guess-input">
+          <mat-form-field appearance="fill" class="guess-select-field" subscriptSizing="dynamic">
+            <mat-label>Select a Guess</mat-label>
+            <input
+              type="text"
+              matInput
+              [matAutocomplete]="guessAuto"
+              [(ngModel)]="guessQuery"
+              (ngModelChange)="onGuessQueryChange($event)"
+              placeholder="Start typing a guess"
+              [disabled]="(isOneVsOne && !isMyTurn) || isFrozen"
             >
-              SUBMIT
-            </button>
+            <mat-autocomplete
+              #guessAuto="matAutocomplete"
+              (optionSelected)="onGuessOptionSelected($event.option.value)"
+            >
+              <mat-option *ngFor="let answer of filteredAnswers" [value]="answer.name">
+                {{ answer.name }}
+              </mat-option>
+              <mat-option *ngIf="filteredAnswers.length === 0" disabled>
+                No guesses found
+              </mat-option>
+            </mat-autocomplete>
+          </mat-form-field>
 
-            <ng-container *ngIf="!isMultiplayer">
-              <button matButton="filled" class="rect-btn promp2-btn" (click)="saveGame()" [disabled]="!answers.length">SAVE</button>
-              <button matButton="filled" class="rect-btn promp2-btn" (click)="restartGame()" [disabled]="!answers.length">RESTART</button>
-              <span *ngIf="savedTimestamp" class="saved-status-inline">Saved: {{ savedTimestamp }}</span>
-            </ng-container>
-          </div>
-        </mat-card-content>
-      </mat-card>
+          <button
+            matButton="filled"
+            class="rect-btn promp1-btn"
+            [disabled]="!selectedGuess || isGameOver || (isOneVsOne && !isMyTurn) || isFrozen"
+            (click)="onSubmitGuess()"
+          >
+            SUBMIT
+          </button>
+
+          <ng-container *ngIf="!isMultiplayer">
+            <button matButton="filled" class="rect-btn promp2-btn" (click)="saveGame()" [disabled]="!answers.length">SAVE</button>
+            <button matButton="filled" class="rect-btn promp2-btn" (click)="restartGame()" [disabled]="!answers.length">RESTART</button>
+            <span *ngIf="savedTimestamp" class="saved-status-inline">Saved: {{ savedTimestamp }}</span>
+          </ng-container>
+        </div>
+      </div>
 
       <!-- ══ 1v1 SHARED GUESS GRID ══ -->
-      <mat-card
+      <div
         class="game-grid-card"
         *ngIf="isOneVsOne && headers.length && gameStarted"
         [@cardEnterDelayed]
       >
-        <mat-card-content>
-          <div class="game-grid-meta">
-            <p class="game-grid-subtitle" *ngIf="oneVsOneGuesses.length === 0">Waiting for first guess…</p>
-            <p class="game-grid-subtitle" *ngIf="oneVsOneGuesses.length > 0">{{ oneVsOneGuesses.length }} guess{{ oneVsOneGuesses.length === 1 ? '' : 'es' }} made.</p>
-          </div>
+        <div class="game-grid-meta">
+          <p class="game-grid-subtitle" *ngIf="oneVsOneGuesses.length === 0">Waiting for first guess…</p>
+          <p class="game-grid-subtitle" *ngIf="oneVsOneGuesses.length > 0">{{ oneVsOneGuesses.length }} guess{{ oneVsOneGuesses.length === 1 ? '' : 'es' }} made.</p>
+        </div>
 
-          <div class="game-grid-scroll">
-            <div class="game-grid">
-              <!-- Player label column -->
-              <div class="column player-label-column">
-                <div class="header">Player</div>
-                <div
-                  class="guess-cell player-label-cell"
-                  *ngFor="let guess of oneVsOneGuesses"
-                  [@cardEnter]
-                  [class.my-guess-label]="guess.isMe"
-                >
-                  {{ guess.isMe ? 'You' : guess.guesserName }}
-                </div>
+        <div class="game-grid-scroll">
+          <div class="game-grid">
+            <!-- Player label column -->
+            <div class="column player-label-column">
+              <div class="header">Player</div>
+              <div
+                class="guess-cell player-label-cell"
+                *ngFor="let guess of oneVsOneGuesses"
+                [@cardEnter]
+                [class.my-guess-label]="guess.isMe"
+              >
+                {{ guess.isMe ? 'You' : guess.guesserName }}
               </div>
-              <!-- Data columns -->
-              <div class="column" *ngFor="let header of headers; let i = index">
-                <div class="header">{{ header }}</div>
-                <div
-                  class="guess-cell"
-                  *ngFor="let guess of oneVsOneGuesses"
-                  [@cardEnter]
-                  [style.background-color]="guess.colors[i]"
-                >
-                  {{ guess.values[i] }}
-                </div>
+            </div>
+            <!-- Data columns -->
+            <div class="column" *ngFor="let header of headers; let i = index">
+              <div class="header">{{ header }}</div>
+              <div
+                class="guess-cell"
+                *ngFor="let guess of oneVsOneGuesses"
+                [@cardEnter]
+                [style.background-color]="guess.colors[i]"
+              >
+                {{ guess.values[i] }}
               </div>
             </div>
           </div>
-        </mat-card-content>
-      </mat-card>
+        </div>
+      </div>
 
-      <!-- ══ SPECTATE GRID (standard MP only, shown while spectating) ══ -->
-      <mat-card
+      <!-- ══ SPECTATE GRID ══ -->
+      <div
         class="game-grid-card spectate-grid-card"
         *ngIf="isSpectating && !isOneVsOne && headers.length"
         [@cardEnterDelayed]
       >
-        <mat-card-content>
-          <div class="spectate-banner">
-            <mat-icon>visibility</mat-icon>
-            <span>You are spectating — watching other players' guesses live</span>
-          </div>
+        <div class="spectate-banner">
+          <mat-icon>visibility</mat-icon>
+          <span>You are spectating — watching other players' guesses live</span>
+        </div>
 
-          <div class="game-grid-meta">
-            <p class="game-grid-subtitle" *ngIf="spectateGuesses.length === 0">Waiting for guesses…</p>
-            <p class="game-grid-subtitle" *ngIf="spectateGuesses.length > 0">{{ spectateGuesses.length }} guess{{ spectateGuesses.length === 1 ? '' : 'es' }} made.</p>
-          </div>
+        <div class="game-grid-meta">
+          <p class="game-grid-subtitle" *ngIf="spectateGuesses.length === 0">Waiting for guesses…</p>
+          <p class="game-grid-subtitle" *ngIf="spectateGuesses.length > 0">{{ spectateGuesses.length }} guess{{ spectateGuesses.length === 1 ? '' : 'es' }} made.</p>
+        </div>
 
-          <div class="game-grid-scroll">
-            <div class="game-grid">
-              <!-- Player label column -->
-              <div class="column player-label-column">
-                <div class="header">Player</div>
-                <div
-                  class="guess-cell player-label-cell"
-                  *ngFor="let guess of spectateGuesses"
-                  [@cardEnter]
-                  [class.my-guess-label]="guess.isMe"
-                >
-                  {{ guess.isMe ? 'You' : guess.playerName }}
-                </div>
+        <div class="game-grid-scroll">
+          <div class="game-grid">
+            <div class="column player-label-column">
+              <div class="header">Player</div>
+              <div
+                class="guess-cell player-label-cell"
+                *ngFor="let guess of spectateGuesses"
+                [@cardEnter]
+                [class.my-guess-label]="guess.isMe"
+              >
+                {{ guess.isMe ? 'You' : guess.playerName }}
               </div>
-              <!-- Data columns -->
-              <div class="column" *ngFor="let header of headers; let i = index">
-                <div class="header">{{ header }}</div>
-                <div
-                  class="guess-cell"
-                  *ngFor="let guess of spectateGuesses"
-                  [@cardEnter]
-                  [style.background-color]="guess.colors[i]"
-                >
-                  {{ guess.values[i] }}
-                </div>
+            </div>
+            <div class="column" *ngFor="let header of headers; let i = index">
+              <div class="header">{{ header }}</div>
+              <div
+                class="guess-cell"
+                *ngFor="let guess of spectateGuesses"
+                [@cardEnter]
+                [style.background-color]="guess.colors[i]"
+              >
+                {{ guess.values[i] }}
               </div>
             </div>
           </div>
-        </mat-card-content>
-      </mat-card>
+        </div>
+      </div>
 
-      <!-- ══ STANDARD GAME GRID (non-1v1, hidden while spectating) ══ -->
-      <mat-card
+      <!-- ══ STANDARD GAME GRID ══ -->
+      <div
         class="game-grid-card"
         *ngIf="!isOneVsOne && !isSpectating && headers.length && (!isMultiplayer || gameStarted)"
         [@cardEnterDelayed]
       >
-        <mat-card-content>
-          <div class="game-grid-meta">
-            <p class="game-grid-subtitle" *ngIf="submittedGuesses.length === 0">Submit a guess to start filling the grid.</p>
-            <p class="game-grid-subtitle" *ngIf="submittedGuesses.length > 0">{{ submittedGuesses.length }} guess{{ submittedGuesses.length === 1 ? '' : 'es' }} submitted.</p>
-          </div>
+        <div class="game-grid-meta">
+          <p class="game-grid-subtitle" *ngIf="submittedGuesses.length === 0">Submit a guess to start filling the grid.</p>
+          <p class="game-grid-subtitle" *ngIf="submittedGuesses.length > 0">{{ submittedGuesses.length }} guess{{ submittedGuesses.length === 1 ? '' : 'es' }} submitted.</p>
+        </div>
 
-          <div class="game-grid-scroll">
-            <div class="game-grid">
-              <div class="column" *ngFor="let header of headers; let i = index">
-                <div class="header">{{ header }}</div>
-                <div
-                  class="guess-cell"
-                  *ngFor="let guess of submittedGuesses"
-                  [@cardEnter]
-                  [style.background-color]="guess.colors[i]"
-                >
-                  {{ guess.values[i] }}
-                </div>
+        <div class="game-grid-scroll">
+          <div class="game-grid">
+            <div class="column" *ngFor="let header of headers; let i = index">
+              <div class="header">{{ header }}</div>
+              <div
+                class="guess-cell"
+                *ngFor="let guess of submittedGuesses"
+                [@cardEnter]
+                [style.background-color]="guess.colors[i]"
+              >
+                {{ guess.values[i] }}
               </div>
             </div>
           </div>
-        </mat-card-content>
-      </mat-card>
+        </div>
+      </div>
 
     </div>
   </div>
@@ -342,16 +353,22 @@
 <!-- ══ LOSS OVERLAY (1v1 only) ══ -->
 <div class="loss-overlay" *ngIf="iLost && isGameOver">
   <div class="loss-card">
-    <mat-icon class="loss-icon">sentiment_very_dissatisfied</mat-icon>
-    <h2>Better luck next time!</h2>
-    <p>{{ oneVsOneWinnerName }} wins!</p>
+    <div class="loss-glow" aria-hidden="true"></div>
+    <div class="loss-icon-wrap">
+      <mat-icon>sentiment_very_dissatisfied</mat-icon>
+    </div>
+    <h2 class="loss-title">Better luck next time!</h2>
+    <p class="loss-winner">{{ oneVsOneWinnerName }} wins!</p>
     <div class="loss-actions">
-      <button matButton="filled" class="rect-btn promp2-btn" (click)="quitGame()">RETURN HOME</button>
+      <button matButton="filled" class="rect-btn promp2-btn" (click)="quitGame()">
+        <mat-icon>home</mat-icon>
+        RETURN HOME
+      </button>
     </div>
   </div>
 </div>
 
-<!-- ══ BLACKOUT OVERLAY (never shown to spectators) ══ -->
+<!-- ══ BLACKOUT OVERLAY ══ -->
 <div class="powerup-blackout-overlay" *ngIf="activePowerupEffect?.type === 'blackout' && !isSpectating">
   <div class="blackout-scanlines"></div>
   <div class="blackout-content">

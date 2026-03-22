@@ -1,4 +1,4 @@
-<div class="home-first-view">
+<div class="home-root">
 
   <!-- Floating letter background -->
   <div class="letters-bg" aria-hidden="true">
@@ -18,63 +18,153 @@
 
   <app-navbar></app-navbar>
 
-  <!-- PROMPTLE LOGO -->
-  <div class="home-main">
-  <div class="logoTitle">
-    <img src="PromptleLogoTransparent.png">
-  </div>
+  <!-- ══ HERO ══ -->
+  <section class="hero-section">
+    <div class="hero-glow" aria-hidden="true"></div>
 
-  <!-- Toggle multiplayer / single player -->
-  <div style="text-align: center; margin-top: 12px;">
-    <app-switch-mode
-      [isSingleplayer]="!isMultiplayer"
-      (isSingleplayerChange)="onModeChange($event)"
-    ></app-switch-mode>
-  </div>
+    <div class="hero-content">
 
-  <!-- Current mode indicator (helpful for testing)
-  <div style="text-align: center; margin: 12px 0; font-weight: bold; color: #444;">
-    Current mode: {{ isMultiplayer ? 'MULTIPLAYER 👥' : 'SINGLE PLAYER 👤' }}
-  </div> -->
+      <!-- Logo -->
+      <div class="hero-logo">
+        <img class="hero-logo-light" src="PromptleLogoTransparent.png" alt="Promptle logo">
+        <img class="hero-logo-dark" src="promptle_logo_dark.png" alt="Promptle logo">
+      </div>
 
-  <!-- Single-player actions: show Load/New when in single-player mode -->
-  <div class="mode-actions-wrap" *ngIf="!isMultiplayer">
-    <div class="mode-actions-row mode-actions-row--single">
-      <button matButton="elevated" class="rect-btn promp2-btn mode-action-btn" (click)="onLoadClicked()" [disabled]="!hasSavedGame">LOAD GAME</button>
+      <!-- Tagline -->
+      <p class="hero-tagline">Guess the answer. Beat your friends. Powered by AI.</p>
+
+      <!-- SP / MP toggle -->
+      <div class="hero-toggle">
+        <app-switch-mode
+          [isSingleplayer]="!isMultiplayer"
+          (isSingleplayerChange)="onModeChange($event)"
+        ></app-switch-mode>
+      </div>
+
+      <!-- Single-player CTA -->
+      <div class="hero-actions" *ngIf="!isMultiplayer">
+        <div
+          class="action-card"
+          [class.action-card--disabled]="!hasSavedGame"
+          (click)="hasSavedGame && onLoadClicked()"
+          role="button"
+          [attr.tabindex]="hasSavedGame ? 0 : -1"
+          (keyup.enter)="hasSavedGame && onLoadClicked()"
+          aria-label="Load saved game"
+        >
+          <span class="action-card-icon">💾</span>
+          <div class="action-card-content">
+            <h3 class="action-card-title">Load Saved Game</h3>
+            <p class="action-card-desc">{{ hasSavedGame ? 'Continue your last game' : 'No saved game — start from the Play section below' }}</p>
+          </div>
+          <mat-icon class="action-card-arrow">arrow_forward</mat-icon>
+        </div>
+      </div>
+
+      <!-- Multiplayer CTA -->
+      <div class="hero-actions" *ngIf="isMultiplayer">
+        <div
+          class="action-card"
+          (click)="joinChatRoom()"
+          role="button"
+          tabindex="0"
+          (keyup.enter)="joinChatRoom()"
+          aria-label="Join multiplayer lobby"
+        >
+          <span class="action-card-icon">🎮</span>
+          <div class="action-card-content">
+            <h3 class="action-card-title">Join Multiplayer Lobby</h3>
+            <p class="action-card-desc">Browse open rooms and jump into a game</p>
+          </div>
+          <mat-icon class="action-card-arrow">arrow_forward</mat-icon>
+        </div>
+      </div>
+
     </div>
-  </div>
 
-  <!-- Multiplayer actions: show lobby button + game-mode sub-toggle when in multiplayer mode -->
-  <div class="mode-actions-wrap" *ngIf="isMultiplayer">
-    <div class="mode-actions-row mode-actions-row--single">
-      <button matButton="filled" class="rect-btn promp2-btn mode-action-btn" (click)="joinChatRoom()">JOIN MULTIPLAYER ROOM</button>
+    <!-- Scroll hint -->
+    <div class="hero-scroll-hint" aria-hidden="true">
+      <span class="scroll-arrow">↓</span>
+      <span class="scroll-label">Pick a topic below</span>
     </div>
-    <!-- Sub-mode toggle: Standard / Chaos / 1v1 -->
-    <div class="submode-row">
-      <button class="submode-btn" [class.submode-active]="multiplayerMode === 'standard'" (click)="multiplayerMode = 'standard'">
-        👥 Standard
-      </button>
-      <button class="submode-btn submode-chaos" [class.submode-active]="multiplayerMode === 'chaos'" (click)="multiplayerMode = 'chaos'">
-        🔥 Chaos
-      </button>
-      <button class="submode-btn" [class.submode-active]="multiplayerMode === '1v1'" (click)="multiplayerMode = '1v1'">
-        ⚔️ 1v1
-      </button>
+  </section>
+
+  <!-- ══ MODE SHOWCASE (multiplayer only) ══ -->
+  <section class="modes-section" *ngIf="isMultiplayer">
+    <h2 class="section-title reveal">Choose Your Mode</h2>
+    <div class="modes-grid">
+
+      <div
+        class="mode-card reveal"
+        [class.mode-card--active]="multiplayerMode === 'standard'"
+        (click)="multiplayerMode = 'standard'"
+        role="button"
+        tabindex="0"
+        (keyup.enter)="multiplayerMode = 'standard'"
+        aria-label="Standard mode"
+      >
+        <div class="mode-card-icon mode-icon-standard">👥</div>
+        <h3 class="mode-card-title">Standard</h3>
+        <p class="mode-card-desc">Race the stopwatch. Fewest guesses in the fastest time wins.</p>
+        <div class="mode-card-tag">Stopwatch · Guess count</div>
+      </div>
+
+      <div
+        class="mode-card mode-card--chaos reveal"
+        style="--delay: 90ms"
+        [class.mode-card--active]="multiplayerMode === 'chaos'"
+        (click)="multiplayerMode = 'chaos'"
+        role="button"
+        tabindex="0"
+        (keyup.enter)="multiplayerMode = 'chaos'"
+        aria-label="Chaos mode"
+      >
+        <div class="mode-card-icon mode-icon-chaos">🔥</div>
+        <h3 class="mode-card-title">Chaos</h3>
+        <p class="mode-card-desc">Power-ups enabled. Freeze opponents, run ad breaks, and peek at answers.</p>
+        <div class="mode-card-tag">Ad Break · Peek · Freeze</div>
+      </div>
+
+      <div
+        class="mode-card mode-card--1v1 reveal"
+        style="--delay: 180ms"
+        [class.mode-card--active]="multiplayerMode === '1v1'"
+        (click)="multiplayerMode = '1v1'"
+        role="button"
+        tabindex="0"
+        (keyup.enter)="multiplayerMode = '1v1'"
+        aria-label="1v1 Turn-Based mode"
+      >
+        <div class="mode-card-icon mode-icon-1v1">⚔️</div>
+        <h3 class="mode-card-title">1v1 Turn-Based</h3>
+        <p class="mode-card-desc">Take turns. 30 seconds per guess. First to get it right wins.</p>
+        <div class="mode-card-tag">Turn timer · Skip power-up</div>
+      </div>
+
     </div>
-  </div>
+  </section>
 
-  <!-- Topic selection cards (shared, but text/buttons adapt to mode) -->
-  <div class="topic-selection" *ngIf="!showLoadConfirm">
+  <!-- ══ PLAY SECTION ══ -->
+  <section class="play-section" *ngIf="!showLoadConfirm">
+    <h2 class="section-title reveal">
+      {{ isMultiplayer ? 'Set Up Your Room' : 'Start Playing' }}
+    </h2>
 
-    <div class="columns">
+    <div class="play-grid">
 
-      <!-- LEFT: Popular Topics -->
-      <div class="column">
-        <mat-card class="option-card">
-          <mat-card-content>
-            <h2>Choose from Popular Topics</h2>
+      <!-- Popular Topics card -->
+      <mat-card class="play-card reveal">
+        <mat-card-content>
+          <div class="play-card-header">
+            <div class="play-card-icon-wrap play-icon-db">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3"/></svg>
+            </div>
+            <h3 class="play-card-title">Popular Topics</h3>
+          </div>
+          <p class="play-card-desc">Pick from curated topics pulled straight from the database — no wait time.</p>
 
-            <mat-form-field appearance="fill" class="topic-field">
+          <div class="play-card-form">
+            <mat-form-field appearance="fill" class="topic-field" subscriptSizing="dynamic">
               <mat-label>Select a topic</mat-label>
               <input
                 type="text"
@@ -97,65 +187,70 @@
               </mat-autocomplete>
             </mat-form-field>
 
-            <p class="subtext">
-              This list will generate a game with no down time
-              as it pulls from the MongoDB database
-            </p>
-
-            <button matButton="filled" class="rect-btn promp1-btn"
-                    [disabled]="!selectedTopic || isCreatingRoom"
-                    (click)="startGame()">
+            <button
+              matButton="filled"
+              class="rect-btn promp1-btn play-start-btn"
+              [disabled]="!selectedTopic || isCreatingRoom"
+              (click)="startGame()"
+            >
               {{ isMultiplayer ? 'CREATE MULTIPLAYER ROOM' : 'PLAY THIS TOPIC' }}
             </button>
-          </mat-card-content>
-        </mat-card>
-      </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
 
-      <!-- RIGHT: Create Unique (AI) -->
-      <div class="column">
-        <mat-card class="option-card">
-          <mat-card-content>
-            <h2>Create Unique</h2>
+      <!-- AI / Custom topic card -->
+      <mat-card class="play-card reveal" style="--delay: 100ms">
+        <mat-card-content>
+          <div class="play-card-header">
+            <div class="play-card-icon-wrap play-icon-ai">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 8v4l2 2"/><path d="M18 2v4h4"/></svg>
+            </div>
+            <h3 class="play-card-title">Create Unique</h3>
+          </div>
+          <p class="play-card-desc">Enter any topic and AI generates a brand-new Promptle on the fly.</p>
 
-            <mat-form-field appearance="fill" class="topic-field">
+          <div class="play-card-form">
+            <mat-form-field appearance="fill" class="topic-field" subscriptSizing="dynamic">
               <mat-label>Enter a custom topic</mat-label>
               <input
                 matInput
-                placeholder="Enter any topic (e.g., Solar System, K-Pop groups)"
+                placeholder="e.g. Solar System, K-Pop groups…"
                 [(ngModel)]="customTopic"
               >
             </mat-form-field>
 
-            <p class="subtext">
-              Uses AI to generate a new Promptle on the fly
-            </p>
-
-            <button matButton="filled" class="rect-btn promp1-btn"
-                    [disabled]="!customTopic.trim() || isCreatingRoom"
-                    (click)="startAiGame()">
-              {{ isMultiplayer ? 'CREATE MULTIPLAYER AI ROOM' : 'GENERATE AI GAME' }}
+            <button
+              matButton="filled"
+              class="rect-btn promp1-btn play-start-btn"
+              [disabled]="!customTopic.trim() || isCreatingRoom"
+              (click)="startAiGame()"
+          >
+            {{ isMultiplayer ? 'CREATE MULTIPLAYER AI ROOM' : 'GENERATE AI GAME' }}
             </button>
-          </mat-card-content>
-        </mat-card>
-      </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
 
     </div>
-  </div>
+  </section>
 
-  <!-- Inline confirmation shown when user clicks LOAD and a saved game exists (single-player only) -->
-  <app-load-saved-game-card
-    *ngIf="showLoadConfirm && !isMultiplayer"
-    [topic]="savedGameTopic"
-    [savedAt]="savedGameSavedAt"
-    (continueClicked)="continueSaved()"
-    (cancelClicked)="cancelLoadConfirm()"
-    (startNewClicked)="cancelLoadConfirm(); newGame()"
-    (deleteClicked)="deleteSavedConfirm()"
-  ></app-load-saved-game-card>
-  </div>
+  <!-- Inline load-saved confirmation -->
+  <section class="load-confirm-section" *ngIf="showLoadConfirm && !isMultiplayer">
+    <app-load-saved-game-card
+      [topic]="savedGameTopic"
+      [savedAt]="savedGameSavedAt"
+      (continueClicked)="continueSaved()"
+      (cancelClicked)="cancelLoadConfirm()"
+      (startNewClicked)="cancelLoadConfirm(); newGame()"
+      (deleteClicked)="deleteSavedConfirm()"
+    ></app-load-saved-game-card>
+  </section>
+
+  <app-uni-footer></app-uni-footer>
 </div>
 
-<!-- Multiplayer room creation loading overlay -->
+<!-- ══ Room-creation loading overlay ══ -->
 <div class="creating-overlay" *ngIf="isCreatingRoom" aria-live="polite">
   <mat-card class="creating-card">
     <mat-card-content>
@@ -166,9 +261,7 @@
   </mat-card>
 </div>
 
-<!-- Error message if room creation failed -->
+<!-- Error message -->
 <div class="create-error" *ngIf="createRoomError && !isCreatingRoom">
   {{ createRoomError }}
 </div>
-
-<app-uni-footer></app-uni-footer>

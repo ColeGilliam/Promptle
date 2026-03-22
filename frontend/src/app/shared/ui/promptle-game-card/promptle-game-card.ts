@@ -2,14 +2,13 @@ import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 @Component({
   selector: 'app-promptle-game-card',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatCardModule, MatIconModule, MatProgressBarModule],
+  imports: [CommonModule, MatButtonModule, MatIconModule, MatProgressBarModule],
   templateUrl: './promptle-game-card.html',
   styleUrls: ['./promptle-game-card.css'],
   animations: [

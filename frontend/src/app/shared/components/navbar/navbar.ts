@@ -29,6 +29,7 @@ export class NavbarComponent implements OnInit {
   isDarkTheme = false;
   dbUsername = '';
   dbProfilePic = '';
+  showMenu = false;
   private readonly themeStorageKey = 'promptle-theme';
 
   constructor(public auth: AuthenticationService, private http: HttpClient) {}
