@@ -19,9 +19,11 @@ export function setupSocket(server) {
 
   const playerNames = new Map();   // socketId → playerName
   const roomHosts = new Map();     // roomId → host socketId
-  const playerGuesses = new Map(); // socketId → guess count
+  const playerGuesses = new Map(); // socketId → guess count (reset each game)
   const gameModes = new Map();     // roomId → 'standard' | '1v1'
   const turnStates = new Map();    // roomId → { socketIds, currentIdx, timer }
+  const startedRooms = new Set();  // roomIds that have already started
+  const roomDeviceIds = new Map(); // roomId → Map(deviceId → socketId)
 
   // ─── Turn helpers ──────────────────────────────────────────────────────
   function startTurnTimer(roomId, timeoutSecs = 30) {
@@ -64,13 +66,28 @@ export function setupSocket(server) {
   io.on('connection', (socket) => {
     console.log('[BACKEND] Player connected:', socket.id);
 
-    socket.on('join-room', async ({ roomId, playerName }) => {
+    socket.on('join-room', async ({ roomId, playerName, deviceId }) => {
       if (!roomId || typeof roomId !== 'string' || roomId.trim() === '') {
         socket.emit('error', 'Invalid room ID');
         return;
       }
 
       const cleanRoom = roomId.trim();
+
+      // Reject if game has already started
+      if (startedRooms.has(cleanRoom)) {
+        socket.emit('join-error', { message: 'This game has already started. Please join another room.' });
+        return;
+      }
+
+      // Reject duplicate device (same browser already in this room)
+      if (deviceId) {
+        const deviceMap = roomDeviceIds.get(cleanRoom);
+        if (deviceMap && deviceMap.has(deviceId)) {
+          socket.emit('join-error', { message: 'You are already in this room from another tab.' });
+          return;
+        }
+      }
 
       // Enforce 2-player limit for 1v1 rooms
       const roomMode = await getRoomMode(cleanRoom);
@@ -84,6 +101,12 @@ export function setupSocket(server) {
 
       playerNames.set(socket.id, playerName || 'Guest');
       socket.join(cleanRoom);
+
+      // Track device ID for this room
+      if (deviceId) {
+        if (!roomDeviceIds.has(cleanRoom)) roomDeviceIds.set(cleanRoom, new Map());
+        roomDeviceIds.get(cleanRoom).set(deviceId, socket.id);
+      }
       console.log(`[BACKEND] ${playerName || 'Guest'} joined room ${cleanRoom} (socket ${socket.id})`);
 
       if (!roomHosts.has(cleanRoom)) {
@@ -109,6 +132,11 @@ export function setupSocket(server) {
       if (roomHosts.get(roomId) !== socket.id) return;
       console.log(`[BACKEND] Game started in ${roomId} by host ${socket.id}, mode: ${mode}`);
       markRoomStarted(roomId);
+      startedRooms.add(roomId);
+
+      // Reset guess counts for all players in the room so counts don't carry over from previous games
+      const roomSocketIds = Array.from(io.sockets.adapter.rooms.get(roomId) || new Set());
+      roomSocketIds.forEach(socketId => playerGuesses.set(socketId, 0));
 
       if (mode === '1v1') {
         gameModes.set(roomId, '1v1');
@@ -218,9 +246,41 @@ export function setupSocket(server) {
       io.to(room).emit('chat message', message);
     });
 
+    socket.on('leave-room', () => {
+      const gameRooms = Array.from(socket.rooms).filter(r => r !== socket.id);
+
+      gameRooms.forEach(room => {
+        // Free the device ID so they can rejoin
+        const deviceMap = roomDeviceIds.get(room);
+        if (deviceMap) {
+          deviceMap.forEach((socketId, deviceId) => {
+            if (socketId === socket.id) deviceMap.delete(deviceId);
+          });
+        }
+
+        // Leave the Socket.io room first so the updated list excludes them
+        socket.leave(room);
+
+        // Broadcast updated player list to remaining players
+        const roomSockets = io.sockets.adapter.rooms.get(room) || new Set();
+        const players = Array.from(roomSockets).map(clientId => ({
+          id: clientId,
+          name: playerNames.get(clientId) || 'Guest'
+        }));
+        io.to(room).emit('players-updated', { roomId: room, players });
+
+        // If host left, clear host so next joiner becomes host
+        if (roomHosts.get(room) === socket.id) roomHosts.delete(room);
+      });
+
+      playerGuesses.delete(socket.id);
+    });
+
     socket.on('delete-room', ({ roomId }) => {
       if (!roomId) return;
       console.log(`[BACKEND] Room ${roomId} deleted by ${socket.id}`);
+      startedRooms.delete(roomId);
+      roomDeviceIds.delete(roomId);
       io.to(roomId).emit('room-deleted');
       // Disconnect all sockets from the room
       const roomSockets = io.sockets.adapter.rooms.get(roomId);
@@ -231,10 +291,33 @@ export function setupSocket(server) {
       }
     });
 
-    socket.on('disconnect', () => {
-      console.log('[BACKEND] Player disconnected:', socket.id);
+    // 'disconnecting' fires while socket.rooms is still populated — use this for room broadcasts
+    socket.on('disconnecting', () => {
+      const leavingRooms = Array.from(socket.rooms).filter(r => r !== socket.id);
 
-      // Clean up 1v1 turn state if this player was in one
+      // Remove device ID entry for this socket from its rooms so the player can rejoin
+      leavingRooms.forEach(room => {
+        const deviceMap = roomDeviceIds.get(room);
+        if (deviceMap) {
+          deviceMap.forEach((socketId, deviceId) => {
+            if (socketId === socket.id) deviceMap.delete(deviceId);
+          });
+        }
+      });
+
+      // Broadcast updated player list (excluding disconnecting socket) to each room
+      leavingRooms.forEach(room => {
+        const roomSockets = io.sockets.adapter.rooms.get(room) || new Set();
+        const players = Array.from(roomSockets)
+          .filter(id => id !== socket.id)
+          .map(clientId => ({
+            id: clientId,
+            name: playerNames.get(clientId) || 'Guest'
+          }));
+        io.to(room).emit('players-updated', { roomId: room, players });
+      });
+
+      // Handle 1v1 turn state cleanup
       turnStates.forEach((state, roomId) => {
         const idx = state.socketIds.indexOf(socket.id);
         if (idx === -1) return;
@@ -258,23 +341,16 @@ export function setupSocket(server) {
         }
       });
 
-      playerNames.delete(socket.id);
-      playerGuesses.delete(socket.id);
-
-      socket.rooms.forEach((room) => {
-        if (room !== socket.id) {
-          const roomSockets = io.sockets.adapter.rooms.get(room) || new Set();
-          const players = Array.from(roomSockets).map((clientId) => ({
-            id: clientId,
-            name: playerNames.get(clientId) || 'Guest'
-          }));
-          io.to(room).emit('players-updated', { roomId: room, players });
-        }
-      });
-
       roomHosts.forEach((hostId, roomId) => {
         if (hostId === socket.id) roomHosts.delete(roomId);
       });
+    });
+
+    // 'disconnect' fires after rooms are cleared — use only for map cleanup
+    socket.on('disconnect', () => {
+      console.log('[BACKEND] Player disconnected:', socket.id);
+      playerNames.delete(socket.id);
+      playerGuesses.delete(socket.id);
     });
   });
 

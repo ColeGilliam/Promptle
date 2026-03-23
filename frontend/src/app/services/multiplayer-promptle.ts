@@ -40,12 +40,22 @@ export class MultiplayerService {
 
   constructor() {}
 
+  private getDeviceId(): string {
+    let id = localStorage.getItem('promptle_device_id');
+    if (!id) {
+      id = 'dev_' + Math.random().toString(36).substring(2, 12) + Date.now().toString(36);
+      localStorage.setItem('promptle_device_id', id);
+    }
+    return id;
+  }
+
   joinRoom(roomId: string, playerName: string = 'Guest') {
     console.log(`[Service] Attempting to join room ${roomId} as ${playerName}`);
+    const deviceId = this.getDeviceId();
 
     if (this.socket?.connected) {
       console.log('[Service] Socket already connected → emitting join-room');
-      this.socket.emit('join-room', { roomId, playerName });
+      this.socket.emit('join-room', { roomId, playerName, deviceId });
       return;
     }
 
@@ -125,7 +135,7 @@ export class MultiplayerService {
     this.socket.on('connect', () => {
       this.mySocketId = this.socket!.id!;
       console.log(`[Service] ✅ CONNECTED! Socket ID: ${this.mySocketId}`);
-      this.socket!.emit('join-room', { roomId, playerName });
+      this.socket!.emit('join-room', { roomId, playerName, deviceId });
     });
 
     this.socket.on('reconnect', () => {
