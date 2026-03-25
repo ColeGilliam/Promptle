@@ -17,6 +17,14 @@
   <div class="nav-actions">
     <button
       class="icon-btn"
+      (click)="openHowToPlay()"
+      aria-label="How to play"
+    >
+      <mat-icon>help_outline</mat-icon>
+    </button>
+
+    <button
+      class="icon-btn"
       (click)="toggleTheme()"
       [attr.aria-label]="isDarkTheme ? 'Switch to light mode' : 'Switch to dark mode'"
     >

@@ -9,6 +9,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDialog } from '@angular/material/dialog';
 import { RouterModule } from '@angular/router';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../../../services/authentication.service';
@@ -16,6 +17,7 @@ import { ProfileService } from '../../../services/profile.service';
 import { take } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { HowToPlayDialogComponent } from './how-to-play-dialog';
 
 @Component({
   selector: 'app-navbar',
@@ -33,7 +35,7 @@ export class NavbarComponent implements OnInit {
   showMenu = false;
   private readonly themeStorageKey = 'promptle-theme';
 
-  constructor(public auth: AuthenticationService, private http: HttpClient, public router: Router) {}
+  constructor(public auth: AuthenticationService, private http: HttpClient, public router: Router, private dialog: MatDialog) {}
 
   ngOnInit() {
     this.initializeTheme();
@@ -47,6 +49,14 @@ export class NavbarComponent implements OnInit {
             this.dbProfilePic = data?.profilePic;
           });
       }
+    });
+  }
+
+  openHowToPlay(): void {
+    this.dialog.open(HowToPlayDialogComponent, {
+      width: '420px',
+      maxWidth: '92vw',
+      panelClass: 'htp-dialog-panel'
     });
   }
 
