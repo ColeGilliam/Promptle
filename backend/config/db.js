@@ -7,6 +7,7 @@ let db;
 let topicCollection;
 let guessesCollection;
 let usersCollection;
+let topicModerationAttemptsCollection;
 
 let cachedMultiplayerGamesCollection = null;
 let cachedDevSettingsCollection = null;
@@ -26,7 +27,7 @@ export function getDevSettingsCollection() {
 }
 
 export async function connectDB() {
-  if (db) return { db, topicCollection, guessesCollection, usersCollection }; // Already connected
+  if (db) return { db, topicCollection, guessesCollection, usersCollection, topicModerationAttemptsCollection }; // Already connected
 
   try {
     client = new MongoClient(MONGODB_URI, {
@@ -44,8 +45,9 @@ export async function connectDB() {
     topicCollection = db.collection('topic');
     guessesCollection = db.collection('guesses');
     usersCollection = db.collection('users');
+    topicModerationAttemptsCollection = db.collection('topicModerationAttempts');
 
-    return { db, topicCollection, guessesCollection, usersCollection };
+    return { db, topicCollection, guessesCollection, usersCollection, topicModerationAttemptsCollection };
   } catch (err) {
     console.error('Error connecting to MongoDB:', err);
     process.exit(1);
@@ -65,6 +67,11 @@ export function getGuessesCollection() {
 export function getUsersCollection() {
   if (!usersCollection) throw new Error('Database not connected. Call connectDB() first!');
   return usersCollection;
+}
+
+export function getTopicModerationAttemptsCollection() {
+  if (!topicModerationAttemptsCollection) throw new Error('Database not connected. Call connectDB() first!');
+  return topicModerationAttemptsCollection;
 }
 
 // Optional: Close connection on shutdown (add to server.js if needed)

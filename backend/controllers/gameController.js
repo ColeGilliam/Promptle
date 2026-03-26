@@ -180,7 +180,8 @@ export const createMultiplayerGame = async (req, res) => {
         body: {
           topic: topic.trim(),
           minCategories: 6,
-          maxCategories: 8
+          maxCategories: 8,
+          auth0Id,
         }
       };
 
@@ -189,13 +190,19 @@ export const createMultiplayerGame = async (req, res) => {
         json: (data) => data  // success case
       };
 
-      // Call your existing function (it uses res.json on success)
+      // Use a Promise wrapper to capture the async result from generateSubjects
       const aiOutput = await new Promise((resolve, reject) => {
         aiRes.json = resolve;
         aiRes.status = (code) => ({
-          json: (errData) => reject(new Error(`AI error ${code}: ${JSON.stringify(errData)}`))
+          // Override to capture error responses from generateSubjects
+          json: (errData) => {
+            const error = new Error(errData?.error || `AI error ${code}`);
+            error.statusCode = code;
+            error.payload = errData;
+            reject(error);
+          }
         });
-        generateSubjects(aiReq, aiRes);
+        Promise.resolve(generateSubjects(aiReq, aiRes)).catch(reject); // Handle any unexpected errors thrown by generateSubjects
       });
 
       if (!aiOutput || !aiOutput.topic || !aiOutput.headers || !aiOutput.answers) {
@@ -241,6 +248,10 @@ export const createMultiplayerGame = async (req, res) => {
     res.status(201).json({ roomId });
 
   } catch (error) {
+    if (error?.statusCode) { 
+      return res.status(error.statusCode).json(error.payload || { error: error.message || 'Failed to create multiplayer game' });
+    }
+
     console.error('createMultiplayerGame error:', error.message || error);
     console.error(error.stack);
     res.status(500).json({ error: 'Failed to create multiplayer game: ' + (error.message || 'unknown') });

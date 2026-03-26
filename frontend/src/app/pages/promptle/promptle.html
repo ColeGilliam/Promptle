@@ -30,9 +30,18 @@
       ></app-promptle-game-card>
 
       <!-- Error -->
-      <div *ngIf="gameError" class="error-banner">
-        <mat-icon>error_outline</mat-icon>
-        {{ gameError }}
+      <div *ngIf="gameError" class="error-state">
+        <div class="error-banner">
+          <mat-icon>error_outline</mat-icon>
+          {{ gameError }}
+        </div>
+        <button
+          matButton
+          class="rect-btn error-return-btn"
+          (click)="quitGame()"
+        >
+          Return Home
+        </button>
       </div>
 
       <!-- ══ MULTIPLAYER PRE-GAME PANEL ══ -->
