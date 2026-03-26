@@ -209,7 +209,7 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
           },
           error: (err) => {
             this.isCreatingRoom = false;
-            this.createRoomError = 'Could not create multiplayer room. Please try again.';
+            this.createRoomError = err?.error?.error ?? 'Could not create multiplayer room. Please try again.';
             console.error('Failed to create multiplayer room:', err);
           }
         });

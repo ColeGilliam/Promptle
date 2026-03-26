@@ -1,6 +1,5 @@
 // controllers/devSettingsController.js
 import { getDevSettingsCollection, getUsersCollection } from '../config/db.js';
-
 const DEV_EMAIL = 'promptle99@gmail.com';
 const SETTINGS_ID = 'global';
 
@@ -52,7 +51,7 @@ export async function updateDevSettings(req, res) {
 
     const coll = getDevSettingsCollection();
     await coll.updateOne(
-      { _id: SETTINGS_ID },
+      { _id: "global" },
       { $set: { allowGuestsCreateRooms: !!allowGuestsCreateRooms, allowAllAIGeneration: !!allowAllAIGeneration } },
       { upsert: true }
     );
