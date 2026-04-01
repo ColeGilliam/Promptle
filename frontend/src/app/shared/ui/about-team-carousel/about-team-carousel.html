@@ -1,0 +1,73 @@
+<div class="carousel-viewport">
+  <div
+    class="carousel-track"
+    [style.transform]="trackTransform"
+    [class.no-transition]="noTransition"
+    (transitionend)="onTransitionEnd($event)"
+  >
+    @for (member of displayMembers; track $index) {
+      <div class="carousel-slide" [class.active-slide]="$index === trackIndex">
+        <mat-card class="person-card">
+          <mat-card-content class="person-inside">
+            <div class="person-pic">
+              <mat-icon class="person-icon">person</mat-icon>
+            </div>
+            <h3 class="person-name mat-title-medium">{{ member.name }}</h3>
+            <p class="person-job mat-label-large">{{ member.role }}</p>
+            <div class="person-links" [class.person-links-empty]="!member.githubUrl && !member.linkedinUrl">
+              <a
+                class="person-link-btn"
+                [class.person-link-off]="!member.githubUrl"
+                [href]="member.githubUrl || null"
+                target="_blank"
+                rel="noopener"
+                [attr.aria-label]="member.githubUrl ? member.name + ' GitHub' : null"
+                [attr.aria-hidden]="member.githubUrl ? null : 'true'"
+                [attr.tabindex]="member.githubUrl ? null : '-1'"
+              >
+                <svg class="person-brand-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path [attr.d]="githubPath" />
+                </svg>
+              </a>
+              <a
+                class="person-link-btn"
+                [class.person-link-off]="!member.linkedinUrl"
+                [href]="member.linkedinUrl || null"
+                target="_blank"
+                rel="noopener"
+                [attr.aria-label]="member.linkedinUrl ? member.name + ' LinkedIn' : null"
+                [attr.aria-hidden]="member.linkedinUrl ? null : 'true'"
+                [attr.tabindex]="member.linkedinUrl ? null : '-1'"
+              >
+                <svg class="person-brand-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path [attr.d]="linkedinPath" />
+                </svg>
+              </a>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    }
+  </div>
+</div>
+
+<div class="slide-buttons">
+  <button mat-icon-button (click)="prevMember()" aria-label="Previous member">
+    <mat-icon>chevron_left</mat-icon>
+  </button>
+  <div class="slide-dots" role="tablist">
+    @for (member of members; track member.name; let i = $index) {
+      <button
+        class="slide-dot"
+        [class.slide-dot-on]="i === activeIndex"
+        (click)="goToMember(i)"
+        [attr.aria-label]="'Go to ' + member.name"
+        role="tab"
+        [attr.aria-selected]="i === activeIndex"
+      ></button>
+    }
+  </div>
+  <button mat-icon-button (click)="nextMember()" aria-label="Next member">
+    <mat-icon>chevron_right</mat-icon>
+  </button>
+</div>

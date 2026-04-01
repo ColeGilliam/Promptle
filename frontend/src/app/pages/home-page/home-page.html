@@ -153,7 +153,7 @@
       <mat-icon class="mp-join-icon">sports_esports</mat-icon>
       <h2 class="mp-join-title">Join a Game</h2>
       <p class="mp-join-sub">Browse open rooms or enter a room code to jump in.</p>
-      <button matButton="filled" class="rect-btn promp1-btn" (click)="joinChatRoom()">
+      <button matButton="filled" class="rect-btn promp2-btn" (click)="joinChatRoom()">
         <mat-icon>meeting_room</mat-icon>
         Browse Lobby
       </button>
@@ -198,7 +198,7 @@
 
             <button
               matButton="filled"
-              class="rect-btn promp1-btn play-start-btn"
+              class="rect-btn promp2-btn play-start-btn"
               [disabled]="!selectedTopic || isCreatingRoom"
               (click)="startGame()"
             >
@@ -231,7 +231,7 @@
 
             <button
               matButton="filled"
-              class="rect-btn promp1-btn play-start-btn"
+              class="rect-btn promp2-btn play-start-btn"
               [disabled]="!customTopic.trim() || isCreatingRoom"
               (click)="startAiGame()"
           >
@@ -257,7 +257,7 @@
     ></app-load-saved-game-card>
   </section>
 
-  <app-uni-footer></app-uni-footer>
+  <app-mini-footer></app-mini-footer>
 </div>
 
 <!-- ══ Room-creation loading overlay ══ -->

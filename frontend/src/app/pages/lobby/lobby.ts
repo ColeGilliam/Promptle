@@ -13,7 +13,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { NavbarComponent } from '../../shared/components/navbar/navbar';
-import { UniFooterComponent } from '../../shared/ui/uni-footer/uni-footer';
+import { MiniFooterComponent } from '../../shared/ui/minifooter/minifooter';
 
 export interface LobbyRoom {
   roomId: string;
@@ -38,7 +38,7 @@ export interface LobbyRoom {
     MatIconModule,
     MatProgressSpinnerModule,
     NavbarComponent,
-    UniFooterComponent,
+    MiniFooterComponent,
   ],
   templateUrl: './lobby.html',
   styleUrls: ['./lobby.css'],
