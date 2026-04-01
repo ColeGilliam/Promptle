@@ -7,12 +7,14 @@ import { authUser, deleteUserAccount, incrementWin } from '../controllers/authCo
 import { getProfile, updateProfile } from '../controllers/userController.js';
 import { saveGame, loadGame, deleteSavedGame } from '../controllers/saveController.js';
 import { getDevSettings, updateDevSettings } from '../controllers/devSettingsController.js';
+import { getDevAuthSession } from '../controllers/devAuthController.js';
 
 
 const router = express.Router();
 
 router.get('/', (_req, res) => res.send('Backend is running!'));
 router.get('/health', (_req, res) => res.json({ status: 'ok' }));
+router.get('/api/dev-auth/session', getDevAuthSession);
 
 router.post('/api/subjects', generateSubjects);
 router.get('/api/topics/:topicId/headers', getHeaders);
