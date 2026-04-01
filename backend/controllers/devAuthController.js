@@ -39,21 +39,26 @@ export async function getDevAuthSession(_req, res) {
   };
 
   try {
-    await usersCollection.updateOne(
-      { auth0Id: DEV_AUTH0_ID },
-      {
-        $set: {
-          email: userRecord.email,
-          name: userRecord.name,
-          lastLogin: now,
-        },
-        $setOnInsert: {
-          auth0Id: DEV_AUTH0_ID,
-          createdAt: now,
-        },
+    const existingUser = await usersCollection.findOne({ auth0Id: DEV_AUTH0_ID });
+    const update = {
+      $set: {
+        email: userRecord.email,
+        name: userRecord.name,
+        lastLogin: now,
       },
-      { upsert: true }
-    );
+      $setOnInsert: {
+        auth0Id: DEV_AUTH0_ID,
+        createdAt: now,
+      },
+    };
+
+    // Seed the profile username from DEV_AUTH_NAME for local testing
+    // Does not overwrite a username that was later customized through the UI
+    if (!existingUser?.username && DEV_AUTH_NAME) {
+      update.$set.username = DEV_AUTH_NAME;
+    }
+
+    await usersCollection.updateOne({ auth0Id: DEV_AUTH0_ID }, update, { upsert: true });
 
     return res.json({
       enabled: true,
