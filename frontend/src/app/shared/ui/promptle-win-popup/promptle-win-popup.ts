@@ -12,6 +12,7 @@ import { MatIconModule } from '@angular/material/icon';
 })
 export class PromptleWinPopup {
   @Input() answerName = '';
+  @Input() topicName = '';
   @Input() isMultiplayer = false;
   @Input() finishTimeMs: number | null = null;
   @Input() guessCount = 0;
@@ -44,7 +45,8 @@ export class PromptleWinPopup {
       .join('\n');
 
     const time = this.finishTimeMs !== null ? ` · ${this.formatTime(this.finishTimeMs)}` : '';
-    const text = `Promptle\n${this.guessCount} guess${this.guessCount === 1 ? '' : 'es'}${time}\n\n${emojiGrid}\n\n${this.shareUrl}`;
+    const title = this.topicName.trim() ? `Promptle: ${this.topicName.trim()}` : 'Promptle';
+    const text = `${title}\n${this.guessCount} guess${this.guessCount === 1 ? '' : 'es'}${time}\n\n${emojiGrid}\n\n${this.shareUrl}`;
 
     navigator.clipboard.writeText(text).then(() => {
       this.copied = true;

@@ -125,12 +125,6 @@
 .share-cell.cell-yellow { background: #ffeb3b; }
 .share-cell.cell-gray   { background: #9e9e9e; }
 
-.share-hint {
-  font-size: 0.8rem;
-  color: #94a3b8;
-  margin: 6px 0 20px;
-}
-
 /* Actions */
 .share-actions {
   display: flex;
@@ -138,4 +132,3 @@
   justify-content: center;
   flex-wrap: wrap;
 }
-

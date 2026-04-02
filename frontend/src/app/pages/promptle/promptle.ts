@@ -89,6 +89,28 @@ export class PromptleComponent implements OnInit, OnDestroy {
     return this.submittedGuesses.map(g => g.colors);
   }
 
+  get displayedSubmittedGuesses(): { name?: string; values: string[]; colors: string[] }[] {
+    return this.reverseForDisplay(this.submittedGuesses);
+  }
+
+  get displayedSpectateGuesses(): { playerId: string; playerName: string; values: string[]; colors: string[]; isMe: boolean }[] {
+    return this.reverseForDisplay(this.spectateGuesses);
+  }
+
+  get displayedOneVsOneGuesses(): {
+    guesserSocketId: string;
+    guesserName: string;
+    values: string[];
+    colors: string[];
+    isMe: boolean;
+  }[] {
+    return this.reverseForDisplay(this.oneVsOneGuesses);
+  }
+
+  private reverseForDisplay<T>(items: T[]): T[] {
+    return [...items].reverse();
+  }
+
   get shareUrl(): string {
     const grid = this.submittedGuesses
       .map(g => g.colors.map(c => c === 'green' ? 'G' : c === 'yellow' ? 'Y' : 'N').join(''))
