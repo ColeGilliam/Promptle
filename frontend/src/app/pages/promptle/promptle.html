@@ -368,6 +368,7 @@
 <app-promptle-win-popup
   *ngIf="isGameOver && !iLost && !isSpectating"
   [answerName]="correctAnswer.name"
+  [topicName]="topic"
   [isMultiplayer]="isMultiplayer"
   [finishTimeMs]="myFinishTimeMs"
   [guessCount]="submittedGuesses.length"
