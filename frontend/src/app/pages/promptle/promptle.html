@@ -265,7 +265,7 @@
               <div class="header">Player</div>
               <div
                 class="guess-cell player-label-cell"
-                *ngFor="let guess of oneVsOneGuesses"
+                *ngFor="let guess of displayedOneVsOneGuesses"
                 [@cardEnter]
                 [class.my-guess-label]="guess.isMe"
               >
@@ -277,7 +277,7 @@
               <div class="header">{{ header }}</div>
               <div
                 class="guess-cell"
-                *ngFor="let guess of oneVsOneGuesses"
+                *ngFor="let guess of displayedOneVsOneGuesses"
                 [@cardEnter]
                 [style.background-color]="guess.colors[i]"
               >
@@ -310,7 +310,7 @@
               <div class="header">Player</div>
               <div
                 class="guess-cell player-label-cell"
-                *ngFor="let guess of spectateGuesses"
+                *ngFor="let guess of displayedSpectateGuesses"
                 [@cardEnter]
                 [class.my-guess-label]="guess.isMe"
               >
@@ -321,7 +321,7 @@
               <div class="header">{{ header }}</div>
               <div
                 class="guess-cell"
-                *ngFor="let guess of spectateGuesses"
+                *ngFor="let guess of displayedSpectateGuesses"
                 [@cardEnter]
                 [style.background-color]="guess.colors[i]"
               >
@@ -349,7 +349,7 @@
               <div class="header">{{ header }}</div>
               <div
                 class="guess-cell"
-                *ngFor="let guess of submittedGuesses"
+                *ngFor="let guess of displayedSubmittedGuesses"
                 [@cardEnter]
                 [style.background-color]="guess.colors[i]"
               >
