@@ -22,6 +22,7 @@ export class PromptleWinPopup {
   @Output() returnHome = new EventEmitter<void>();
   @Output() playAgain  = new EventEmitter<void>();
   @Output() spectate   = new EventEmitter<void>();
+  @Output() viewGame   = new EventEmitter<void>();
 
   copied = false;
 
@@ -57,4 +58,5 @@ export class PromptleWinPopup {
   onReturnHome(): void { this.returnHome.emit(); }
   onPlayAgain():  void { this.playAgain.emit();  }
   onSpectate():   void { this.spectate.emit();   }
+  onViewGame():   void { this.viewGame.emit();   }
 }
