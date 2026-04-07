@@ -209,12 +209,14 @@ export function createGenerateSubjectsHandler({
 
       logger.info('[AI subjects] summary', {
         topic: payload.topic,
+        headers: payload.headers,
         headersCount: payload.headers.length,
         subjectCount: payload.answers.length,
         targetCount,
         minCategories,
         maxCategories,
         correctAnswer: payload.correctAnswer?.name,
+        correctAnswerCells: payload.correctAnswer?.cells || [],
         tokenUsage: completion.usage || 'No usage data',
       });
 
