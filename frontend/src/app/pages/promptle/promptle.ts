@@ -3,7 +3,13 @@ import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
-import { DbGameService, GameData } from '../../services/setup-game';
+import {
+  DbGameService,
+  GameCell,
+  GameData,
+  HydratedGameAnswer,
+  hydrateGameData,
+} from '../../services/setup-game';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NavbarComponent } from '../../shared/components/navbar/navbar';
 import { AuthenticationService } from '../../services/authentication.service';
@@ -63,9 +69,9 @@ export class PromptleComponent implements OnInit, OnDestroy {
   //─────────────────────────────────────
   topic = '';
   headers: string[] = [];
-  answers: { name: string; values: string[] }[] = [];
-  filteredAnswers: { name: string; values: string[] }[] = [];
-  correctAnswer: {name: string; values: string[]} = {name: '', values: []};
+  answers: HydratedGameAnswer[] = [];
+  filteredAnswers: HydratedGameAnswer[] = [];
+  correctAnswer: HydratedGameAnswer = { name: '', cells: [], values: [] };
   selectedGuess = '';
   guessQuery = '';
   isGameOver = false;
@@ -630,9 +636,17 @@ export class PromptleComponent implements OnInit, OnDestroy {
   }
 
   private applySavedPayload(payload: any) {
-    this.topic   = payload.topic;
-    this.headers = payload.headers || [];
-    this.answers = payload.answers || [];
+    const hydrated = hydrateGameData({
+      topic: payload?.topic,
+      headers: payload?.headers,
+      answers: payload?.answers,
+      correctAnswer: payload?.correctAnswer,
+      mode: payload?.mode,
+    });
+
+    this.topic   = hydrated.topic;
+    this.headers = hydrated.headers;
+    this.answers = hydrated.answers;
     this.submittedGuesses = Array.isArray(payload.submittedGuesses)
       ? payload.submittedGuesses.map((g: any) => ({
           name:   typeof g?.name === 'string' ? g.name : undefined,
@@ -643,7 +657,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.selectedGuess  = '';
     this.guessQuery     = '';
     this.filterAnswers(this.guessQuery);
-    this.correctAnswer  = payload.correctAnswer || { name: '', values: [] };
+    this.correctAnswer  = hydrated.correctAnswer;
     this.isGameOver     = !!payload.isGameOver;
     this.savedTimestamp = payload.savedAt ? new Date(payload.savedAt).toLocaleString() : null;
 
@@ -665,7 +679,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
     const pool = candidates.length ? candidates : this.answers;
     const pick = pool[Math.floor(Math.random() * pool.length)];
 
-    this.correctAnswer    = { name: pick.name, values: [...pick.values] };
+    this.correctAnswer    = { name: pick.name, cells: [...pick.cells], values: [...pick.values] };
     this.backendHeaders   = [...this.headers];
     this.backendRow       = [...pick.values];
     this.submittedGuesses = [];
@@ -697,14 +711,16 @@ export class PromptleComponent implements OnInit, OnDestroy {
   }
 
   private applyGameData(data: GameData) {
-    this.topic   = data.topic;
-    this.headers = data.headers;
-    this.answers = data.answers;
-    this.filterAnswers(this.guessQuery);
-    this.correctAnswer = data.correctAnswer;
+    const hydrated = hydrateGameData(data);
 
-    if (data.mode === '1v1') this.isOneVsOne = true;
-    if (data.mode === 'chaos') this.isChaos = true;
+    this.topic   = hydrated.topic;
+    this.headers = hydrated.headers;
+    this.answers = hydrated.answers;
+    this.filterAnswers(this.guessQuery);
+    this.correctAnswer = hydrated.correctAnswer;
+
+    if (hydrated.mode === '1v1') this.isOneVsOne = true;
+    if (hydrated.mode === 'chaos') this.isChaos = true;
 
     const correct = this.answers.find(a => a.name === this.correctAnswer.name);
     this.backendHeaders = correct ? [...this.headers] : [];
@@ -763,9 +779,93 @@ export class PromptleComponent implements OnInit, OnDestroy {
     return this.getGuessedNamesLowercase().has(name.trim().toLowerCase());
   }
 
+  // Evaluate guess colors based on the guessed cells and the correct answer's cells.
+  private evaluateGuessColors(guessedCells: GameCell[], correctCells: GameCell[]): string[] {
+    return guessedCells.map((cell, i) => this.getCellColor(cell, correctCells[i]));
+  }
+
+  // Determine the color of a cell based on its value and the correct answer's cell.
+  private getCellColor(guessedCell?: GameCell, correctCell?: GameCell): string {
+    const guessNorm = this.normalizeDisplay(guessedCell?.display ?? '');
+    const correctNorm = this.normalizeDisplay(correctCell?.display ?? '');
+
+    if (!guessNorm || !correctNorm) return 'gray';
+    if (guessNorm === correctNorm) return 'green';
+
+    if (this.hasListItemMatch(guessedCell, correctCell)) return 'yellow';
+    if (guessedCell?.kind === 'reference' || correctCell?.kind === 'reference') {
+      return this.hasReferencePartMatch(guessedCell, correctCell) ? 'yellow' : 'gray';
+    }
+    if (this.hasTextTokenMatch(guessedCell, correctCell)) return 'yellow';
+    return 'gray';
+  }
+
+  // For list-type cells: check if there's at least one overlapping item after normalization.
+  private hasListItemMatch(guessedCell?: GameCell, correctCell?: GameCell): boolean {
+    const guessedItems = this.getComparableItems(guessedCell);
+    const correctItems = this.getComparableItems(correctCell);
+    if (!guessedItems.length || !correctItems.length) return false;
+
+    return this.countOverlap(guessedItems, correctItems) >= 1;
+  }
+
+  // For reference-type cells: check if the 'label' part matches after normalization.
+  private hasReferencePartMatch(guessedCell?: GameCell, correctCell?: GameCell): boolean {
+    const guessedIsReference = guessedCell?.kind === 'reference';
+    const correctIsReference = correctCell?.kind === 'reference';
+    if (!guessedIsReference && !correctIsReference) return false;
+
+    const guessedLabel = this.normalizeDisplay(String(guessedCell?.parts?.label ?? ''));
+    const correctLabel = this.normalizeDisplay(String(correctCell?.parts?.label ?? ''));
+    return !!guessedLabel && guessedLabel === correctLabel;
+  }
+
+  // For text-type cells: check if there's significant token overlap (at least 2 shared tokens) after normalization.
+  private hasTextTokenMatch(guessedCell?: GameCell, correctCell?: GameCell): boolean {
+    if (!guessedCell || !correctCell) return false;
+    if (guessedCell.kind === 'number' || correctCell.kind === 'number') return false;
+
+    const guessedTokens = this.getComparableTokens(guessedCell);
+    const correctTokens = this.getComparableTokens(correctCell);
+    return this.countOverlap(guessedTokens, correctTokens) >= 2;
+  }
+
+  // For list-type cells: extract and normalize the list items for comparison.
+  private getComparableItems(cell?: GameCell): string[] {
+    if (!cell) return [];
+    const items = Array.isArray(cell.items) ? cell.items : [];
+    return items
+      .map(item => this.normalizeDisplay(item))
+      .filter(Boolean);
+  }
+
+  private getComparableTokens(cell?: GameCell): string[] {
+    if (!cell) return [];
+    const tokens = Array.isArray(cell.parts?.tokens) && cell.parts.tokens.length
+      ? cell.parts.tokens
+      : this.tokenize(cell.display);
+
+    return Array.from(new Set(tokens.map(token => this.normalizeDisplay(token)).filter(Boolean)));
+  }
+
+  private normalizeDisplay(value: string): string {
+    return this.tokenize(value).join(' ');
+  }
+
   tokenize(value: string): string[] {
     if (!value) return [];
     return value.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+  }
+
+  // Count the number of overlapping items between two arrays of strings.
+  private countOverlap(left: string[], right: string[]): number {
+    if (!left.length || !right.length) return 0;
+    const rightSet = new Set(right);
+    let count = 0;
+    for (const value of new Set(left)) {
+      if (rightSet.has(value)) count++;
+    }
+    return count;
   }
 
   private handleWin() {
@@ -795,15 +895,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
     const correct = this.answers.find(a => a.name === this.correctAnswer.name);
     if (!guessed || !correct) return;
 
-    const correctTokens = new Set<string>();
-    correct.values.forEach(v => this.tokenize(v).forEach(t => correctTokens.add(t)));
-
-    const colors = guessed.values.map((value, i) => {
-      const cv = correct.values[i];
-      if (value && cv && value.toLowerCase() === cv.toLowerCase()) return 'green';
-      for (const t of this.tokenize(value)) if (correctTokens.has(t)) return 'yellow';
-      return 'gray';
-    });
+    const colors = this.evaluateGuessColors(guessed.cells, correct.cells);
 
     const isCorrect = this.selectedGuess === this.correctAnswer.name;
     const finishMs  = isCorrect ? this.stopwatchMs : undefined;

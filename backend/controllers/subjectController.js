@@ -9,6 +9,7 @@ import {
   TOPIC_MODERATION_FAILED_ERROR,
   TOPIC_NOT_ALLOWED_ERROR,
 } from '../services/topicModeration.js';
+import { normalizeGameAnswer, normalizeGamePayload } from '../services/gameCells.js';
 
 const DEV_EMAIL = 'promptle99@gmail.com';
 
@@ -123,7 +124,19 @@ export function createGenerateSubjectsHandler({
               "answers": [
                 {
                   "name": string,
-                  "values": ["Subject", "Category 1 value", ...]
+                  "cells": [
+                    {
+                      "display": string,
+                      "kind": "text" | "set" | "reference" | "number",
+                      "items"?: [string],
+                      "parts"?: {
+                        "tokens"?: [string],
+                        "label"?: string,
+                        "number"?: string,
+                        "value"?: number
+                      }
+                    }
+                  ]
                 }
               ]
             }
@@ -133,9 +146,13 @@ export function createGenerateSubjectsHandler({
             the topic has a small finite roster of 50 or less (e.g., NFL teams, U.S. states), then include them all.
             the topic has substantially more than 100 possible subjects, then select around 80–100 different subjects. 
             (2) Total number of headers, including "Subject", must be between the provided min and max number of categories, and should be sufficient enough to properly describe and identify the subject.
-            (3) The first header is "Subject". The first value for each answer must match the subject name.
+            (3) The first header is "Subject". The first cell for each answer must have a display value equal to the subject name.
             (4) All answers must share identical header structure and value ordering.
-            (5) Keep values concise (1-3 words).
+            (5) Keep display values concise (1-3 words) unless a longer name is necessary for clarity. Use the "parts" field to break down longer names into important tokens for guessing.
+            (6) Use "set" when the display contains multiple items such as powers, members, colors, genres, or teams.
+            (7) Use "reference" for values like issue numbers, episodes, chapters, albums, movies, releases, or anything with a label/number pair. Fill parts.label and/or parts.number when available.
+            (8) Use "number" for pure numeric values and fill parts.value.
+            (9) Use "text" for ordinary single values and include parts.tokens with the important words.
           `,
           },
           {
@@ -179,32 +196,29 @@ export function createGenerateSubjectsHandler({
         Math.min(MAX_COUNT, Math.max(answers.length || TARGET_DEFAULT, MIN_COUNT))
       );
 
-      answers = answers.slice(0, targetCount).map((answer) => {
-        const values = Array.isArray(answer.values) ? answer.values.slice(0, headers.length) : [];
-        const name = answer.name || values[0] || '';
-        return { name, values };
-      });
+      answers = answers.slice(0, targetCount).map((answer) => normalizeGameAnswer(answer, headers));
 
       const correctAnswer = answers[Math.floor(Math.random() * answers.length)];
       const finalTopic = parsed.topic || normalizedTopic;
-
-      logger.info('[AI subjects] summary', {
-        topic: finalTopic,
-        headersCount: headers.length,
-        subjectCount: answers.length,
-        targetCount,
-        minCategories,
-        maxCategories,
-        correctAnswer: correctAnswer?.name,
-        tokenUsage: completion.usage || 'No usage data',
-      });
-
-      res.json({
+      const payload = normalizeGamePayload({
         topic: finalTopic,
         headers,
         answers,
         correctAnswer,
       });
+
+      logger.info('[AI subjects] summary', {
+        topic: payload.topic,
+        headersCount: payload.headers.length,
+        subjectCount: payload.answers.length,
+        targetCount,
+        minCategories,
+        maxCategories,
+        correctAnswer: payload.correctAnswer?.name,
+        tokenUsage: completion.usage || 'No usage data',
+      });
+
+      res.json(payload);
     } catch (error) {
       logger.error('Error generating subjects from OpenAI:', error);
       res.status(500).json({ error: 'Failed to generate subjects.' });
