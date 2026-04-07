@@ -104,6 +104,13 @@
         </button>
       </div>
 
+      <div class="dev-delete-bar" *ngIf="isGameOver && isViewingCompletedGame && !iLost && !isSpectating">
+        <button matButton class="rect-btn promp2-btn" (click)="returnToResultsPopup()">
+          <mat-icon>arrow_back</mat-icon>
+          BACK TO RESULTS
+        </button>
+      </div>
+
       <!-- ══ STOPWATCH (standard mode only — not shown in 1v1) ══ -->
       <div class="stopwatch-bar" *ngIf="!isOneVsOne && !gameLoading && gameStarted && !isGameOver">
         <mat-icon>timer</mat-icon>
@@ -366,7 +373,7 @@
 
 <!-- Win overlay -->
 <app-promptle-win-popup
-  *ngIf="isGameOver && !iLost && !isSpectating"
+  *ngIf="isGameOver && !isViewingCompletedGame && !iLost && !isSpectating"
   [answerName]="correctAnswer.name"
   [topicName]="topic"
   [isMultiplayer]="isMultiplayer"
@@ -377,6 +384,7 @@
   (returnHome)="quitGame()"
   (playAgain)="restartGame()"
   (spectate)="startSpectating()"
+  (viewGame)="viewCompletedGame()"
 ></app-promptle-win-popup>
 
 <!-- ══ LOSS OVERLAY (1v1 only) ══ -->

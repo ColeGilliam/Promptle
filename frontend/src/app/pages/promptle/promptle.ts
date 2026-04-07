@@ -69,6 +69,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
   selectedGuess = '';
   guessQuery = '';
   isGameOver = false;
+  isViewingCompletedGame = false;
 
   submittedGuesses: { name?: string; values: string[]; colors: string[] }[] = [];
 
@@ -645,6 +646,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.filterAnswers(this.guessQuery);
     this.correctAnswer  = payload.correctAnswer || { name: '', values: [] };
     this.isGameOver     = !!payload.isGameOver;
+    this.isViewingCompletedGame = false;
     this.savedTimestamp = payload.savedAt ? new Date(payload.savedAt).toLocaleString() : null;
 
     const correct = this.answers.find(a => a.name === this.correctAnswer.name);
@@ -673,6 +675,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.guessQuery       = '';
     this.filterAnswers(this.guessQuery);
     this.isGameOver       = false;
+    this.isViewingCompletedGame = false;
     this.gameError        = '';
     this.myFinishTimeMs   = null;
     this.stopStopwatch();
@@ -713,6 +716,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.submittedGuesses = [];
     this.selectedGuess    = '';
     this.guessQuery       = '';
+    this.isGameOver       = false;
+    this.isViewingCompletedGame = false;
     this.filterAnswers(this.guessQuery);
     if (!this.isMultiplayer) {
       this.stopStopwatch();
@@ -770,6 +775,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
 
   private handleWin() {
     this.isGameOver = true;
+    this.isViewingCompletedGame = false;
     this.stopStopwatch();
     if (this.isMultiplayer) return;
     this.auth.user$.pipe(take(1)).subscribe(user => {
@@ -856,6 +862,16 @@ export class PromptleComponent implements OnInit, OnDestroy {
   }
 
   quitGame() { this.router.navigate(['/']); }
+
+  viewCompletedGame() {
+    if (!this.isGameOver) return;
+    this.isViewingCompletedGame = true;
+  }
+
+  returnToResultsPopup() {
+    if (!this.isGameOver) return;
+    this.isViewingCompletedGame = false;
+  }
 
   deleteCurrentRoom() {
     if (!this.isDevAccount || !this.currentRoom) return;
