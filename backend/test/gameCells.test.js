@@ -11,6 +11,7 @@ test('normalizeGameCell preserves list-like values as set cells', () => {
   assert.equal(cell.display, 'Flight, Strength');
 });
 
+test('normalizeGameCell parses label and number from reference values', () => {
   const cell = normalizeGameCell('Amazing Spiderman #1');
 
   assert.equal(cell.kind, 'reference');
