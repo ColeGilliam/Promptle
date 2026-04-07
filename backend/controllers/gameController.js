@@ -4,6 +4,7 @@ from '../config/db.js';
 import { generateSubjects } from './subjectController.js';  // adjust path if needed
 import { getIo } from '../sockets/socketState.js';
 import { fetchDevSettings } from './devSettingsController.js';
+import { normalizeGameAnswer, normalizeGamePayload } from '../services/gameCells.js';
 
 const DEV_EMAIL = 'promptle99@gmail.com';
 
@@ -69,13 +70,11 @@ async function buildGameData(topicIdentifier, isNumericId = true, answerOverride
   if (!docs.length) throw new Error('No guesses found for topic');
 
   const answers = docs.map((doc) => {
-    const values = headers.map((h) => {
+    const cells = headers.map((h) => {
       const val = doc[h];
-      if (Array.isArray(val)) return val.join(', ');
-      if (val === undefined || val === null) return '';
-      return String(val);
+      return val;
     });
-    return { name: doc.name, values };
+    return normalizeGameAnswer({ name: doc.name, cells }, headers);
   });
 
   // Pick correct answer — use override if provided (share link seeding), else random
@@ -84,12 +83,12 @@ async function buildGameData(topicIdentifier, isNumericId = true, answerOverride
     : null;
   const correctAnswer = overrideMatch ?? answers[Math.floor(Math.random() * answers.length)];
 
-  return {
+  return normalizeGamePayload({
     topic: topicName,
     headers,
     answers,
     correctAnswer,
-  };
+  });
 }
 
 // ────────────────────────────────────────────────
@@ -135,6 +134,7 @@ export async function startGame(req, res) {
       delete gameData.expiresAt;
       delete gameData.started;
       delete gameData.isMultiplayer;
+      gameData = normalizeGamePayload(gameData);
 
     } else if (topicId) {
       // Single-player classic mode (answer param seeds a specific correct answer)
@@ -209,7 +209,7 @@ export const createMultiplayerGame = async (req, res) => {
         return res.status(500).json({ error: 'AI generation failed to produce valid game data' });
       }
 
-      gameData = aiOutput;
+      gameData = normalizeGamePayload(aiOutput);
 
     } else if (id) {
       // ── Existing numeric topic from DB ──
