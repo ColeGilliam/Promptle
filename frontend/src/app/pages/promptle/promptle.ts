@@ -795,6 +795,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
     const correctNorm = this.normalizeDisplay(correctCell?.display ?? '');
 
     if (!guessNorm || !correctNorm) return 'gray';
+    if (this.hasMatchingNumberValue(guessedCell, correctCell)) return 'green';
     if (guessNorm === correctNorm) return 'green';
 
     if (this.hasListItemMatch(guessedCell, correctCell)) return 'yellow';
@@ -803,6 +804,17 @@ export class PromptleComponent implements OnInit, OnDestroy {
     }
     if (this.hasTextTokenMatch(guessedCell, correctCell)) return 'yellow';
     return 'gray';
+  }
+
+  // For number-type cells: check if the 'value' part matches exactly (after confirming both are numbers).
+  private hasMatchingNumberValue(guessedCell?: GameCell, correctCell?: GameCell): boolean {
+    if (guessedCell?.kind !== 'number' || correctCell?.kind !== 'number') return false;
+
+    const guessedValue = guessedCell.parts?.value;
+    const correctValue = correctCell.parts?.value;
+    return typeof guessedValue === 'number'
+      && Number.isFinite(guessedValue)
+      && guessedValue === correctValue;
   }
 
   // For list-type cells: check if there's at least one overlapping item after normalization.

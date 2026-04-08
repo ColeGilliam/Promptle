@@ -58,6 +58,15 @@ async function buildGameData(topicIdentifier, isNumericId = true, answerOverride
   if (!topic) throw new Error('Topic not found');
 
   const headers = topic.headers || [];
+  const columns = Array.isArray(topic.columns) && topic.columns.length
+    ? topic.columns
+    : headers.map((header, index) => ({
+        header,
+        ...(Array.isArray(topic.columnKinds) && typeof topic.columnKinds[index] === 'string'
+          ? { kind: topic.columnKinds[index] }
+          : {}),
+        ...(index === 0 ? { kind: 'text' } : {}),
+      }));
   const topicName = topic.topicName || 'Unknown Topic';
 
   if (!headers.length) throw new Error('Topic has no headers defined');
@@ -74,7 +83,7 @@ async function buildGameData(topicIdentifier, isNumericId = true, answerOverride
       const val = doc[h];
       return val;
     });
-    return normalizeGameAnswer({ name: doc.name, cells }, headers);
+    return normalizeGameAnswer({ name: doc.name, cells }, columns);
   });
 
   // Pick correct answer — use override if provided (share link seeding), else random
@@ -85,7 +94,7 @@ async function buildGameData(topicIdentifier, isNumericId = true, answerOverride
 
   return normalizeGamePayload({
     topic: topicName,
-    headers,
+    columns,
     answers,
     correctAnswer,
   });
