@@ -72,6 +72,15 @@ describe('PromptleComponent feedback scoring', () => {
     expect(colors[1]).toBe('gray');
   });
 
+  it('marks number cells green when the numeric value matches even if the display units differ', () => {
+    const colors = component['evaluateGuessColors'](
+      [textCell('Villain'), numberCell('72 in', 72, 'in')],
+      [textCell('Hero'), numberCell('72 inches', 72, 'inches')]
+    );
+
+    expect(colors[1]).toBe('green');
+  });
+
   // TODO: Quantitative number feedback tests once that logic is implemented
 });
 
@@ -99,10 +108,10 @@ function referenceCell(display: string, label: string, number: string): GameCell
   };
 }
 
-function numberCell(display: string, value: number): GameCell {
+function numberCell(display: string, value: number, unit?: string): GameCell {
   return {
     display,
     kind: 'number',
-    parts: { value },
+    parts: { value, ...(unit ? { unit } : {}) },
   };
 }

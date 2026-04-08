@@ -16,6 +16,7 @@ export interface GameCellParts {
   label?: string;
   number?: string;
   value?: number;
+  unit?: string;
 }
 
 export interface GameCell {
@@ -25,10 +26,22 @@ export interface GameCell {
   parts?: GameCellParts;
 }
 
+export interface GameColumn {
+  header: string;
+  kind?: GameCellKind;
+  unit?: string;
+}
+
 export interface GameAnswer {
   name: string;
   cells?: GameCell[];
   values?: string[];
+}
+
+export interface HydratedGameColumn {
+  header: string;
+  kind?: GameCellKind;
+  unit?: string;
 }
 
 export interface HydratedGameAnswer {
@@ -41,6 +54,7 @@ export interface HydratedGameAnswer {
 export interface GameData {
   topic: string;
   headers: string[];
+  columns?: GameColumn[];
   answers: GameAnswer[];
   correctAnswer: GameAnswer;
   mode?: string;
@@ -50,6 +64,7 @@ export interface GameData {
 export interface HydratedGameData {
   topic: string;
   headers: string[];
+  columns: HydratedGameColumn[];
   answers: HydratedGameAnswer[];
   correctAnswer: HydratedGameAnswer;
   mode?: string;
@@ -74,6 +89,11 @@ function tokenizeDisplay(value: string): string[] {
   return stringifyValue(value).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
 }
 
+function normalizeCellKind(kind: unknown): GameCellKind | '' {
+  const normalized = stringifyValue(kind).toLowerCase();
+  return GAME_CELL_KINDS.has(normalized as GameCellKind) ? normalized as GameCellKind : '';
+}
+
 // In case data is provided as a simple string or array, split it into items based on common delimiters
 function splitListItems(display: string): string[] {
   const trimmed = stringifyValue(display);
@@ -87,31 +107,145 @@ function splitListItems(display: string): string[] {
   return items.length > 1 ? items : [];
 }
 
-// Attempts to parse a numeric value from the display string or an explicit value, returning null if parsing fails
-function parseNumericValue(display: string, explicitValue: unknown): number | null {
-  if (typeof explicitValue === 'number' && Number.isFinite(explicitValue)) return explicitValue;
-
-  const trimmed = stringifyValue(display);
-  if (!trimmed || !/^-?\d+(?:\.\d+)?$/.test(trimmed)) return null;
-
-  const parsed = Number(trimmed);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-// Attempts to parse a reference from the display string or explicit parts, looking for patterns like "Label #Number" or "Label (Number)"
-function parseReferenceParts(display: string, explicitParts: Record<string, unknown>): GameCellParts | null {
-  const label = stringifyValue(explicitParts['label']);
-  const number = stringifyValue(explicitParts['number']);
-  if (label || number) {
+// Attempts to parse a numeric value or measurement from the display string
+function parseNumericParts(display: string, explicitParts: Record<string, unknown>): GameCellParts | null {
+  const explicitUnit = stringifyValue(explicitParts['unit']);
+  if (typeof explicitParts['value'] === 'number' && Number.isFinite(explicitParts['value'])) {
     return {
-      label,
-      number,
-      tokens: tokenizeDisplay(label || display),
+      value: explicitParts['value'],
+      unit: explicitUnit,
     };
   }
 
   const trimmed = stringifyValue(display);
   if (!trimmed) return null;
+
+  if (/^-?\d+(?:\.\d+)?$/.test(trimmed)) {
+    const parsed = Number(trimmed);
+    return Number.isFinite(parsed) ? { value: parsed, unit: explicitUnit } : null;
+  }
+
+  const measurementMatch = trimmed.match(/^(-?\d+(?:\.\d+)?)\s*([a-z%°]+(?:\/[a-z%°]+)?)$/i);
+  if (!measurementMatch) return null;
+
+  const unit = stringifyValue(measurementMatch[2]).toLowerCase();
+  if (['st', 'nd', 'rd', 'th'].includes(unit)) return null;
+
+  const parsed = Number(measurementMatch[1]);
+  if (!Number.isFinite(parsed)) return null;
+
+  return {
+    value: parsed,
+    unit: explicitUnit || unit,
+  };
+}
+
+// Formats the display string for a number cell, combining the numeric value and unit if appropriate, while respecting any existing display formatting
+function formatNumberDisplay(display: string, numericParts: GameCellParts = {}): string {
+  const trimmedDisplay = stringifyValue(display);
+  const unit = stringifyValue(numericParts.unit);
+  if (!unit) return trimmedDisplay;
+
+  const numericValue = typeof numericParts.value === 'number' && Number.isFinite(numericParts.value)
+    ? String(numericParts.value)
+    : '';
+
+  if (!trimmedDisplay && numericValue) return `${numericValue} ${unit}`;
+  if (!trimmedDisplay) return trimmedDisplay;
+  if (/[a-z%°]/i.test(trimmedDisplay)) return trimmedDisplay;
+  return `${trimmedDisplay} ${unit}`;
+}
+
+function normalizeDisplay(value: string): string {
+  return tokenizeDisplay(value).join(' ');
+}
+
+// Normalizes a single column definition, ensuring it has a header and optional kind/unit, with fallbacks to handle legacy formats
+function normalizeColumn(rawColumn: unknown, fallbackHeader = '', fallbackKind: GameCellKind | '' = ''): HydratedGameColumn | null {
+  const rawObject = isPlainObject(rawColumn) ? rawColumn : null;
+  const header = stringifyValue(rawObject?.['header'] ?? rawObject?.['label'] ?? rawColumn ?? fallbackHeader);
+  if (!header) return null;
+
+  const kind = normalizeCellKind(rawObject?.['kind'] ?? fallbackKind);
+  const unit = stringifyValue(rawObject?.['unit']);
+
+  return {
+    header,
+    ...(kind ? { kind } : {}),
+    ...(unit ? { unit } : {}),
+  };
+}
+
+// Normalizes all columns
+function normalizeColumns(rawColumns: unknown[] = [], rawHeaders: unknown[] = []): HydratedGameColumn[] {
+  const headers = Array.isArray(rawHeaders)
+    ? rawHeaders.map(header => stringifyValue(header)).filter(Boolean)
+    : [];
+
+  if (Array.isArray(rawColumns) && rawColumns.length) {
+    const columns = rawColumns
+      .map((column, index) => normalizeColumn(column, headers[index] ?? '', index === 0 ? 'text' : ''))
+      .filter((column): column is HydratedGameColumn => !!column);
+
+    if (headers.length > columns.length) {
+      for (let index = columns.length; index < headers.length; index += 1) {
+        const fallbackColumn = normalizeColumn(headers[index], headers[index], index === 0 ? 'text' : '');
+        if (fallbackColumn) columns.push(fallbackColumn);
+      }
+    }
+
+    if (columns.length) return columns;
+  }
+
+  return headers
+    .map((header, index) => normalizeColumn(header, header, index === 0 ? 'text' : ''))
+    .filter((column): column is HydratedGameColumn => !!column);
+}
+
+// Extracts the cell context (header, kind, unit) from the provided raw context
+function getCellContext(rawContext: string | Partial<GameColumn> = ''): HydratedGameColumn {
+  if (typeof rawContext === 'string') {
+    return {
+      header: stringifyValue(rawContext),
+    };
+  }
+
+  const rawObject = isPlainObject(rawContext) ? rawContext : {};
+  const kind = normalizeCellKind(rawObject['kind']);
+  const unit = stringifyValue(rawObject['unit']);
+  return {
+    header: stringifyValue(rawObject['header']),
+    ...(kind ? { kind } : {}),
+    ...(unit ? { unit } : {}),
+  };
+}
+
+// Checks if the display string contains patterns that suggest it's a reference, such as "Label #Number" or "Label No. Number"
+function hasReferenceMarker(display: string): boolean {
+  const trimmed = stringifyValue(display);
+  if (!trimmed) return false;
+  return /#\s*\d/i.test(trimmed)
+    || /\b(?:no\.?|number|issue|vol\.?|volume|chapter|season|episode|part)\s+\d/i.test(trimmed);
+}
+
+// Attempts to parse a reference from the display string or explicit parts, looking for patterns like "Label #Number"
+function parseReferenceParts(display: string, explicitParts: Record<string, unknown>): GameCellParts | null {
+  const trimmed = stringifyValue(display);
+  const explicitLabel = stringifyValue(explicitParts['label']);
+  const explicitNumber = stringifyValue(explicitParts['number']);
+  const explicitTokens = Array.isArray(explicitParts['tokens'])
+    ? explicitParts['tokens'].map(token => stringifyValue(token)).filter(Boolean)
+    : [];
+
+  if (explicitLabel && explicitNumber) {
+    return {
+      label: explicitLabel,
+      number: explicitNumber,
+      tokens: explicitTokens.length ? explicitTokens : tokenizeDisplay(explicitLabel || trimmed),
+    };
+  }
+
+  if (!trimmed || !hasReferenceMarker(trimmed)) return null;
 
   const patterns = [
     /^(.*?)(?:\s*#\s*|\s+(?:no\.?|number|issue|vol\.?|volume|chapter|season|episode|part)\s+)(\d+[a-z0-9-]*)$/i,
@@ -138,18 +272,21 @@ function parseReferenceParts(display: string, explicitParts: Record<string, unkn
 
 // Builds the parts object for a text cell, using explicit tokens if provided, otherwise tokenizing the display string
 function inferCellKind(
-  explicitKind: unknown,
+  preferredKind: unknown,
+  sourceWasArray: boolean,
   inferredItems: string[],
   display: string,
   explicitParts: Record<string, unknown>
 ): GameCellKind {
-  if (typeof explicitKind === 'string' && GAME_CELL_KINDS.has(explicitKind as GameCellKind)) {
-    return explicitKind as GameCellKind;
-  }
+  const numericParts = parseNumericParts(display, explicitParts);
+  const referenceParts = parseReferenceParts(display, explicitParts);
+  const normalizedPreferredKind = normalizeCellKind(preferredKind);
 
+  if (sourceWasArray) return 'set';
+  if (normalizedPreferredKind) return normalizedPreferredKind;
   if (inferredItems.length > 1) return 'set';
-  if (parseNumericValue(display, explicitParts['value']) !== null) return 'number';
-  if (parseReferenceParts(display, explicitParts)) return 'reference';
+  if (numericParts) return 'number';
+  if (referenceParts) return 'reference';
   return 'text';
 }
 
@@ -174,18 +311,23 @@ export function getCellDisplay(cell: GameCell | undefined): string {
 }
 
 // Accepts various raw cell formats and normalizes them into a consistent structure with inferred kind and display
-export function hydrateGameCell(rawCell: unknown, fallbackDisplay = ''): GameCell {
+export function hydrateGameCell(rawCell: unknown, context: string | Partial<GameColumn> = '', fallbackDisplay = ''): GameCell {
+  const cellContext = getCellContext(context);
   const rawObject = isPlainObject(rawCell) ? rawCell : null;
-  const explicitParts = isPlainObject(rawObject?.['parts']) ? rawObject['parts'] : {};
+  const explicitParts: Record<string, unknown> = {
+    ...(cellContext.unit ? { unit: cellContext.unit } : {}),
+    ...(isPlainObject(rawObject?.['parts']) ? rawObject['parts'] : {}),
+  };
+  const sourceWasArray = Array.isArray(rawCell);
   const explicitItems = Array.isArray(rawObject?.['items'])
     ? rawObject['items'].map(item => stringifyValue(item)).filter(Boolean)
-    : Array.isArray(rawCell)
+    : sourceWasArray
       ? rawCell.map(item => stringifyValue(item)).filter(Boolean)
       : [];
 
   const display = toDisplayString(rawCell) || stringifyValue(fallbackDisplay);
   const inferredItems = explicitItems.length ? explicitItems : splitListItems(display);
-  const kind = inferCellKind(rawObject?.['kind'], inferredItems, display, explicitParts);
+  const kind = inferCellKind(cellContext.kind || rawObject?.['kind'], sourceWasArray, inferredItems, display, explicitParts);
 
   if (kind === 'set') {
     const items = inferredItems.length ? inferredItems : (display ? [display] : []);
@@ -193,11 +335,11 @@ export function hydrateGameCell(rawCell: unknown, fallbackDisplay = ''): GameCel
   }
 
   if (kind === 'number') {
-    const value = parseNumericValue(display, explicitParts['value']);
+    const numericParts = parseNumericParts(display, explicitParts);
     return {
-      display,
+      display: formatNumberDisplay(display, numericParts ?? {}),
       kind,
-      parts: value === null ? {} : { value },
+      parts: numericParts ?? {},
     };
   }
 
@@ -233,20 +375,24 @@ export function hydrateGameCell(rawCell: unknown, fallbackDisplay = ''): GameCel
 }
 
 // Normalizes an entire game answer, ensuring each cell is properly structured and the overall answer has a consistent format
-export function hydrateGameAnswer(answer: Partial<GameAnswer> | undefined, headerCount = 0): HydratedGameAnswer {
+export function hydrateGameAnswer(answer: Partial<GameAnswer> | undefined, columnDefs: Array<string | Partial<GameColumn>> = []): HydratedGameAnswer {
+  const columns = Array.isArray(columnDefs) && columnDefs.some(column => isPlainObject(column))
+    ? normalizeColumns(columnDefs)
+    : normalizeColumns([], columnDefs);
   const rawCells = Array.isArray(answer?.cells) ? answer.cells : [];
   const rawValues = Array.isArray(answer?.values) ? answer.values : [];
+  const headerCount = columns.length;
   const fallbackName = stringifyValue(answer?.name);
   const cellCount = Math.max(headerCount, rawCells.length, rawValues.length, fallbackName ? 1 : 0);
   const name = fallbackName || toDisplayString(rawCells[0] ?? rawValues[0] ?? '');
 
   const cells = Array.from({ length: cellCount }, (_, index) => {
     const rawCell = rawCells[index] ?? rawValues[index] ?? (index === 0 ? name : '');
-    return hydrateGameCell(rawCell, index === 0 ? name : '');
+    return hydrateGameCell(rawCell, columns[index] ?? { header: '', ...(index === 0 ? { kind: 'text' } : {}) }, index === 0 ? name : '');
   });
 
   if (cells[0] && !cells[0].display && name) {
-    cells[0] = hydrateGameCell({ display: name, kind: 'text' }, name);
+    cells[0] = hydrateGameCell({ display: name, kind: 'text' }, columns[0] ?? { header: '', kind: 'text' }, name);
   }
 
   return {
@@ -257,17 +403,17 @@ export function hydrateGameAnswer(answer: Partial<GameAnswer> | undefined, heade
 }
 
 export function hydrateGameData(data: Partial<GameData> | undefined): HydratedGameData {
-  const headers = Array.isArray(data?.headers)
-    ? data.headers.map(header => stringifyValue(header)).filter(Boolean)
-    : [];
+  const columns = normalizeColumns(data?.columns, data?.headers);
+  const headers = columns.map(column => column.header);
 
   return {
     topic: stringifyValue(data?.topic),
     headers,
+    columns,
     answers: Array.isArray(data?.answers)
-      ? data.answers.map(answer => hydrateGameAnswer(answer, headers.length))
+      ? data.answers.map(answer => hydrateGameAnswer(answer, columns))
       : [],
-    correctAnswer: hydrateGameAnswer(data?.correctAnswer, headers.length),
+    correctAnswer: hydrateGameAnswer(data?.correctAnswer, columns),
     mode: stringifyValue(data?.mode) || undefined,
   };
 }

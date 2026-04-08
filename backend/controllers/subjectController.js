@@ -120,20 +120,26 @@ export function createGenerateSubjectsHandler({
             Always respond ONLY with a single JSON object using this exact shape: 
             {
               "topic": string,
-              "headers": ["Subject", "Category 1", ...],
+              "columns": [
+                {
+                  "header": string,
+                  "kind": "text" | "set" | "reference" | "number",
+                  "unit"?: string
+                }
+              ],
               "answers": [
                 {
                   "name": string,
                   "cells": [
                     {
                       "display": string,
-                      "kind": "text" | "set" | "reference" | "number",
                       "items"?: [string],
                       "parts"?: {
                         "tokens"?: [string],
                         "label"?: string,
                         "number"?: string,
-                        "value"?: number
+                        "value"?: number,
+                        "unit"?: string
                       }
                     }
                   ]
@@ -145,14 +151,15 @@ export function createGenerateSubjectsHandler({
             (1) Subject count must be between 7-100, aim for 15–30 most of the time unless:
             the topic has a small finite roster of 50 or less (e.g., NFL teams, U.S. states), then include them all.
             the topic has substantially more than 100 possible subjects, then select around 80–100 different subjects. 
-            (2) Total number of headers, including "Subject", must be between the provided min and max number of categories, and should be sufficient enough to properly describe and identify the subject.
-            (3) The first header is "Subject". The first cell for each answer must have a display value equal to the subject name.
-            (4) All answers must share identical header structure and value ordering.
+            (2) Total number of columns, including "Subject", must be between the provided min and max number of categories, and should be sufficient enough to properly describe and identify the subject.
+            (3) The first column must be { "header": "Subject", "kind": "text" }. The first cell for each answer must have a display value equal to the subject name.
+            (4) All answers must share identical column structure and value ordering.
             (5) Keep display values concise (1-3 words) unless a longer name is necessary for clarity. Use the "parts" field to break down longer names into important tokens for guessing.
-            (6) Use "set" when the display contains multiple items such as powers, members, colors, genres, or teams.
-            (7) Use "reference" for values like issue numbers, episodes, chapters, albums, movies, releases, or anything with a label/number pair. Fill parts.label and/or parts.number when available.
-            (8) Use "number" for pure numeric values and fill parts.value.
-            (9) Use "text" for ordinary single values and include parts.tokens with the important words.
+            (6) Every column must declare the semantic kind for that entire column. All cells in a column must match the declared kind.
+            (7) Use "set" when a column contains multiple items such as powers, members, colors, genres, or teams. Every cell in a set column must include "items".
+            (8) Use "reference" ONLY for true entity-specific title/index values such as "Amazing Fantasy #15". Every cell in a reference column must include both parts.label and parts.number.
+            (9) Use "number" for numeric quantities or identifiers, including values with units like "2.5 m" or "220 kg". Every cell in a number column must include parts.value, and include parts.unit when a unit is shown. The display string must include the unit text when a unit exists. Use digits, not roman numerals or spelled-out numbers.
+            (10) Use "text" for ordinary single values and include parts.tokens with the important words.
           `,
           },
           {
@@ -178,11 +185,25 @@ export function createGenerateSubjectsHandler({
         return res.status(500).json({ error: 'AI response was not valid JSON.' });
       }
 
+      let columns = Array.isArray(parsed.columns) ? parsed.columns : [];
       let headers = Array.isArray(parsed.headers) ? parsed.headers : [];
       let answers = Array.isArray(parsed.answers) ? parsed.answers : [];
 
-      if (!headers.length || !answers.length) {
-        return res.status(500).json({ error: 'AI response was missing headers or answers.' });
+      if (!columns.length && headers.length) {
+        columns = headers.map((header, index) => ({
+          header,
+          ...(index === 0 ? { kind: 'text' } : {}),
+        }));
+      }
+
+      if (columns.length) {
+        headers = columns
+          .map((column) => (typeof column?.header === 'string' ? column.header : ''))
+          .filter(Boolean);
+      }
+
+      if (!columns.length || !answers.length) {
+        return res.status(500).json({ error: 'AI response was missing columns or answers.' });
       }
 
       if (answers.length < MIN_COUNT) {
@@ -190,19 +211,19 @@ export function createGenerateSubjectsHandler({
         return res.status(500).json({ error: `AI returned too few subjects. Need at least ${MIN_COUNT}.` });
       }
 
-      headers = headers.slice(0, Math.min(maxCategories, headers.length));
+      columns = columns.slice(0, Math.min(maxCategories, columns.length));
       const targetCount = Math.max(
         MIN_COUNT,
         Math.min(MAX_COUNT, Math.max(answers.length || TARGET_DEFAULT, MIN_COUNT))
       );
 
-      answers = answers.slice(0, targetCount).map((answer) => normalizeGameAnswer(answer, headers));
+      answers = answers.slice(0, targetCount).map((answer) => normalizeGameAnswer(answer, columns));
 
       const correctAnswer = answers[Math.floor(Math.random() * answers.length)];
       const finalTopic = parsed.topic || normalizedTopic;
       const payload = normalizeGamePayload({
         topic: finalTopic,
-        headers,
+        columns,
         answers,
         correctAnswer,
       });
