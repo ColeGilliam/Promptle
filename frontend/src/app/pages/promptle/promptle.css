@@ -78,6 +78,27 @@
   to   { transform: translate( 70px,  30px) rotate( 23deg) scale(1.14); }
 }
 
+/* ── Game animation toggle ── */
+:host-context(.no-game-anims) .pregame-icon-wrap--waiting mat-icon,
+:host-context(.no-game-anims) .powerup-hint-toast,
+:host-context(.no-game-anims) .chaos-effect-banner,
+:host-context(.no-game-anims) .blackout-scanlines,
+:host-context(.no-game-anims) .blackout-content,
+:host-context(.no-game-anims) .blackout-headline,
+:host-context(.no-game-anims) .loss-card {
+  animation: none !important;
+}
+
+:host-context(.no-game-anims) .powerup-btn,
+:host-context(.no-game-anims) .turn-status {
+  transition: none !important;
+}
+
+:host-context(.no-game-anims) .powerup-btn:hover:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+}
+
 .game-main {
   position: relative;
   z-index: 1;

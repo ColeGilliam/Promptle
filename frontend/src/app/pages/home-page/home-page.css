@@ -131,6 +131,9 @@
   100% { transform: translateY(-14px); }
 }
 
+:host-context(.no-ui-anims) .hero-logo img    { animation: none !important; }
+:host-context(.no-ui-anims) .hero-scroll-hint { animation: none !important; }
+
 /* Tagline */
 .hero-tagline {
   margin: 0;

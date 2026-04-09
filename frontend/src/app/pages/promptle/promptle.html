@@ -16,7 +16,7 @@
 
   <app-navbar></app-navbar>
 
-  <div class="game-main">
+  <div class="game-main" [@.disabled]="noGameAnims">
     <div class="promptle-container">
 
       <!-- Game info card (always shown when loaded) -->
@@ -358,6 +358,7 @@
 <!-- Win overlay -->
 <app-promptle-win-popup
   *ngIf="isGameOver && !iLost && !isSpectating"
+  [@.disabled]="noGameAnims"
   [answerName]="correctAnswer.name"
   [isMultiplayer]="isMultiplayer"
   [finishTimeMs]="myFinishTimeMs"
@@ -370,7 +371,7 @@
 ></app-promptle-win-popup>
 
 <!-- ══ LOSS OVERLAY (1v1 only) ══ -->
-<div class="loss-overlay" *ngIf="iLost && isGameOver">
+<div class="loss-overlay" *ngIf="iLost && isGameOver" [@.disabled]="noGameAnims">
   <div class="loss-card">
     <div class="loss-glow" aria-hidden="true"></div>
     <div class="loss-icon-wrap">

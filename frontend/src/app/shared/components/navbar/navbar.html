@@ -16,6 +16,7 @@
   <!-- Right actions -->
   <div class="nav-actions">
     <button
+      type="button"
       class="icon-btn"
       (click)="openHowToPlay()"
       aria-label="How to play"
@@ -24,6 +25,7 @@
     </button>
 
     <button
+      type="button"
       class="icon-btn"
       (click)="toggleTheme()"
       [attr.aria-label]="isDarkTheme ? 'Switch to light mode' : 'Switch to dark mode'"
@@ -35,7 +37,7 @@
       <!-- Backdrop to close menu on outside click -->
       <div class="menu-backdrop" *ngIf="showMenu" (click)="showMenu = false"></div>
 
-      <button class="icon-btn" (click)="showMenu = !showMenu" aria-label="Open menu">
+      <button type="button" class="icon-btn" (click)="showMenu = !showMenu" aria-label="Open menu">
         <mat-icon>{{ showMenu ? 'close' : 'menu' }}</mat-icon>
       </button>
 
@@ -52,6 +54,10 @@
           <mat-icon>face</mat-icon>
           <span>Profile</span>
         </a>
+        <button type="button" class="dropdown-item" (click)="openSettings(); showMenu = false">
+          <mat-icon>tune</mat-icon>
+          <span>Settings</span>
+        </button>
         <a *ngIf="isDevAccount" class="dropdown-item" routerLink="/dev-settings" (click)="showMenu = false">
           <mat-icon>settings</mat-icon>
           <span>Dev Settings</span>
