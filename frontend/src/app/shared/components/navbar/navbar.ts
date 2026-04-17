@@ -62,8 +62,8 @@ export class NavbarComponent implements OnInit {
         this.isDevAccount = user.email === 'promptle99@gmail.com';
         this.http.get(`/api/profile/${user.sub}`)
           .subscribe((data: any) => {
-            this.dbUsername = data?.username;
-            this.dbProfilePic = data?.profilePic;
+            this.dbUsername = data?.username || '';
+            this.dbProfilePic = data?.profilePic || '';
           });
       }
     });
@@ -131,8 +131,8 @@ export class NavbarComponent implements OnInit {
       .subscribe({
         next: (data: any) => {
           if (data) {
-            this.dbUsername = data.username;
-            this.dbProfilePic = data.profilePic;
+            this.dbUsername = data.username || '';
+            this.dbProfilePic = data.profilePic || '';
           }
         },
         error: (err) => console.error("Navbar fetch error:", err)

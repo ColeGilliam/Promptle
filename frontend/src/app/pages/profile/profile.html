@@ -54,15 +54,32 @@
               </mat-form-field>
             </mat-card-content>
 
-            <mat-card-actions class="actions">
-              <button matButton="filled" class="promp1-btn rect-btn save-btn" (click)="saveProfile()">
-                <mat-icon>save</mat-icon> Save Changes
+            <div class="upload-row">
+              <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/png,image/jpeg" hidden>
+              <button matButton="outlined" class="rect-btn upload-btn" (click)="fileInput.click()">
+                <mat-icon>upload</mat-icon> Change Avatar
               </button>
-              <button matButton="outlined" class="danger-btn rect-btn" (click)="deleteAccount()">
-                <mat-icon>delete_forever</mat-icon> Delete Account
-              </button>
-            </mat-card-actions>
-          </mat-card>
+            </div>
+            <p class="field-error" *ngIf="profilePicError">{{ profilePicError }}</p>
+
+            <mat-form-field appearance="fill" class="full-width">
+              <mat-label>Display Username</mat-label>
+              <input matInput [(ngModel)]="dbUsername" maxlength="16" placeholder="Enter custom username">
+              <mat-hint>3-16 characters. Letters, numbers, and hyphens only.</mat-hint>
+              <mat-error *ngIf="usernameError">{{ usernameError }}</mat-error>
+            </mat-form-field>
+            <p class="field-error" *ngIf="saveError">{{ saveError }}</p>
+          </mat-card-content>
+
+          <mat-card-actions class="actions">
+            <button matButton="filled" class="promp1-btn rect-btn save-btn" (click)="saveProfile()">
+              <mat-icon>save</mat-icon> Save Changes
+            </button>
+            <button matButton="outlined" class="danger-btn rect-btn" (click)="deleteAccount()">
+              <mat-icon>delete_forever</mat-icon> Delete Account
+            </button>
+          </mat-card-actions>
+        </mat-card>
 
           <!-- Right: Stats card -->
           <mat-card class="stats-card">

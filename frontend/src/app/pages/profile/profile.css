@@ -238,6 +238,21 @@
   margin-bottom: 18px;
 }
 
+.field-error {
+  margin: 10px 0 0;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.field-error {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+:host-context(.dark) .field-error {
+  color: #fca5a5;
+}
+
 .upload-btn {
   gap: 6px;
   color: #6366f1 !important;
