@@ -3,6 +3,13 @@ import OpenAI from 'openai';
 import { OPENAI_API_KEY } from '../config/config.js';
 import { getUsersCollection } from '../config/db.js';
 import { fetchDevSettings } from './devSettingsController.js';
+import {
+  logRejectedTopicAttempt,
+  moderateTopicInput,
+  TOPIC_MODERATION_FAILED_ERROR,
+  TOPIC_NOT_ALLOWED_ERROR,
+} from '../services/topicModeration.js';
+import { normalizeGameAnswer, normalizeGamePayload } from '../services/gameCells.js';
 
 const DEV_EMAIL = 'promptle99@gmail.com';
 
@@ -22,20 +29,26 @@ export function createGenerateSubjectsHandler({
   openaiClient = openai,
   apiKey = OPENAI_API_KEY,
   logger = console,
+  isDevAccountFn = isDevAccount,
+  fetchDevSettingsFn = fetchDevSettings,
+  moderateTopicInputFn = moderateTopicInput,
+  logRejectedTopicAttemptFn = logRejectedTopicAttempt,
 } = {}) {
   return async function generateSubjects(req, res) {
     const { topic, minCategories = 6, maxCategories = 8, auth0Id } = req.body || {};
     const MIN_COUNT = 7;
     const MAX_COUNT = 100;
     const TARGET_DEFAULT = 20;
+    const normalizedTopic = typeof topic === 'string' ? topic.trim() : '';
 
-    if (!topic) {
+    // Input validation for topic
+    if (!normalizedTopic) {
       return res.status(400).json({ error: 'Please provide a topic in the request body.' });
     }
 
-    const isDevUser = await isDevAccount(auth0Id);
+    const isDevUser = await isDevAccountFn(auth0Id);
     if (!isDevUser) {
-      const settings = await fetchDevSettings();
+      const settings = await fetchDevSettingsFn();
       if (!settings.allowAllAIGeneration) {
         return res.status(403).json({ error: 'AI game generation is restricted to the dev account.' });
       }
@@ -43,6 +56,55 @@ export function createGenerateSubjectsHandler({
 
     if (!openaiClient || !apiKey) {
       return res.status(500).json({ error: 'OpenAI API key is missing. Set OPENAI_API_KEY in your environment.' });
+    }
+
+    // Moderate the topic input using the provided moderation function
+    let moderationResult;
+    try {
+      // Pass the openaiClient to the moderation function in case it needs to make API calls for moderation
+      moderationResult = await moderateTopicInputFn({
+        openaiClient,
+        topic: normalizedTopic,
+      });
+    } catch (error) {
+      logger.error('Error moderating topic input:', error);
+      return res.status(500).json({ error: TOPIC_MODERATION_FAILED_ERROR });
+    }
+
+    // If the topic is flagged by moderation, log the attempt and return an error response
+    if (moderationResult.flagged) {
+      try {
+        await logRejectedTopicAttemptFn({
+          auth0Id,
+          topic: normalizedTopic,
+          moderationResult,
+        });
+      } catch (error) {
+        logger.error('Failed to log rejected topic attempt:', error);
+      }
+
+      // Log the blocked attempt with user ID, topic, flagged categories, and moderation model used, using warn level if available, otherwise fallback to info
+      if (typeof logger.warn === 'function') {
+        logger.warn('[AI topic blocked]', {
+          auth0Id: auth0Id || null,
+          topic: normalizedTopic,
+          flaggedCategories: moderationResult.flaggedCategories,
+          moderationModel: moderationResult.moderationModel,
+        });
+      } else {
+        logger.info('[AI topic blocked]', {
+          auth0Id: auth0Id || null,
+          topic: normalizedTopic,
+          flaggedCategories: moderationResult.flaggedCategories,
+          moderationModel: moderationResult.moderationModel,
+        });
+      }
+
+      // Returns a user error message indicating the topic is not allowed
+      return res.status(400).json({
+        error: TOPIC_NOT_ALLOWED_ERROR,
+        code: 'topic_not_allowed',
+      });
     }
 
     try {
@@ -58,11 +120,29 @@ export function createGenerateSubjectsHandler({
             Always respond ONLY with a single JSON object using this exact shape: 
             {
               "topic": string,
-              "headers": ["Subject", "Category 1", ...],
+              "columns": [
+                {
+                  "header": string,
+                  "kind": "text" | "set" | "reference" | "number",
+                  "unit"?: string
+                }
+              ],
               "answers": [
                 {
                   "name": string,
-                  "values": ["Subject", "Category 1 value", ...]
+                  "cells": [
+                    {
+                      "display": string,
+                      "items"?: [string],
+                      "parts"?: {
+                        "tokens"?: [string],
+                        "label"?: string,
+                        "number"?: string,
+                        "value"?: number,
+                        "unit"?: string
+                      }
+                    }
+                  ]
                 }
               ]
             }
@@ -71,16 +151,21 @@ export function createGenerateSubjectsHandler({
             (1) Subject count must be between 7-100, aim for 15–30 most of the time unless:
             the topic has a small finite roster of 50 or less (e.g., NFL teams, U.S. states), then include them all.
             the topic has substantially more than 100 possible subjects, then select around 80–100 different subjects. 
-            (2) Total number of headers, including "Subject", must be between the provided min and max number of categories, and should be sufficient enough to properly describe and identify the subject.
-            (3) The first header is "Subject". The first value for each answer must match the subject name.
-            (4) All answers must share identical header structure and value ordering.
-            (5) Keep values concise (1-3 words).
+            (2) Total number of columns, including "Subject", must be between the provided min and max number of categories, and should be sufficient enough to properly describe and identify the subject.
+            (3) The first column must be { "header": "Subject", "kind": "text" }. The first cell for each answer must have a display value equal to the subject name.
+            (4) All answers must share identical column structure and value ordering.
+            (5) Keep display values concise (1-3 words) unless a longer name is necessary for clarity. Use the "parts" field to break down longer names into important tokens for guessing.
+            (6) Every column must declare the semantic kind for that entire column. All cells in a column must match the declared kind.
+            (7) Use "set" when a column contains multiple items such as powers, members, colors, genres, or teams. Every cell in a set column must include "items".
+            (8) Use "reference" ONLY for true entity-specific title/index values such as "Amazing Fantasy #15". Every cell in a reference column must include both parts.label and parts.number.
+            (9) Use "number" for numeric quantities or identifiers, including values with units like "2.5 m" or "220 kg". Every cell in a number column must include parts.value, and include parts.unit when a unit is shown. The display string must include the unit text when a unit exists. Use digits, not roman numerals or spelled-out numbers.
+            (10) Use "text" for ordinary single values and include parts.tokens with the important words.
           `,
           },
           {
             role: 'user',
             content: `
-          Topic: "${topic}". 
+          Topic: "${normalizedTopic}". 
           Generate distinct subjects and structured categories using the rules above.
           Stay within 7-100 subjects: aim for 15-30 by default, but if the domain is a small finite list under 100 return them all, and if the domain is very large (hundreds) return 80-100 diverse subjects.
 
@@ -100,11 +185,25 @@ export function createGenerateSubjectsHandler({
         return res.status(500).json({ error: 'AI response was not valid JSON.' });
       }
 
+      let columns = Array.isArray(parsed.columns) ? parsed.columns : [];
       let headers = Array.isArray(parsed.headers) ? parsed.headers : [];
       let answers = Array.isArray(parsed.answers) ? parsed.answers : [];
 
-      if (!headers.length || !answers.length) {
-        return res.status(500).json({ error: 'AI response was missing headers or answers.' });
+      if (!columns.length && headers.length) {
+        columns = headers.map((header, index) => ({
+          header,
+          ...(index === 0 ? { kind: 'text' } : {}),
+        }));
+      }
+
+      if (columns.length) {
+        headers = columns
+          .map((column) => (typeof column?.header === 'string' ? column.header : ''))
+          .filter(Boolean);
+      }
+
+      if (!columns.length || !answers.length) {
+        return res.status(500).json({ error: 'AI response was missing columns or answers.' });
       }
 
       if (answers.length < MIN_COUNT) {
@@ -112,38 +211,37 @@ export function createGenerateSubjectsHandler({
         return res.status(500).json({ error: `AI returned too few subjects. Need at least ${MIN_COUNT}.` });
       }
 
-      headers = headers.slice(0, Math.min(maxCategories, headers.length));
+      columns = columns.slice(0, Math.min(maxCategories, columns.length));
       const targetCount = Math.max(
         MIN_COUNT,
         Math.min(MAX_COUNT, Math.max(answers.length || TARGET_DEFAULT, MIN_COUNT))
       );
 
-      answers = answers.slice(0, targetCount).map((answer) => {
-        const values = Array.isArray(answer.values) ? answer.values.slice(0, headers.length) : [];
-        const name = answer.name || values[0] || '';
-        return { name, values };
-      });
+      answers = answers.slice(0, targetCount).map((answer) => normalizeGameAnswer(answer, columns));
 
       const correctAnswer = answers[Math.floor(Math.random() * answers.length)];
-      const finalTopic = parsed.topic || topic;
-
-      logger.info('[AI subjects] summary', {
+      const finalTopic = parsed.topic || normalizedTopic;
+      const payload = normalizeGamePayload({
         topic: finalTopic,
-        headersCount: headers.length,
-        subjectCount: answers.length,
-        targetCount,
-        minCategories,
-        maxCategories,
-        correctAnswer: correctAnswer?.name,
-        tokenUsage: completion.usage || 'No usage data',
-      });
-
-      res.json({
-        topic: finalTopic,
-        headers,
+        columns,
         answers,
         correctAnswer,
       });
+
+      logger.info('[AI subjects] summary', {
+        topic: payload.topic,
+        headers: payload.headers,
+        headersCount: payload.headers.length,
+        subjectCount: payload.answers.length,
+        targetCount,
+        minCategories,
+        maxCategories,
+        correctAnswer: payload.correctAnswer?.name,
+        correctAnswerCells: payload.correctAnswer?.cells || [],
+        tokenUsage: completion.usage || 'No usage data',
+      });
+
+      res.json(payload);
     } catch (error) {
       logger.error('Error generating subjects from OpenAI:', error);
       res.status(500).json({ error: 'Failed to generate subjects.' });

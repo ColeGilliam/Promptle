@@ -4,6 +4,7 @@ from '../config/db.js';
 import { generateSubjects } from './subjectController.js';  // adjust path if needed
 import { getIo } from '../sockets/socketState.js';
 import { fetchDevSettings } from './devSettingsController.js';
+import { normalizeGameAnswer, normalizeGamePayload } from '../services/gameCells.js';
 
 const DEV_EMAIL = 'promptle99@gmail.com';
 
@@ -57,6 +58,15 @@ async function buildGameData(topicIdentifier, isNumericId = true, answerOverride
   if (!topic) throw new Error('Topic not found');
 
   const headers = topic.headers || [];
+  const columns = Array.isArray(topic.columns) && topic.columns.length
+    ? topic.columns
+    : headers.map((header, index) => ({
+        header,
+        ...(Array.isArray(topic.columnKinds) && typeof topic.columnKinds[index] === 'string'
+          ? { kind: topic.columnKinds[index] }
+          : {}),
+        ...(index === 0 ? { kind: 'text' } : {}),
+      }));
   const topicName = topic.topicName || 'Unknown Topic';
 
   if (!headers.length) throw new Error('Topic has no headers defined');
@@ -69,13 +79,11 @@ async function buildGameData(topicIdentifier, isNumericId = true, answerOverride
   if (!docs.length) throw new Error('No guesses found for topic');
 
   const answers = docs.map((doc) => {
-    const values = headers.map((h) => {
+    const cells = headers.map((h) => {
       const val = doc[h];
-      if (Array.isArray(val)) return val.join(', ');
-      if (val === undefined || val === null) return '';
-      return String(val);
+      return val;
     });
-    return { name: doc.name, values };
+    return normalizeGameAnswer({ name: doc.name, cells }, columns);
   });
 
   // Pick correct answer — use override if provided (share link seeding), else random
@@ -84,12 +92,12 @@ async function buildGameData(topicIdentifier, isNumericId = true, answerOverride
     : null;
   const correctAnswer = overrideMatch ?? answers[Math.floor(Math.random() * answers.length)];
 
-  return {
+  return normalizeGamePayload({
     topic: topicName,
-    headers,
+    columns,
     answers,
     correctAnswer,
-  };
+  });
 }
 
 // ────────────────────────────────────────────────
@@ -135,6 +143,7 @@ export async function startGame(req, res) {
       delete gameData.expiresAt;
       delete gameData.started;
       delete gameData.isMultiplayer;
+      gameData = normalizeGamePayload(gameData);
 
     } else if (topicId) {
       // Single-player classic mode (answer param seeds a specific correct answer)
@@ -180,7 +189,8 @@ export const createMultiplayerGame = async (req, res) => {
         body: {
           topic: topic.trim(),
           minCategories: 6,
-          maxCategories: 8
+          maxCategories: 8,
+          auth0Id,
         }
       };
 
@@ -189,20 +199,26 @@ export const createMultiplayerGame = async (req, res) => {
         json: (data) => data  // success case
       };
 
-      // Call your existing function (it uses res.json on success)
+      // Use a Promise wrapper to capture the async result from generateSubjects
       const aiOutput = await new Promise((resolve, reject) => {
         aiRes.json = resolve;
         aiRes.status = (code) => ({
-          json: (errData) => reject(new Error(`AI error ${code}: ${JSON.stringify(errData)}`))
+          // Override to capture error responses from generateSubjects
+          json: (errData) => {
+            const error = new Error(errData?.error || `AI error ${code}`);
+            error.statusCode = code;
+            error.payload = errData;
+            reject(error);
+          }
         });
-        generateSubjects(aiReq, aiRes);
+        Promise.resolve(generateSubjects(aiReq, aiRes)).catch(reject); // Handle any unexpected errors thrown by generateSubjects
       });
 
       if (!aiOutput || !aiOutput.topic || !aiOutput.headers || !aiOutput.answers) {
         return res.status(500).json({ error: 'AI generation failed to produce valid game data' });
       }
 
-      gameData = aiOutput;
+      gameData = normalizeGamePayload(aiOutput);
 
     } else if (id) {
       // ── Existing numeric topic from DB ──
@@ -241,6 +257,10 @@ export const createMultiplayerGame = async (req, res) => {
     res.status(201).json({ roomId });
 
   } catch (error) {
+    if (error?.statusCode) { 
+      return res.status(error.statusCode).json(error.payload || { error: error.message || 'Failed to create multiplayer game' });
+    }
+
     console.error('createMultiplayerGame error:', error.message || error);
     console.error(error.stack);
     res.status(500).json({ error: 'Failed to create multiplayer game: ' + (error.message || 'unknown') });

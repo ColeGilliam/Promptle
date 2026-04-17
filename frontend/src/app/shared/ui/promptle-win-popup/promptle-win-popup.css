@@ -180,6 +180,11 @@
   color: white !important;
 }
 
+.view-game-btn {
+  background: linear-gradient(135deg, #0f766e, #0ea5a4) !important;
+  color: white !important;
+}
+
 .spectate-btn {
   background: linear-gradient(135deg, #7c3aed, #6d28d9) !important;
   color: white !important;

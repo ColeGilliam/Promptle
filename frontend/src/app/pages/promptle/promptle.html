@@ -30,9 +30,18 @@
       ></app-promptle-game-card>
 
       <!-- Error -->
-      <div *ngIf="gameError" class="error-banner">
-        <mat-icon>error_outline</mat-icon>
-        {{ gameError }}
+      <div *ngIf="gameError" class="error-state">
+        <div class="error-banner">
+          <mat-icon>error_outline</mat-icon>
+          {{ gameError }}
+        </div>
+        <button
+          matButton
+          class="rect-btn error-return-btn"
+          (click)="quitGame()"
+        >
+          Return Home
+        </button>
       </div>
 
       <!-- ══ MULTIPLAYER PRE-GAME PANEL ══ -->
@@ -92,6 +101,13 @@
         <button matButton class="rect-btn delete-room-btn" (click)="deleteCurrentRoom()">
           <mat-icon>delete</mat-icon>
           DELETE ROOM
+        </button>
+      </div>
+
+      <div class="dev-delete-bar" *ngIf="isGameOver && isViewingCompletedGame && !iLost && !isSpectating">
+        <button matButton class="rect-btn promp2-btn" (click)="returnToResultsPopup()">
+          <mat-icon>arrow_back</mat-icon>
+          BACK TO RESULTS
         </button>
       </div>
 
@@ -256,7 +272,7 @@
               <div class="header">Player</div>
               <div
                 class="guess-cell player-label-cell"
-                *ngFor="let guess of oneVsOneGuesses"
+                *ngFor="let guess of displayedOneVsOneGuesses"
                 [@cardEnter]
                 [class.my-guess-label]="guess.isMe"
               >
@@ -268,7 +284,7 @@
               <div class="header">{{ header }}</div>
               <div
                 class="guess-cell"
-                *ngFor="let guess of oneVsOneGuesses"
+                *ngFor="let guess of displayedOneVsOneGuesses"
                 [@cardEnter]
                 [style.background-color]="guess.colors[i]"
               >
@@ -301,7 +317,7 @@
               <div class="header">Player</div>
               <div
                 class="guess-cell player-label-cell"
-                *ngFor="let guess of spectateGuesses"
+                *ngFor="let guess of displayedSpectateGuesses"
                 [@cardEnter]
                 [class.my-guess-label]="guess.isMe"
               >
@@ -312,7 +328,7 @@
               <div class="header">{{ header }}</div>
               <div
                 class="guess-cell"
-                *ngFor="let guess of spectateGuesses"
+                *ngFor="let guess of displayedSpectateGuesses"
                 [@cardEnter]
                 [style.background-color]="guess.colors[i]"
               >
@@ -340,7 +356,7 @@
               <div class="header">{{ header }}</div>
               <div
                 class="guess-cell"
-                *ngFor="let guess of submittedGuesses"
+                *ngFor="let guess of displayedSubmittedGuesses"
                 [@cardEnter]
                 [style.background-color]="guess.colors[i]"
               >
@@ -357,9 +373,10 @@
 
 <!-- Win overlay -->
 <app-promptle-win-popup
-  *ngIf="isGameOver && !iLost && !isSpectating"
+  *ngIf="isGameOver && !isViewingCompletedGame && !iLost && !isSpectating"
   [@.disabled]="noGameAnims"
   [answerName]="correctAnswer.name"
+  [topicName]="topic"
   [isMultiplayer]="isMultiplayer"
   [finishTimeMs]="myFinishTimeMs"
   [guessCount]="submittedGuesses.length"
@@ -368,6 +385,7 @@
   (returnHome)="quitGame()"
   (playAgain)="restartGame()"
   (spectate)="startSpectating()"
+  (viewGame)="viewCompletedGame()"
 ></app-promptle-win-popup>
 
 <!-- ══ LOSS OVERLAY (1v1 only) ══ -->
