@@ -1,0 +1,275 @@
+<div class="page-wrap">
+  <app-navbar></app-navbar>
+
+  <!-- project banner -->
+  <div class="project-banner">
+    <p class="banner-course">CS 426 Senior Project in Computer Science &nbsp;&middot;&nbsp; Spring 2026</p>
+    <img class="banner-logo banner-logo-light" src="PromptleLogoTransparent.png" alt="Promptle logo" />
+    <img class="banner-logo banner-logo-dark" src="promptle_logo_dark.png" alt="Promptle logo" />
+    <p class="banner-team">Team 9</p>
+    <p class="banner-sub">University of Nevada, Reno &nbsp;&mdash;&nbsp; Department of Computer Science and Engineering</p>
+  </div>
+
+  <!-- top -->
+  <section class="top-part">
+    <div class="top-glow" aria-hidden="true"></div>
+    <div class="top-content">
+      <p class="small-label mat-overline">About the Project</p>
+      <h1 class="big-title">What is Promptle?</h1>
+      <div class="top-description">
+        <p class="top-paragraph mat-body-1">
+          Promptle is a web-based guessing game inspired by Wordle, but designed to remove one of the biggest limits of traditional puzzle games: a fixed set of topics and answers. Many Wordle-style games rely on a hard-coded database, which means the experience eventually becomes repetitive once players have seen the available content. Promptle addresses that problem by combining structured category-based guessing with AI-generated puzzle creation, allowing the game to stay replayable and flexible over time.
+        </p>
+        <p class="top-paragraph mat-body-1">
+          Players can choose a topic, start a round, and try to identify the hidden answer by making guesses and reading the feedback returned from each guess. The game preserves the familiar satisfaction of narrowing down the correct answer through hints, but extends that model by allowing existing topics, user-driven topic input, and dynamically generated puzzles. OpenAI's API is used to generate new game content, which makes it possible to support a much wider range of subjects than a static topic list alone could provide.
+        </p>
+        <p class="top-paragraph mat-body-1">
+          Beyond the core gameplay loop, Promptle includes user accounts and profiles, support for multiplayer play, and a design intended to grow into additional AI-assisted game modes in the future. The overall goal of the project is to create a browser-based game that is replayable, customizable, and social, while still keeping each round clear, structured, and accessible to players who enjoy category-based puzzle games.
+        </p>
+      </div>
+      <div class="feature-stack">
+        <div class="feature-row">
+          @for (f of features; track f.id) {
+            <button class="feature-chip" [class.feature-chip-on]="activeFeature === f.id" (click)="toggleFeature(f.id)">
+              <mat-icon>{{ f.icon }}</mat-icon>
+              <span>{{ f.label }}</span>
+              <mat-icon class="chip-caret">{{ activeFeature === f.id ? 'expand_less' : 'expand_more' }}</mat-icon>
+            </button>
+          }
+        </div>
+        @if (activeFeature) {
+          <div class="feature-detail" @expandCollapse>
+            <p class="feature-detail-text mat-body-1">{{ activeFeatureDetail }}</p>
+          </div>
+        }
+        <div class="button-row">
+          <button mat-flat-button color="primary" class="main-btn rect-btn promp2-btn" (click)="openSignIn()">
+            <mat-icon>person_add</mat-icon>
+            Create an Account
+          </button>
+          <button mat-stroked-button color="primary" class="rect-btn promp3-btn" routerLink="/">
+            Try the Game
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- team -->
+  <div class="light-strip">
+  <section class="team-top">
+    <p class="small-label mat-overline">The People Behind It</p>
+    <h2 class="mid-title">Meet the Team</h2>
+  </section>
+
+  <section class="team-slider">
+    <app-about-team-carousel [members]="members"></app-about-team-carousel>
+
+    <mat-card class="about-box1 teacher-box">
+      <p class="small-label mat-overline">Who Guided the Project</p>
+      <div class="advisor-grid">
+        <div class="advisor-row">
+          <div class="advisor-icon-wrap">
+            <mat-icon class="advisor-icon">school</mat-icon>
+          </div>
+          <div class="advisor-text">
+            <span class="advisor-role">Instructors</span>
+            <span class="advisor-names">David Feil-Seifer &amp; Vinh Le, University of Nevada, Reno</span>
+          </div>
+        </div>
+        <div class="advisor-row">
+          <div class="advisor-icon-wrap">
+            <mat-icon class="advisor-icon">person</mat-icon>
+          </div>
+          <div class="advisor-text">
+            <span class="advisor-role">External Advisor</span>
+            <span class="advisor-names">Lecturer II Erin Keith, University of Nevada, Reno</span>
+          </div>
+        </div>
+      </div>
+    </mat-card>
+  </section>
+  </div>
+
+  <!-- tech & deployment combined -->
+  <section class="build-part">
+    <p class="small-label mat-overline">Under the Hood</p>
+    <h2 class="mid-title">Tech &amp; Deployment</h2>
+
+    <div class="build-columns">
+      <div class="build-col">
+        <p class="build-col-label">The Stack</p>
+        <mat-chip-set class="stack-list" aria-label="Tech stack">
+          @for (tech of techStack; track tech.name) {
+            <mat-chip class="stack-item">
+              <mat-icon matChipAvatar>{{ tech.icon }}</mat-icon>
+              <span class="stack-main">{{ tech.name }}</span>
+              <span class="stack-side">{{ tech.desc }}</span>
+            </mat-chip>
+          }
+        </mat-chip-set>
+      </div>
+
+      <div class="build-divider" aria-hidden="true"></div>
+
+      <div class="build-col build-col-narrow">
+        <p class="build-col-label">How We're Hosted</p>
+        <mat-list class="host-list">
+          @for (item of deployInfo; track item.label; let last = $last) {
+            <mat-list-item class="host-row">
+              <mat-icon matListItemIcon color="primary">{{ item.icon }}</mat-icon>
+              <span matListItemTitle class="host-left">{{ item.label }}</span>
+              <span matListItemLine class="host-right">{{ item.value }}</span>
+            </mat-list-item>
+            @if (!last) {
+              <mat-divider></mat-divider>
+            }
+          }
+        </mat-list>
+      </div>
+    </div>
+  </section>
+
+  <!-- project resources -->
+  <div class="light-strip">
+  <section class="resources-part">
+    <div class="resources-header">
+      <p class="small-label mat-overline">Research &amp; References</p>
+      <h2 class="mid-title">Project Resources</h2>
+      <p class="resources-note mat-body-2">
+        Reference discovery was assisted by ChatGPT. Final sources, citations, and relevance summaries were reviewed and selected by the team.
+      </p>
+    </div>
+
+    <!-- featured book — full-width horizontal -->
+    <mat-card class="about-box1 resource-book-card">
+      <p class="resource-category-tag">Problem Domain Book</p>
+      <div class="book-body">
+        <div class="book-left">
+          <mat-icon class="book-icon">menu_book</mat-icon>
+          <h3 class="book-title">{{ problemDomainBook.title }}</h3>
+          <p class="book-author">{{ problemDomainBook.author }}</p>
+          <p class="book-citation mat-body-2">{{ problemDomainBook.citation }}</p>
+          <a class="resource-link" [href]="problemDomainBook.url" target="_blank" rel="noopener">
+            <mat-icon>open_in_new</mat-icon>
+            View source
+          </a>
+        </div>
+        <mat-divider class="book-divider" [vertical]="true"></mat-divider>
+        <div class="book-right">
+          <p class="book-why-label">Why it matters</p>
+          <p class="resource-why mat-body-1">{{ problemDomainBook.why }}</p>
+        </div>
+      </div>
+    </mat-card>
+
+    <!-- articles — 3-column row -->
+    <div class="resources-articles-section">
+      <p class="resource-category-tag">Reference Articles</p>
+      <div class="resources-articles-grid">
+        @for (article of referenceArticles; track article.title) {
+          <mat-card class="about-box2 resource-article-card">
+            <p class="article-title mat-label-large">{{ article.title }}</p>
+            <p class="article-authors mat-body-2">{{ article.authors }}</p>
+            <p class="article-citation mat-body-2">{{ article.citation }}</p>
+            <mat-divider class="resource-divider"></mat-divider>
+            <p class="resource-why mat-body-2">{{ article.why }}</p>
+            <a class="resource-link" [href]="article.url" target="_blank" rel="noopener">
+              <mat-icon>open_in_new</mat-icon>
+              View source
+            </a>
+          </mat-card>
+        }
+      </div>
+    </div>
+
+    <!-- web resources row -->
+    <div class="resources-web-section">
+      <p class="resource-category-tag">Web Resources</p>
+      <div class="resources-web-grid">
+        @for (web of webResources; track web.title) {
+          <mat-card class="about-box2 resource-web-card">
+            <div class="web-card-header">
+              <div class="web-icon-wrap">
+                <mat-icon>{{ web.icon }}</mat-icon>
+              </div>
+              <div>
+                <p class="web-title">{{ web.title }}</p>
+                <p class="web-domain">{{ web.domain }}</p>
+              </div>
+            </div>
+            <p class="resource-why mat-body-2">{{ web.why }}</p>
+            <a class="resource-link" [href]="web.url" target="_blank" rel="noopener">
+              <mat-icon>open_in_new</mat-icon>
+              Visit
+            </a>
+          </mat-card>
+        }
+      </div>
+    </div>
+
+    <!-- news / related information -->
+    <div class="resources-news-section">
+      <p class="resource-category-tag">News / Related Information</p>
+      <div class="resources-news-grid">
+        @for (item of newsItems; track item.title) {
+          <mat-card class="about-box2 resource-news-card">
+            <div class="news-card-header">
+              <mat-icon class="news-icon">newspaper</mat-icon>
+              <div>
+                <p class="news-title">{{ item.title }}</p>
+                <p class="news-meta">{{ item.source }} &middot; {{ item.date }}</p>
+              </div>
+            </div>
+            <p class="resource-why mat-body-2">{{ item.why }}</p>
+            <a class="resource-link" [href]="item.url" target="_blank" rel="noopener">
+              <mat-icon>open_in_new</mat-icon>
+              Read article
+            </a>
+          </mat-card>
+        }
+      </div>
+    </div>
+  </section>
+  </div>
+
+  <!-- accessibility -->
+  <section class="a11y-part">
+    <mat-card class="about-box1 a11y-main">
+      <div class="a11y-icon-wrap" aria-hidden="true">
+        <mat-icon class="a11y-icon">accessibility_new</mat-icon>
+      </div>
+      <div class="a11y-text">
+        <p class="small-label mat-overline">Design Commitment</p>
+        <h2 class="mid-title">Accessibility</h2>
+        <p class="a11y-paragraph mat-body-1">
+          Promptle is being developed with accessibility in mind. The site aims to support keyboard
+          navigation, readable color contrast, clear heading structure, descriptive labels for
+          interactive elements, and responsive layouts across devices. Our goal is to keep the
+          experience usable and understandable for as many players as possible while continuing to
+          improve accessibility throughout development.
+        </p>
+      </div>
+    </mat-card>
+    <div class="a11y-side">
+      <div class="a11y-pill">
+        <mat-icon>keyboard</mat-icon>
+        <span>Keyboard-friendly controls</span>
+      </div>
+      <div class="a11y-pill">
+        <mat-icon>contrast</mat-icon>
+        <span>Readable contrast in light and dark mode</span>
+      </div>
+      <div class="a11y-pill">
+        <mat-icon>view_quilt</mat-icon>
+        <span>Clear structure and labeled elements</span>
+      </div>
+      <div class="a11y-pill">
+        <mat-icon>devices</mat-icon>
+        <span>Responsive layouts across devices</span>
+      </div>
+    </div>
+  </section>
+
+  <app-mini-footer></app-mini-footer>
+</div>

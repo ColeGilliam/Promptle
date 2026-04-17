@@ -19,7 +19,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 
 import { NavbarComponent } from '../../shared/components/navbar/navbar';
-import { UniFooterComponent } from '../../shared/ui/uni-footer/uni-footer';
+import { MiniFooterComponent } from '../../shared/ui/minifooter/minifooter';
 import { SwitchMode } from '../../shared/ui/switch-mode/switch-mode';
 import { LoadSavedGameCard } from '../../shared/ui/load-saved-game-card/load-saved-game-card';
 
@@ -39,7 +39,7 @@ import { LoadSavedGameCard } from '../../shared/ui/load-saved-game-card/load-sav
     MatProgressSpinnerModule,
     MatIconModule,
     NavbarComponent,
-    UniFooterComponent,
+    MiniFooterComponent,
     MatAutocompleteModule,
     SwitchMode,
     LoadSavedGameCard,

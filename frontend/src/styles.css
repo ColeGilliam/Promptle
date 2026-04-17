@@ -8,7 +8,11 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 /* Smooth scrolling */
 html { scroll-behavior: smooth; }
 
-/* Better selection color */
+/* Turn off shared UI motion */
+body.no-ui-anims .fl         { animation: none !important; }
+body.no-ui-anims .page-glow  { animation: none !important; }
+
+/* Selection color */
 ::selection {
   background: rgba(74, 123, 255, 0.25);
   color: inherit;
@@ -30,6 +34,7 @@ app-navbar {
   flex-shrink: 0;
 }
 
+/* Shared rectangular buttons */
 .rect-btn {
   border-radius: var(--rect-btn-radius);    /* Closer to 0 = squarer */
   padding: 12px 20px;
@@ -62,6 +67,7 @@ app-navbar {
   }
 }
 
+/* Autocomplete panel */
 .mat-mdc-autocomplete-panel {
   border-radius: 12px !important;
   border: 1px solid rgba(99, 102, 241, 0.18) !important;
@@ -106,3 +112,80 @@ body.dark .mat-mdc-select-panel {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45) !important;
 }
 
+/* Alternate tile colors */
+body.colorblind-deuteranopia,
+body.colorblind-protanopia {
+  --feedback-green: #2563eb;
+  --feedback-green-text: #ffffff;
+  --feedback-yellow: #f97316;
+  --feedback-yellow-text: #ffffff;
+  --feedback-gray: #9ca3af;
+  --feedback-gray-text: #ffffff;
+}
+
+body.colorblind-tritanopia {
+  --feedback-green: #0f766e;
+  --feedback-green-text: #ffffff;
+  --feedback-yellow: #db2777;
+  --feedback-yellow-text: #ffffff;
+  --feedback-gray: #94a3b8;
+  --feedback-gray-text: #ffffff;
+}
+
+body.colorblind-achromatopsia {
+  --feedback-green: #111827;
+  --feedback-green-text: #ffffff;
+  --feedback-yellow: #6b7280;
+  --feedback-yellow-text: #ffffff;
+  --feedback-gray: #d1d5db;
+  --feedback-gray-text: #111827;
+}
+
+body.high-contrast {
+  --feedback-green: #00c853;
+  --feedback-green-text: #ffffff;
+  --feedback-yellow: #f5793a;
+  --feedback-yellow-text: #ffffff;
+  --feedback-gray: #3a3a3c;
+  --feedback-gray-text: #ffffff;
+}
+
+/* Apply tile color overrides */
+body[class*="colorblind-"] .guess-cell[style*="green"],
+body.high-contrast .guess-cell[style*="green"],
+body[class*="colorblind-"] .win-cell.cell-green,
+body.high-contrast .win-cell.cell-green,
+body[class*="colorblind-"] .share-cell.cell-green,
+body.high-contrast .share-cell.cell-green,
+body[class*="colorblind-"] .color-dot[style*="green"],
+body.high-contrast .color-dot[style*="green"] {
+  background-color: var(--feedback-green) !important;
+  border-color: var(--feedback-green) !important;
+  color: var(--feedback-green-text) !important;
+}
+
+body[class*="colorblind-"] .guess-cell[style*="yellow"],
+body.high-contrast .guess-cell[style*="yellow"],
+body[class*="colorblind-"] .win-cell.cell-yellow,
+body.high-contrast .win-cell.cell-yellow,
+body[class*="colorblind-"] .share-cell.cell-yellow,
+body.high-contrast .share-cell.cell-yellow,
+body[class*="colorblind-"] .color-dot[style*="yellow"],
+body.high-contrast .color-dot[style*="yellow"] {
+  background-color: var(--feedback-yellow) !important;
+  border-color: var(--feedback-yellow) !important;
+  color: var(--feedback-yellow-text) !important;
+}
+
+body[class*="colorblind-"] .guess-cell[style*="gray"],
+body.high-contrast .guess-cell[style*="gray"],
+body[class*="colorblind-"] .win-cell.cell-gray,
+body.high-contrast .win-cell.cell-gray,
+body[class*="colorblind-"] .share-cell.cell-gray,
+body.high-contrast .share-cell.cell-gray,
+body[class*="colorblind-"] .color-dot[style*="gray"],
+body.high-contrast .color-dot[style*="gray"] {
+  background-color: var(--feedback-gray) !important;
+  border-color: var(--feedback-gray) !important;
+  color: var(--feedback-gray-text) !important;
+}

@@ -61,7 +61,7 @@
   align-items: center;
   gap: 8px;
   padding: 4px 12px 4px 4px;
-  border-radius: 24px;
+  border-radius: 10px;
   background: rgba(99, 102, 241, 0.08);
   border: 1px solid rgba(99, 102, 241, 0.18);
 }
@@ -69,7 +69,7 @@
 .nav-avatar {
   width: 30px;
   height: 30px;
-  border-radius: 50%;
+  border-radius: 6px;
   object-fit: cover;
   border: 1.5px solid rgba(99, 102, 241, 0.4);
 }

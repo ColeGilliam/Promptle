@@ -13,7 +13,6 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { NavbarComponent } from '../../shared/components/navbar/navbar';
 import { AuthenticationService } from '../../services/authentication.service';
-import { take } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 
 import { MatIconModule } from '@angular/material/icon';
@@ -25,9 +24,10 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { animate, style, transition, trigger } from '@angular/animations';
 
 import { MultiplayerService } from '../../services/multiplayer-promptle';
-import { Subscription } from 'rxjs';
+import { Subscription, take } from 'rxjs';
 import { PromptleGameCard } from '../../shared/ui/promptle-game-card/promptle-game-card';
 import { PromptleWinPopup } from '../../shared/ui/promptle-win-popup/promptle-win-popup';
+import { SettingsService } from '../../services/settings.service';
 
 @Component({
   selector: 'app-promptle',
@@ -215,7 +215,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
     private auth: AuthenticationService,
     private http: HttpClient,
     private multiplayerService: MultiplayerService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private settings: SettingsService
   ) { }
 
   ngOnInit() {
@@ -992,6 +993,10 @@ export class PromptleComponent implements OnInit, OnDestroy {
   startSpectating() {
     this.isSpectating = true;
     this.cdr.detectChanges();
+  }
+
+  get noGameAnims(): boolean {
+    return !this.settings.getGameAnimations();
   }
 
   ngOnDestroy() {

@@ -19,25 +19,40 @@
   <app-navbar></app-navbar>
 
   <!-- Hero header -->
-  <div class="profile-hero" *ngIf="isLoggedIn">
-    <div class="avatar-hero-wrap">
-      <img [src]="selectedImageBase64 || dbProfilePic || 'https://via.placeholder.com/150'"
-           class="hero-avatar" alt="User Avatar">
-      <div class="avatar-ring"></div>
+  @if (isLoggedIn) {
+    <div class="profile-hero">
+      <div class="avatar-hero-wrap">
+        <img [src]="selectedImageBase64 || dbProfilePic || 'assets/default-avatar.png'"
+             class="hero-avatar" alt="User Avatar">
+        <div class="avatar-ring"></div>
+      </div>
+      <h1 class="profile-hero-name">{{ dbUsername || 'Player' }}</h1>
+      <p class="profile-hero-sub">Promptle Player</p>
     </div>
-    <h1 class="profile-hero-name">{{ dbUsername || 'Player' }}</h1>
-    <p class="profile-hero-sub">Promptle Player</p>
-  </div>
+  }
 
   <div class="page-layout">
-    <div class="profile-container" *ngIf="isLoggedIn">
+    @if (isLoggedIn) {
+      <!-- Profile content -->
+      <div class="profile-container">
+        <div class="profile-content">
+          <!-- LEFT: Profile card -->
+          <mat-card class="profile-card">
+            <mat-card-content>
+              <h2 class="card-section-title">Edit Profile</h2>
 
-      <div class="profile-content">
+              <div class="upload-row">
+                <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" hidden>
+                <button matButton="outlined" class="rect-btn promp3-btn upload-btn" (click)="fileInput.click()">
+                  <mat-icon>upload</mat-icon> Change Avatar
+                </button>
+              </div>
 
-        <!-- LEFT: Profile Card -->
-        <mat-card class="profile-card">
-          <mat-card-content>
-            <h2 class="card-section-title">Edit Profile</h2>
+              <mat-form-field appearance="fill" class="full-width">
+                <mat-label>Display Username</mat-label>
+                <input matInput [(ngModel)]="dbUsername" placeholder="Enter custom username">
+              </mat-form-field>
+            </mat-card-content>
 
             <div class="upload-row">
               <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/png,image/jpeg" hidden>
@@ -66,35 +81,37 @@
           </mat-card-actions>
         </mat-card>
 
-        <!-- RIGHT: Stats Card -->
-        <mat-card class="stats-card">
-          <mat-card-content>
-            <h2 class="card-section-title">Player Stats</h2>
+          <!-- Right: Stats card -->
+          <mat-card class="stats-card">
+            <mat-card-content>
+              <h2 class="card-section-title">Player Stats</h2>
 
-            <div class="stat-big">
-              <div class="stat-big-icon"><mat-icon>emoji_events</mat-icon></div>
-              <div class="stat-big-value">{{ winCount }}</div>
-              <div class="stat-big-label">Total Wins</div>
-            </div>
+              <div class="stat-big">
+                <div class="stat-big-icon"><mat-icon>emoji_events</mat-icon></div>
+                <div class="stat-big-value">{{ winCount }}</div>
+                <div class="stat-big-label">Total Wins</div>
+              </div>
 
-            <div class="stat-divider"></div>
+              <div class="stat-divider"></div>
 
-            <div class="stat-row">
-              <div class="stat-row-icon"><mat-icon>sports_esports</mat-icon></div>
-              <span class="stat-row-label">Games Played</span>
-              <span class="stat-row-value">{{ winCount }}</span>
-            </div>
-          </mat-card-content>
-        </mat-card>
+              <div class="stat-row">
+                <div class="stat-row-icon"><mat-icon>sports_esports</mat-icon></div>
+                <span class="stat-row-label">Games Played</span>
+                <span class="stat-row-value">{{ winCount }}</span>
+              </div>
+            </mat-card-content>
+          </mat-card>
 
+        </div>
       </div>
-    </div>
-
-    <!-- Not logged in message -->
-    <div *ngIf="!isLoggedIn" class="not-logged-in">
-      <mat-icon class="not-logged-icon">lock</mat-icon>
-      <h2>Sign in to view your profile</h2>
-      <p>Your stats and settings are stored securely with your account.</p>
-    </div>
+    } @else {
+      <!-- Signed out -->
+      <div class="not-logged-in">
+        <mat-icon class="not-logged-icon">lock</mat-icon>
+        <h2>Sign in to view your profile</h2>
+        <p>Your stats and settings are stored securely with your account.</p>
+      </div>
+    }
   </div>
+  <app-mini-footer></app-mini-footer>
 </div>

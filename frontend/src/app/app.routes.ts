@@ -1,8 +1,7 @@
 import { Routes } from '@angular/router';
 import { HomePage } from './pages/home-page/home-page';
-import { HomePageLegacyComponent } from './home-page/home-page';
+import { AboutPageComponent } from './pages/about-page/about-page';
 import { PromptleComponent } from './pages/promptle/promptle';
-import { AboutComponent } from './pages/about/about';
 import { Testing } from './pages/testing/testing';
 import { ProfileComponent } from './pages/profile/profile';
 import { ChatRoomTest } from './pages/chat-room-test/chat-room-test';
@@ -12,8 +11,7 @@ import { DevSettingsComponent } from './pages/dev-settings/dev-settings';
 
 export const routes: Routes = [
   {path: '', component: HomePage},
-  {path: 'legacy-home', component: HomePageLegacyComponent},
-  {path: 'about', component: AboutComponent},
+  {path: 'about', component: AboutPageComponent},
   {path: 'game', component: PromptleComponent},
   {path: 'testing', component: Testing},
   {path: 'profile', component: ProfileComponent },

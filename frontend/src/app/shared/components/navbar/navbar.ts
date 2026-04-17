@@ -9,6 +9,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDialog } from '@angular/material/dialog';
 import { RouterModule } from '@angular/router';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../../../services/authentication.service';
@@ -16,6 +17,9 @@ import { ProfileService } from '../../../services/profile.service';
 import { take } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { HowToPlayDialogComponent } from './how-to-play-dialog';
+import { SettingsDialogComponent } from './settings-dialog';
+import { SettingsService } from '../../../services/settings.service';
 
 @Component({
   selector: 'app-navbar',
@@ -33,10 +37,25 @@ export class NavbarComponent implements OnInit {
   showMenu = false;
   private readonly themeStorageKey = 'promptle-theme';
 
-  constructor(public auth: AuthenticationService, private http: HttpClient, public router: Router) {}
+  public router: Router;
+
+  constructor(
+    public auth: AuthenticationService,
+    private http: HttpClient,
+    router?: Router,
+    private dialog?: MatDialog,
+    private settingsService?: SettingsService
+  ) {
+    this.router = router ?? ({ url: '/' } as Router);
+  }
 
   ngOnInit() {
     this.initializeTheme();
+
+    this.settingsService?.isDarkTheme$.subscribe((isDarkTheme) => {
+      this.isDarkTheme = isDarkTheme;
+    });
+
     this.auth.isAuthenticated$.subscribe(status => this.isLoggedIn = status);
     this.auth.user$.subscribe(user => {
       if (user?.sub) {
@@ -50,13 +69,44 @@ export class NavbarComponent implements OnInit {
     });
   }
 
+  openHowToPlay(): void {
+    this.dialog?.open(HowToPlayDialogComponent, {
+      width: '420px',
+      maxWidth: '92vw',
+      panelClass: 'htp-dialog-panel'
+    });
+  }
+
+  openSettings(): void {
+    const dialogRef = this.dialog?.open(SettingsDialogComponent, {
+      width: '460px',
+      maxWidth: '92vw',
+      panelClass: 'settings-dialog-panel'
+    });
+
+    dialogRef?.afterClosed().subscribe(() => {
+      this.initializeTheme();
+    });
+  }
+
   toggleTheme(): void {
     this.isDarkTheme = !this.isDarkTheme;
+
+    if (this.settingsService) {
+      this.settingsService.setTheme(this.isDarkTheme);
+      return;
+    }
+
     this.applyTheme(this.isDarkTheme);
     localStorage.setItem(this.themeStorageKey, this.isDarkTheme ? 'dark' : 'light');
   }
 
   private initializeTheme(): void {
+    if (this.settingsService) {
+      this.isDarkTheme = this.settingsService.isDarkTheme;
+      return;
+    }
+
     const savedTheme = localStorage.getItem(this.themeStorageKey);
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
