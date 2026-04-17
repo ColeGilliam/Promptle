@@ -1,6 +1,7 @@
 import { Server } from "socket.io";
 import { setIo } from "./socketState.js";
 import { markRoomStarted, getRoomMode } from "../controllers/gameController.js";
+import { validateProfileUsernameRules } from "../services/profileModeration.js";
 
 export function setupSocket(server) {
   const io = new Server(server, {
@@ -99,7 +100,20 @@ export function setupSocket(server) {
         }
       }
 
-      playerNames.set(socket.id, playerName || 'Guest');
+      const requestedName =
+        typeof playerName === 'string' && playerName.trim()
+          ? playerName
+          : 'Guest';
+      const usernameValidation = validateProfileUsernameRules(requestedName);
+      if (!usernameValidation.isValid) {
+        socket.emit('join-error', { message: usernameValidation.error });
+        return;
+      }
+
+      const approvedName = usernameValidation.normalizedUsername;
+
+      // Store the approved name once so later socket events cannot spoof it.
+      playerNames.set(socket.id, approvedName);
       socket.join(cleanRoom);
 
       // Track device ID for this room
@@ -107,7 +121,7 @@ export function setupSocket(server) {
         if (!roomDeviceIds.has(cleanRoom)) roomDeviceIds.set(cleanRoom, new Map());
         roomDeviceIds.get(cleanRoom).set(deviceId, socket.id);
       }
-      console.log(`[BACKEND] ${playerName || 'Guest'} joined room ${cleanRoom} (socket ${socket.id})`);
+      console.log(`[BACKEND] ${approvedName} joined room ${cleanRoom} (socket ${socket.id})`);
 
       if (!roomHosts.has(cleanRoom)) {
         roomHosts.set(cleanRoom, socket.id);
@@ -155,7 +169,7 @@ export function setupSocket(server) {
       }
     });
 
-    socket.on('1v1-submit-guess', ({ roomId, guesserName, guessValues, guessColors, isCorrect, finishMs }) => {
+    socket.on('1v1-submit-guess', ({ roomId, guessValues, guessColors, isCorrect, finishMs }) => {
       const state = turnStates.get(roomId);
       if (!state) return;
 
@@ -166,10 +180,12 @@ export function setupSocket(server) {
 
       playerGuesses.set(socket.id, (playerGuesses.get(socket.id) || 0) + 1);
       const guesses = playerGuesses.get(socket.id);
+      const approvedName = playerNames.get(socket.id) || 'Guest';
 
+      // Broadcast the server-approved name instead of trusting client payloads.
       io.to(roomId).emit('1v1-guess-made', {
         guesserSocketId: socket.id,
-        guesserName,
+        guesserName: approvedName,
         guessValues,
         guessColors,
         isCorrect,
@@ -180,7 +196,7 @@ export function setupSocket(server) {
       if (isCorrect) {
         io.to(roomId).emit('1v1-game-over', {
           winnerId: socket.id,
-          winnerName: guesserName,
+          winnerName: approvedName,
           guessCount: guesses,
           finishMs,
         });
@@ -216,19 +232,35 @@ export function setupSocket(server) {
       startTurnTimer(roomId, 30);
     });
 
-    socket.on('use-powerup', ({ roomId, type, playerName }) => {
-      console.log(`[BACKEND] ${playerName} used powerup "${type}" in ${roomId}`);
-      socket.to(roomId).emit('powerup-effect', { type, fromPlayerName: playerName });
+    socket.on('use-powerup', ({ roomId, type }) => {
+      const approvedName = playerNames.get(socket.id) || 'Guest';
+      console.log(`[BACKEND] ${approvedName} used powerup "${type}" in ${roomId}`);
+      socket.to(roomId).emit('powerup-effect', { type, fromPlayerName: approvedName });
     });
 
-    socket.on('player-guess', ({ roomId, playerName, playerId, colors, values, isCorrect, finishTime }) => {
-      playerGuesses.set(playerId, (playerGuesses.get(playerId) || 0) + 1);
-      const guesses = playerGuesses.get(playerId);
+    socket.on('player-guess', ({ roomId, colors, values, isCorrect, finishTime }) => {
+      playerGuesses.set(socket.id, (playerGuesses.get(socket.id) || 0) + 1);
+      const guesses = playerGuesses.get(socket.id);
+      const approvedName = playerNames.get(socket.id) || 'Guest';
 
-      socket.to(roomId).emit('opponent-guess', { playerName, playerId, colors, values, isCorrect, finishTime, guesses });
+      // Broadcast the server-approved name instead of trusting client payloads.
+      socket.to(roomId).emit('opponent-guess', {
+        playerName: approvedName,
+        playerId: socket.id,
+        colors,
+        values,
+        isCorrect,
+        finishTime,
+        guesses,
+      });
 
       if (isCorrect) {
-        io.to(roomId).emit('player-won', { playerName, playerId, guesses, finishTime });
+        io.to(roomId).emit('player-won', {
+          playerName: approvedName,
+          playerId: socket.id,
+          guesses,
+          finishTime,
+        });
       }
     });
 

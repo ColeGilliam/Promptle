@@ -48,6 +48,9 @@ export class ProfileComponent implements OnInit {
     selectedImageBase64: string = ''; 
     loading: boolean = true;
     winCount = 0;
+    saveError = '';
+    usernameError = '';
+    profilePicError = '';
     private readonly themeStorageKey = 'promptle-theme';
     constructor(private router: Router, private http: HttpClient, private auth: AuthenticationService, private profile: ProfileService) {}
 
@@ -135,11 +138,7 @@ export class ProfileComponent implements OnInit {
     const file = event.target.files[0]; // Get the selected file
     
     if (file) {
-      // Check if the file is an image
-      if (!file.type.startsWith('image/')) {
-        alert('Please select an image file.');
-        return;
-      }
+      this.profilePicError = '';
 
       const reader = new FileReader();
       
@@ -157,26 +156,44 @@ export class ProfileComponent implements OnInit {
   saveProfile() {
     this.auth.user$.pipe(take(1)).subscribe(user => {
       if (user && user.sub) {
+        this.usernameError = '';
+        this.saveError = '';
         const payload = {
           auth0Id: user.sub,
           username: this.dbUsername,
           // If selectedImageBase64 is empty, keep the old dbProfilePic
           profilePic: this.selectedImageBase64 || this.dbProfilePic 
         };
-        console.log("Sending payload:", payload);
-        this.http.put('/api/update-profile', payload)
+        this.profile.updateProfile(payload)
           .subscribe({
-            next: () => {
+            next: (response) => {
               alert('Profile updated!');
-              this.dbProfilePic = this.selectedImageBase64;
+              this.dbUsername = response?.username || this.dbUsername;
+              this.dbProfilePic = response?.profilePic ?? (this.selectedImageBase64 || this.dbProfilePic);
               this.selectedImageBase64 = ''; 
+              this.profilePicError = '';
+              this.saveError = '';
 
               this.auth.setMongoUser({
                 username: this.dbUsername,
                 profilePic: this.dbProfilePic
             });
             },
-            error: (err) => console.error(err)
+            error: (err) => {
+              const serverError = err?.error?.error || 'Failed to update profile.';
+              const serverCode = err?.error?.code || '';
+              this.saveError = serverError;
+              if (String(serverCode).startsWith('profile_image')) {
+                this.profilePicError = serverError;
+              }
+              if (
+                String(serverCode).startsWith('username') ||
+                String(serverCode).startsWith('profile_username')
+              ) {
+                this.usernameError = serverError;
+              }
+              console.error(err);
+            }
           });
       }
     });

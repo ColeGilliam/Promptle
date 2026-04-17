@@ -257,13 +257,13 @@ export class PromptleComponent implements OnInit, OnDestroy {
           if (user?.sub) {
             this.http.get<any>(`/api/profile/${encodeURIComponent(user.sub)}`).subscribe({
               next: (mongoUser) => {
-                const name = mongoUser?.username || user?.name || user?.email?.split('@')[0] || 'Guest';
+                const name = mongoUser?.username || 'Player';
                 this.myUsername = name;
                 this.multiplayerService.joinRoom(room, name);
                 setTimeout(() => { this.mySocketId = this.multiplayerService.getSocketId(); }, 1000);
               },
               error: () => {
-                const name = user?.name || user?.email?.split('@')[0] || 'Guest';
+                const name = 'Player';
                 this.myUsername = name;
                 this.multiplayerService.joinRoom(room, name);
                 setTimeout(() => { this.mySocketId = this.multiplayerService.getSocketId(); }, 1000);

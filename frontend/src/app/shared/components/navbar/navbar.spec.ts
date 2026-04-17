@@ -4,7 +4,7 @@ describe('NavbarComponent theme', () => {
   it('toggleTheme should be capable of switching from dark/light mode and persist it', () => {
     console.log('Running test: toggleTheme should be capable of switching from dark/light mode and persist it');
 
-    const component = new NavbarComponent({} as any, {} as any);
+    const component = new NavbarComponent({} as any, {} as any, {} as any);
     localStorage.removeItem('promptle-theme');
     document.body.classList.remove('dark');
 
