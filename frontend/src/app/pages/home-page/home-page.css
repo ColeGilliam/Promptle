@@ -513,6 +513,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 24px;
+  align-items: start;
 }
 
 /* Play cards */
@@ -528,16 +529,11 @@
   box-shadow: 0 12px 36px rgba(60, 145, 241, 0.22), 0 2px 8px rgba(0, 0, 0, 0.08) !important;
 }
 
-.play-card {
-  height: 100% !important;
-}
-
 .play-card mat-card-content {
   padding: 28px 24px !important;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  height: 100% !important;
   box-sizing: border-box;
 }
 
@@ -610,12 +606,37 @@
   gap: 12px;
 }
 
+.topic-match-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.16);
+}
+
+.topic-match-copy {
+  margin: 0;
+}
+
+.topic-match-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 /* Start button */
 .play-start-btn {
   width: 100%;
   min-height: 46px;
   font-weight: 700;
   letter-spacing: 0.05em;
+}
+
+.play-start-btn-alt {
+  border-color: rgba(59, 130, 246, 0.28);
+  color: #1d4ed8 !important;
 }
 
 /* Dark mode play cards */
@@ -636,6 +657,11 @@
   color: #94a3b8;
 }
 
+:host-context(.dark) .topic-match-choice {
+  background: rgba(99, 102, 241, 0.12);
+  border-color: rgba(129, 140, 248, 0.2);
+}
+
 :host-context(.dark) .play-icon-db {
   background: rgba(59, 130, 246, 0.15);
   color: #93c5fd;
@@ -654,6 +680,11 @@
   --mat-form-field-filled-focus-active-indicator-color: var(--topic-focus-color);
   --mat-form-field-filled-caret-color: var(--topic-focus-color);
   --mat-select-focused-arrow-color: var(--topic-focus-color);
+}
+
+:host-context(.dark) .play-start-btn-alt {
+  border-color: rgba(129, 140, 248, 0.32);
+  color: #c7d2fe !important;
 }
 
 /* ── Load-confirm section ─────────────────────────── */

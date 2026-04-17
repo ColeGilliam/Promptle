@@ -1,6 +1,7 @@
 import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TopicsListService, TopicInfo } from '../../services/topics-list';
+import { findBestTopicMatch } from '../../services/topic-match';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../../services/authentication.service';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
@@ -54,6 +55,7 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
   selectedTopicQuery = '';
   filteredTopics: TopicInfo[] = [];
   customTopic = '';
+  matchedCustomTopic: TopicInfo | null = null;
 
   isMultiplayer = false;  // false = single-player, true = multiplayer
   multiplayerMode: 'standard' | 'chaos' | '1v1' = 'standard'; // only relevant when isMultiplayer = true
@@ -89,6 +91,12 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
 
   get canUseAI(): boolean {
     return this.isDevAccount || this.allowAllAIGeneration;
+  }
+
+  get resolvedCustomTopicMatch(): TopicInfo | null {
+    if (!this.matchedCustomTopic) return null;
+    if (this.isMultiplayer && !this.canCreateRooms) return null;
+    return this.matchedCustomTopic;
   }
 
   constructor(
@@ -182,43 +190,19 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
   // Unified start game — branches by mode
   // ────────────────────────────────────────────────
   startSelectedGame(isAi: boolean = false) {
-    let payload: any;
+    let payload: { topic?: string; id?: number };
 
     if (isAi) {
       const topic = this.customTopic.trim();
       if (!topic) return;
-      payload = { topic };
+      const matchedTopic = this.resolvedCustomTopicMatch;
+      payload = matchedTopic ? { id: matchedTopic.topicId } : { topic };
     } else {
       if (!this.selectedTopic) return;
       payload = { id: this.selectedTopic.topicId };
     }
 
-    if (this.isMultiplayer) {
-      // MULTIPLAYER: create room on backend (may take several seconds for AI generation)
-      payload.mode = this.multiplayerMode;
-      payload.auth0Id = this.myAuth0Id;
-      this.isCreatingRoom = true;
-      this.createRoomError = '';
-      this.http.post<{ roomId: string }>('/api/game/multiplayer', payload)
-        .subscribe({
-          next: (res) => {
-            this.isCreatingRoom = false;
-            this.router.navigate(['/game'], {
-              queryParams: { room: res.roomId }
-            });
-          },
-          error: (err) => {
-            this.isCreatingRoom = false;
-            this.createRoomError = err?.error?.error ?? 'Could not create multiplayer room. Please try again.';
-            console.error('Failed to create multiplayer room:', err);
-          }
-        });
-    } else {
-      // SINGLE PLAYER: direct navigation
-      const queryParams = isAi ? { topic: payload.topic } : { id: payload.id };
-      this.newGame(); // Refresh saved metadata
-      this.router.navigate(['/game'], { queryParams });
-    }
+    this.startGameFromPayload(payload);
   }
 
   // Button handlers
@@ -228,6 +212,20 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
 
   startAiGame() {
     this.startSelectedGame(true);
+  }
+
+  startMatchedCustomGame() {
+    const matchedTopic = this.resolvedCustomTopicMatch;
+    if (!matchedTopic) return;
+
+    this.startGameFromPayload({ id: matchedTopic.topicId });
+  }
+
+  startCustomGeneratedGame() {
+    const topic = this.customTopic.trim();
+    if (!topic) return;
+
+    this.startGameFromPayload({ topic });
   }
 
   // ────────────────────────────────────────────────
@@ -395,6 +393,7 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
         this.allTopics = data;
         this.topicNames = data.map(t => t.topicName);
         this.filterTopics(this.selectedTopicQuery);
+        this.updateCustomTopicMatch();
 
         const topicIds = data.map(t => t.topicId);
       },
@@ -421,6 +420,67 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
       this.allTopics.find(topic => topic.topicName === topicName) ?? null;
     this.selectedTopicQuery = topicName;
     this.filterTopics(topicName);
+  }
+
+  onCustomTopicChange(topic: string) {
+    this.customTopic = topic;
+    this.updateCustomTopicMatch();
+  }
+
+  get customTopicActionLabel(): string {
+    if (this.resolvedCustomTopicMatch) {
+      return this.isMultiplayer ? 'PLAY POPULAR TOPIC' : 'PLAY POPULAR TOPIC';
+    }
+
+    return this.isMultiplayer ? 'CREATE CUSTOM GAME' : 'CREATE CUSTOM GAME';
+  }
+
+  get customGeneratedActionLabel(): string {
+    return this.isMultiplayer ? 'CREATE CUSTOM GAME' : 'CREATE CUSTOM GAME';
+  }
+
+  get matchedTopicActionLabel(): string {
+    return 'PLAY POPULAR TOPIC';
+  }
+
+  private resolveCustomTopic(topic: string): TopicInfo | null {
+    return findBestTopicMatch(topic, this.allTopics);
+  }
+
+  private updateCustomTopicMatch() {
+    this.matchedCustomTopic = this.resolveCustomTopic(this.customTopic);
+  }
+
+  private startGameFromPayload(payload: { topic?: string; id?: number }) {
+    if (this.isMultiplayer) {
+      const roomPayload = {
+        ...payload,
+        mode: this.multiplayerMode,
+        auth0Id: this.myAuth0Id,
+      };
+
+      this.isCreatingRoom = true;
+      this.createRoomError = '';
+      this.http.post<{ roomId: string }>('/api/game/multiplayer', roomPayload)
+        .subscribe({
+          next: (res) => {
+            this.isCreatingRoom = false;
+            this.router.navigate(['/game'], {
+              queryParams: { room: res.roomId }
+            });
+          },
+          error: (err) => {
+            this.isCreatingRoom = false;
+            this.createRoomError = err?.error?.error ?? 'Could not create multiplayer room. Please try again.';
+            console.error('Failed to create multiplayer room:', err);
+          }
+        });
+      return;
+    }
+
+    const queryParams = payload.topic ? { topic: payload.topic } : { id: payload.id };
+    this.newGame();
+    this.router.navigate(['/game'], { queryParams });
   }
 
   private filterTopics(query: string) {

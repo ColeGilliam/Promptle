@@ -31,19 +31,17 @@ import { MiniFooterComponent } from '../../shared/ui/minifooter/minifooter';
   styleUrls: ['./profile.css'],
 })
 export class ProfileComponent implements OnInit {
-
-    isLoggedIn = false;
-    isDarkTheme = false;
-    dbUsername: string = '';
-    dbProfilePic: string = '';
-    selectedImageBase64: string = ''; 
-    loading: boolean = true;
-    winCount = 0;
-    saveError = '';
-    usernameError = '';
-    profilePicError = '';
-    private readonly themeStorageKey = 'promptle-theme';
-    constructor(private router: Router, private http: HttpClient, private auth: AuthenticationService, private profile: ProfileService) {}
+  isLoggedIn = false;
+  isDarkTheme = false;
+  dbUsername: string = '';
+  dbProfilePic: string = '';
+  selectedImageBase64: string = '';
+  loading: boolean = true;
+  winCount = 0;
+  saveError = '';
+  usernameError = '';
+  profilePicError = '';
+  private readonly themeStorageKey = 'promptle-theme';
 
   constructor(private http: HttpClient, private auth: AuthenticationService, private profile: ProfileService) {}
 

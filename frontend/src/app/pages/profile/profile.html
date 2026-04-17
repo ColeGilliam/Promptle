@@ -42,34 +42,21 @@
               <h2 class="card-section-title">Edit Profile</h2>
 
               <div class="upload-row">
-                <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" hidden>
+                <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/png,image/jpeg" hidden>
                 <button matButton="outlined" class="rect-btn promp3-btn upload-btn" (click)="fileInput.click()">
                   <mat-icon>upload</mat-icon> Change Avatar
                 </button>
               </div>
+              <p class="field-error" *ngIf="profilePicError">{{ profilePicError }}</p>
 
               <mat-form-field appearance="fill" class="full-width">
                 <mat-label>Display Username</mat-label>
-                <input matInput [(ngModel)]="dbUsername" placeholder="Enter custom username">
+                <input matInput [(ngModel)]="dbUsername" maxlength="16" placeholder="Enter custom username">
+                <mat-hint>3-16 characters. Letters, numbers, and hyphens only.</mat-hint>
+                <mat-error *ngIf="usernameError">{{ usernameError }}</mat-error>
               </mat-form-field>
+              <p class="field-error" *ngIf="saveError">{{ saveError }}</p>
             </mat-card-content>
-
-            <div class="upload-row">
-              <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/png,image/jpeg" hidden>
-              <button matButton="outlined" class="rect-btn upload-btn" (click)="fileInput.click()">
-                <mat-icon>upload</mat-icon> Change Avatar
-              </button>
-            </div>
-            <p class="field-error" *ngIf="profilePicError">{{ profilePicError }}</p>
-
-            <mat-form-field appearance="fill" class="full-width">
-              <mat-label>Display Username</mat-label>
-              <input matInput [(ngModel)]="dbUsername" maxlength="16" placeholder="Enter custom username">
-              <mat-hint>3-16 characters. Letters, numbers, and hyphens only.</mat-hint>
-              <mat-error *ngIf="usernameError">{{ usernameError }}</mat-error>
-            </mat-form-field>
-            <p class="field-error" *ngIf="saveError">{{ saveError }}</p>
-          </mat-card-content>
 
           <mat-card-actions class="actions">
             <button matButton="filled" class="promp1-btn rect-btn save-btn" (click)="saveProfile()">

@@ -226,17 +226,46 @@
                 matInput
                 placeholder="e.g. Marvel Characters, Sitcoms..."
                 [(ngModel)]="customTopic"
+                (ngModelChange)="onCustomTopicChange($event)"
               >
             </mat-form-field>
 
-            <button
-              matButton="filled"
-              class="rect-btn promp2-btn play-start-btn"
-              [disabled]="!customTopic.trim() || isCreatingRoom"
-              (click)="startAiGame()"
-          >
-            {{ isMultiplayer ? 'CREATE MULTIPLAYER AI ROOM' : 'GENERATE AI GAME' }}
-            </button>
+            <div class="topic-match-choice" *ngIf="resolvedCustomTopicMatch as matchedTopic; else defaultCustomStart">
+              <p class="play-card-desc topic-match-copy">
+                <strong>{{ matchedTopic.topicName }}</strong> is one of our popular topics. You can play it for a preset game with no load time or generate a new custom game.
+              </p>
+
+              <div class="topic-match-actions">
+                <button
+                  matButton="filled"
+                  class="rect-btn promp2-btn play-start-btn"
+                  [disabled]="!customTopic.trim() || isCreatingRoom"
+                  (click)="startMatchedCustomGame()"
+                >
+                  {{ matchedTopicActionLabel }}
+                </button>
+
+                <button
+                  matButton="outlined"
+                  class="rect-btn play-start-btn play-start-btn-alt"
+                  [disabled]="!customTopic.trim() || isCreatingRoom"
+                  (click)="startCustomGeneratedGame()"
+                >
+                  {{ customGeneratedActionLabel }}
+                </button>
+              </div>
+            </div>
+
+            <ng-template #defaultCustomStart>
+              <button
+                matButton="filled"
+                class="rect-btn promp2-btn play-start-btn"
+                [disabled]="!customTopic.trim() || isCreatingRoom"
+                (click)="startAiGame()"
+              >
+                {{ customTopicActionLabel }}
+              </button>
+            </ng-template>
           </div>
         </mat-card-content>
       </mat-card>
