@@ -1,5 +1,6 @@
 // routes/api.js
 import express from 'express';
+import { generateConnectionsGame } from '../controllers/connectionsController.js';
 import { generateSubjects } from '../controllers/subjectController.js';
 import { getHeaders, getPopularTopics } from '../controllers/topicController.js';
 import { startGame, createMultiplayerGame, listRooms, deleteRoom } from '../controllers/gameController.js';
@@ -17,6 +18,7 @@ router.get('/health', (_req, res) => res.json({ status: 'ok' }));
 router.get('/api/dev-auth/session', getDevAuthSession);
 
 router.post('/api/subjects', generateSubjects);
+router.post('/api/connections', generateConnectionsGame);
 router.get('/api/topics/:topicId/headers', getHeaders);
 router.get('/api/popularTopics/list', getPopularTopics);
 router.get('/api/game/start', startGame);

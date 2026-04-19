@@ -18,10 +18,26 @@
   transition: background 0.3s ease;
 }
 
+:host {
+  display: block;
+}
+
+:host,
+:host * {
+  box-sizing: border-box;
+}
+
 :host-context(.dark) .topbar {
   background: rgba(10, 12, 20, 0.82);
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.5), 0 4px 24px rgba(0, 0, 0, 0.35);
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
 }
 
 /* ── Brand ── */
@@ -29,8 +45,21 @@
   display: flex;
   align-items: center;
   gap: 9px;
+  min-height: 40px;
+  padding: 4px 12px 4px 6px;
+  border-radius: 14px;
   text-decoration: none;
   color: inherit;
+  min-width: 0;
+  border: 1px solid transparent;
+  transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.brand:hover {
+  transform: translateY(-1px);
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.16);
+  box-shadow: 0 8px 18px rgba(99, 102, 241, 0.1);
 }
 
 .brand-logo {
@@ -53,6 +82,63 @@
 /* ── Spacer ── */
 .spacer {
   flex: 1 1 auto;
+}
+
+.brand--active {
+  background: rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.18);
+  box-shadow: 0 8px 18px rgba(99, 102, 241, 0.12);
+}
+
+.game-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 40px;
+  padding: 4px 12px 4px 6px;
+  border-radius: 14px;
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid transparent;
+  background: transparent;
+  transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.game-brand:hover {
+  transform: translateY(-1px);
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.16);
+  box-shadow: 0 8px 18px rgba(99, 102, 241, 0.1);
+}
+
+.game-brand-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  background: rgba(99, 102, 241, 0.12);
+  color: #4f46e5;
+  box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.12);
+}
+
+.game-brand-icon mat-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+  line-height: 18px;
+}
+
+.game-brand-name {
+  font-size: 1.02rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  white-space: nowrap;
 }
 
 /* ── User chip ── */
@@ -89,6 +175,54 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+:host-context(.dark) .game-brand {
+  background: transparent;
+  border-color: transparent;
+}
+
+:host-context(.dark) .brand:hover {
+  background: rgba(139, 92, 246, 0.12);
+  border-color: rgba(139, 92, 246, 0.18);
+  box-shadow: 0 10px 22px rgba(76, 29, 149, 0.16);
+}
+
+:host-context(.dark) .brand--active {
+  background: rgba(139, 92, 246, 0.14);
+  border-color: rgba(139, 92, 246, 0.22);
+  box-shadow: 0 10px 22px rgba(76, 29, 149, 0.18);
+}
+
+:host-context(.dark) .game-brand:hover {
+  background: rgba(139, 92, 246, 0.12);
+  border-color: rgba(139, 92, 246, 0.18);
+  box-shadow: 0 10px 22px rgba(76, 29, 149, 0.16);
+}
+
+:host-context(.dark) .game-brand-icon {
+  background: rgba(139, 92, 246, 0.18);
+  color: #c4b5fd;
+  box-shadow: inset 0 0 0 1px rgba(139, 92, 246, 0.18);
+}
+
+:host-context(.dark) .game-brand-name {
+  background: linear-gradient(135deg, #93c5fd, #a5b4fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.game-brand--active {
+  background: rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.18);
+  box-shadow: 0 8px 18px rgba(99, 102, 241, 0.12);
+}
+
+:host-context(.dark) .game-brand--active {
+  background: rgba(139, 92, 246, 0.14);
+  border-color: rgba(139, 92, 246, 0.22);
+  box-shadow: 0 10px 22px rgba(76, 29, 149, 0.18);
 }
 
 :host-context(.dark) .user-chip {
@@ -273,4 +407,37 @@
 
 :host-context(.dark) .dropdown-divider {
   background: rgba(255, 255, 255, 0.07);
+}
+
+@media (max-width: 900px) {
+  .topbar {
+    padding: 0 14px;
+    gap: 8px;
+  }
+
+  .brand-name {
+    display: none;
+  }
+
+  .user-chip {
+    display: none;
+  }
+
+  .game-brand-name {
+    font-size: 0.82rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .nav-left {
+    gap: 8px;
+  }
+
+  .game-brand {
+    padding-right: 10px;
+  }
+
+  .game-brand-name {
+    font-size: 0.76rem;
+  }
 }

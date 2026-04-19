@@ -69,6 +69,14 @@ export class NavbarComponent implements OnInit {
     });
   }
 
+  get isConnectionsRoute(): boolean {
+    return this.router.url.startsWith('/connections');
+  }
+
+  get isPromptleRoute(): boolean {
+    return !this.isConnectionsRoute;
+  }
+
   openHowToPlay(): void {
     this.dialog?.open(HowToPlayDialogComponent, {
       width: '420px',

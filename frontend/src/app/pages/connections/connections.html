@@ -1,0 +1,244 @@
+<div class="connections-view">
+  <!-- Decorative floating letters to match Promptle's playful background treatment. -->
+  <div class="letters-bg" aria-hidden="true">
+    <span class="fl fl-1">C</span>
+    <span class="fl fl-2">O</span>
+    <span class="fl fl-3">N</span>
+    <span class="fl fl-4">N</span>
+    <span class="fl fl-5">E</span>
+    <span class="fl fl-6">C</span>
+    <span class="fl fl-7">T</span>
+    <span class="fl fl-8">4</span>
+    <span class="fl fl-9">?</span>
+  </div>
+
+  <div class="page-glow" aria-hidden="true"></div>
+
+  <app-navbar></app-navbar>
+
+  <main class="connections-main">
+    <!-- Static hero copy introducing the mode before the prompt or board appears. -->
+    <section class="hero-card">
+      <div class="hero-copy">
+        <h1>Build a topic-specific Connections board with AI.</h1>
+        <p>
+          Enter any topic and find four groups of four words. Heads up, the categories are meant to be tricky and overlap!
+        </p>
+      </div>
+
+      <div class="hero-dots" aria-hidden="true">
+        <span class="hero-dot hero-dot--yellow"></span>
+        <span class="hero-dot hero-dot--green"></span>
+        <span class="hero-dot hero-dot--blue"></span>
+        <span class="hero-dot hero-dot--purple"></span>
+      </div>
+    </section>
+
+    <!-- Topic entry is only shown before a board exists or after the player explicitly resets it. -->
+    <section class="panel-grid" *ngIf="showTopicPrompt">
+      <section class="panel-card panel-card--controls">
+        <!-- Swap the prompt card contents based on the global AI-generation gate. -->
+        <div class="panel-header" *ngIf="canUseAI; else connectionsDisabled">
+          <div>
+            <span class="eyebrow">Generate</span>
+            <h2>Topic Prompt</h2>
+          </div>
+        </div>
+
+        <ng-container *ngIf="canUseAI">
+          <!-- The only required input for a generated board is a free-form topic string. -->
+          <mat-form-field appearance="fill" class="topic-field" subscriptSizing="dynamic">
+            <mat-label>Enter a topic</mat-label>
+            <input
+              matInput
+              placeholder="Greek mythology, NBA teams..."
+              [(ngModel)]="topic"
+              (keydown.enter)="generateGame()"
+            >
+          </mat-form-field>
+
+          <div class="control-actions">
+            <!-- Button shares Promptle styling but kicks off a Connections-specific generation flow. -->
+            <button
+              matButton="filled"
+              class="rect-btn promp1-btn generate-btn"
+              type="button"
+              (click)="generateGame()"
+              [disabled]="!topic.trim() || loading"
+            >
+              <mat-spinner *ngIf="loading" diameter="18"></mat-spinner>
+              <mat-icon *ngIf="!loading">auto_awesome</mat-icon>
+              Generate Board
+            </button>
+          </div>
+
+          <p class="control-error" *ngIf="error">{{ error }}</p>
+        </ng-container>
+
+        <ng-template #connectionsDisabled>
+          <!-- Non-dev users see this instead of the topic form when AI generation is globally disabled. -->
+          <div class="connections-disabled">
+            <div class="connections-disabled__icon">
+              <mat-icon>block</mat-icon>
+            </div>
+            <div class="connections-disabled__copy">
+              <span class="eyebrow">Unavailable</span>
+              <h2>Sorry! Connections is currently disabled, please try again later..</h2>
+            </div>
+          </div>
+        </ng-template>
+      </section>
+    </section>
+
+    <!-- The game shell stays mounted during loading so the board can transition in immediately. -->
+    <section class="game-layout" *ngIf="showGameLayout">
+      <section class="board-panel panel-card">
+        <div class="panel-header board-header">
+          <div>
+            <h2>Find the four connections</h2>
+          </div>
+
+          <div class="board-actions">
+            <button
+              matButton="outlined"
+              class="rect-btn secondary-btn"
+              type="button"
+              (click)="clearSelection()"
+              [disabled]="selectedCount === 0 || loading || isResolvingGuess"
+            >
+              <mat-icon>backspace</mat-icon>
+              Clear
+            </button>
+
+            <button
+              matButton="outlined"
+              class="rect-btn secondary-btn"
+              type="button"
+              (click)="shuffleBoard()"
+              [disabled]="!canShuffleBoard"
+            >
+              <mat-icon>shuffle</mat-icon>
+              Shuffle
+            </button>
+
+            <button
+              matButton="filled"
+              class="rect-btn promp2-btn submit-btn"
+              type="button"
+              (click)="submitSelection()"
+              [disabled]="!canSubmitSelection"
+            >
+              Submit 4 Words
+            </button>
+          </div>
+        </div>
+
+        <div
+          class="board-feedback"
+          *ngIf="feedback && !loading"
+          [class.board-feedback--success]="feedbackTone === 'success'"
+          [class.board-feedback--one-away]="feedbackTone === 'one_away'"
+          [class.board-feedback--danger]="feedbackTone === 'danger'"
+        >
+          <!-- Feedback stays inline with the board so success/error states remain close to the tile interaction. -->
+          <mat-icon>{{ feedbackIcon }}</mat-icon>
+          <span>{{ feedback }}</span>
+        </div>
+
+        <div class="board-grid">
+          <!-- Loading occupies the board grid itself so the page does not jump when the puzzle arrives. -->
+          <div class="board-loading-state" *ngIf="loading && !hasGame" aria-live="polite">
+            <mat-spinner diameter="30"></mat-spinner>
+            <div class="board-loading-copy">
+              <h3>The game is generating...</h3>
+            </div>
+          </div>
+
+          <!-- Solved and revealed categories stay inside the board instead of moving to a separate results list. -->
+          <article
+            class="board-group-row"
+            *ngFor="let group of solvedGroups; trackBy: trackGroup"
+            [class.solved-group--yellow]="group.difficulty === 'yellow'"
+            [class.solved-group--green]="group.difficulty === 'green'"
+            [class.solved-group--blue]="group.difficulty === 'blue'"
+            [class.solved-group--purple]="group.difficulty === 'purple'"
+            [class.board-group-row--revealed]="group.revealed"
+          >
+            <div class="board-group-header">
+              <h3>{{ group.category }}</h3>
+              <span class="difficulty-pill">{{ group.difficulty | titlecase }}</span>
+            </div>
+
+            <p class="solved-group-explanation" *ngIf="group.explanation">{{ group.explanation }}</p>
+
+            <div class="solved-word-row">
+              <span class="solved-word-chip" *ngFor="let word of group.words">{{ word }}</span>
+            </div>
+          </article>
+
+          <!-- Remaining words stay as interactive tiles until their full group is solved. -->
+          <button
+            type="button"
+            class="word-tile"
+            *ngFor="let word of boardWords; trackBy: trackWord"
+            [class.word-tile--selected]="isSelected(word.key)"
+            [class.word-tile--shake]="isShaking(word.key)"
+            [disabled]="loading || gameOver || isSelectionLocked(word.key) || isResolvingGuess"
+            (click)="toggleWordSelection(word)"
+          >
+            {{ word.label }}
+          </button>
+        </div>
+      </section>
+
+      <section class="panel-card panel-card--stats">
+        <!-- Sidebar keeps meta state visible without competing with the puzzle grid itself. -->
+        <div class="stats-card-header">
+          <div>
+            <h2>{{ activeTopic || 'No board loaded' }}</h2>
+          </div>
+
+          <button
+            matButton="outlined"
+            class="rect-btn secondary-btn stats-new-topic-btn"
+            type="button"
+            (click)="requestNewTopic()"
+          >
+            <mat-icon>edit</mat-icon>
+            New Topic
+          </button>
+        </div>
+
+        <div class="stats-grid">
+          <!-- Hearts reflect remaining mistakes rather than showing a raw numeric counter. -->
+          <div class="stat-pill">
+            <span class="stat-label">Mistakes</span>
+            <div class="hearts-row" aria-label="Mistakes remaining">
+              <mat-icon
+                *ngFor="let hasHeart of mistakeHearts"
+                [class.heart-icon--spent]="!hasHeart"
+                class="heart-icon"
+              >
+                {{ hasHeart ? 'favorite' : 'favorite_border' }}
+              </mat-icon>
+            </div>
+          </div>
+          <div class="stat-pill">
+            <span class="stat-label">Solved groups</span>
+            <span class="stat-value">{{ solvedCount }}/4</span>
+          </div>
+          <div class="stat-pill">
+            <span class="stat-label">Selected</span>
+            <span class="stat-value">{{ selectedCount }}/4</span>
+          </div>
+        </div>
+
+        <div class="rules-copy">
+          <!-- Keep the rules terse since this panel sits beside active gameplay. -->
+          <p>Select four words that belong together, then submit the set.</p>
+          <p>You have 4 chances to find all the connections.</p>
+        </div>
+      </section>
+    </section>
+  </main>
+</div>

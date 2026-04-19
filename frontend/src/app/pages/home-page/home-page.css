@@ -196,6 +196,11 @@
   color: #64748b;
 }
 
+.play-icon-connections {
+  color: #7c3aed;
+  background: linear-gradient(135deg, rgba(250, 204, 21, 0.16), rgba(124, 58, 237, 0.18));
+}
+
 :host-context(.dark) .mp-join-sub {
   color: #94a3b8;
 }
