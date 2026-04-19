@@ -498,4 +498,5 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
   joinChatRoom() {
     this.router.navigate(['/lobby']);
   }
+
 }

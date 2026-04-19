@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { HomePage } from './pages/home-page/home-page';
 import { AboutPageComponent } from './pages/about-page/about-page';
+import { ConnectionsComponent } from './pages/connections/connections';
 import { PromptleComponent } from './pages/promptle/promptle';
 import { Testing } from './pages/testing/testing';
 import { ProfileComponent } from './pages/profile/profile';
@@ -12,6 +13,7 @@ import { DevSettingsComponent } from './pages/dev-settings/dev-settings';
 export const routes: Routes = [
   {path: '', component: HomePage},
   {path: 'about', component: AboutPageComponent},
+  {path: 'connections', component: ConnectionsComponent},
   {path: 'game', component: PromptleComponent},
   {path: 'testing', component: Testing},
   {path: 'profile', component: ProfileComponent },

@@ -1,9 +1,30 @@
 <nav class="topbar">
   <!-- Brand -->
-  <a class="brand" routerLink="/" aria-label="Promptle home">
-    <img [src]="isDarkTheme ? 'promptle_logo_dark.png' : 'PromptleLogoTransparent.png'" class="brand-logo" alt="">
-    <span class="brand-name">Promptle</span>
-  </a>
+  <div class="nav-left">
+    <a
+      class="brand"
+      [class.brand--active]="isPromptleRoute"
+      routerLink="/"
+      aria-label="Promptle home"
+      [attr.aria-current]="isPromptleRoute ? 'page' : null"
+    >
+      <img [src]="isDarkTheme ? 'promptle_logo_dark.png' : 'PromptleLogoTransparent.png'" class="brand-logo" alt="">
+      <span class="brand-name">Promptle</span>
+    </a>
+
+    <a
+      class="game-brand"
+      [class.game-brand--active]="isConnectionsRoute"
+      routerLink="/connections"
+      aria-label="Open Connections"
+      [attr.aria-current]="isConnectionsRoute ? 'page' : null"
+    >
+      <span class="game-brand-icon">
+        <mat-icon>grid_view</mat-icon>
+      </span>
+      <span class="game-brand-name">Connections</span>
+    </a>
+  </div>
 
   <span class="spacer"></span>
 
