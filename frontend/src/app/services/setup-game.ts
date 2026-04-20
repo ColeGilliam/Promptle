@@ -403,17 +403,31 @@ export function hydrateGameAnswer(answer: Partial<GameAnswer> | undefined, colum
 }
 
 export function hydrateGameData(data: Partial<GameData> | undefined): HydratedGameData {
-  const columns = normalizeColumns(data?.columns, data?.headers);
+  const allColumns = normalizeColumns(data?.columns, data?.headers);
+  const restIndices = allColumns.map((_, i) => i).slice(1).sort(() => Math.random() - 0.5);
+  const selectedIndices = allColumns.length ? [0, ...restIndices.slice(0, 5)] : restIndices.slice(0, 6);
+  const columns = selectedIndices.map(i => allColumns[i]);
   const headers = columns.map(column => column.header);
+
+  function reorderAnswer(answer: Partial<GameAnswer> | undefined): Partial<GameAnswer> {
+    if (!answer) return {};
+    const rawCells = Array.isArray(answer.cells) ? answer.cells : [];
+    const rawValues = Array.isArray(answer.values) ? answer.values : [];
+    return {
+      ...answer,
+      cells: selectedIndices.map(i => rawCells[i]),
+      values: selectedIndices.map(i => rawValues[i]),
+    };
+  }
 
   return {
     topic: stringifyValue(data?.topic),
     headers,
     columns,
     answers: Array.isArray(data?.answers)
-      ? data.answers.map(answer => hydrateGameAnswer(answer, columns))
+      ? data.answers.map(answer => hydrateGameAnswer(reorderAnswer(answer), columns))
       : [],
-    correctAnswer: hydrateGameAnswer(data?.correctAnswer, columns),
+    correctAnswer: hydrateGameAnswer(reorderAnswer(data?.correctAnswer), columns),
     mode: stringifyValue(data?.mode) || undefined,
   };
 }
