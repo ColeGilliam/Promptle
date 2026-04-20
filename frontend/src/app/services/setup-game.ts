@@ -331,7 +331,7 @@ export function hydrateGameCell(rawCell: unknown, context: string | Partial<Game
 
   if (kind === 'set') {
     const items = inferredItems.length ? inferredItems : (display ? [display] : []);
-    return { display, kind, items };
+    return { display: items[0] ?? display, kind, items };
   }
 
   if (kind === 'number') {

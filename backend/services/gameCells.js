@@ -268,7 +268,7 @@ export function normalizeGameCell(rawCell, context = '', fallbackDisplay = '') {
   if (kind === 'set') {
     const items = inferredItems.length ? inferredItems : (display ? [display] : []);
     return {
-      display,
+      display: items[0] ?? display,
       kind,
       items,
     };
