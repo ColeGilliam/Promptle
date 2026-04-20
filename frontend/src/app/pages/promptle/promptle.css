@@ -147,7 +147,6 @@
   flex-wrap: nowrap;
   gap: 14px;
   width: max-content;
-  min-width: 100%;
 }
 
 .game-grid .column {
@@ -162,11 +161,11 @@
   gap: 10px; /* spacing between cells in a column */
   padding: 10px 10px 12px;
   border-radius: var(--rect-btn-radius, 8px);
-  border: 1px solid rgba(255, 255, 255, 0.55);
+  border: 1.5px solid rgba(99, 102, 241, 0.35);
   background: rgba(242, 248, 255, 0.65);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  box-shadow: 0 2px 12px rgba(60, 145, 241, 0.1);
+  box-shadow: 0 2px 12px rgba(60, 145, 241, 0.15);
 }
 
 .header {
@@ -343,6 +342,8 @@
 .game-grid-scroll {
   overflow-x: auto;
   padding-bottom: 4px;
+  display: flex;
+  justify-content: center;
 }
 
 :host-context(.dark) .column {
