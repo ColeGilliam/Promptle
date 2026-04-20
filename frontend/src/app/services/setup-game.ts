@@ -89,6 +89,16 @@ function tokenizeDisplay(value: string): string[] {
   return stringifyValue(value).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
 }
 
+function formatHeader(raw: string): string {
+  return raw
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
+
 function normalizeCellKind(kind: unknown): GameCellKind | '' {
   const normalized = stringifyValue(kind).toLowerCase();
   return GAME_CELL_KINDS.has(normalized as GameCellKind) ? normalized as GameCellKind : '';
@@ -163,7 +173,7 @@ function normalizeDisplay(value: string): string {
 // Normalizes a single column definition, ensuring it has a header and optional kind/unit, with fallbacks to handle legacy formats
 function normalizeColumn(rawColumn: unknown, fallbackHeader = '', fallbackKind: GameCellKind | '' = ''): HydratedGameColumn | null {
   const rawObject = isPlainObject(rawColumn) ? rawColumn : null;
-  const header = stringifyValue(rawObject?.['header'] ?? rawObject?.['label'] ?? rawColumn ?? fallbackHeader);
+  const header = formatHeader(stringifyValue(rawObject?.['header'] ?? rawObject?.['label'] ?? rawColumn ?? fallbackHeader));
   if (!header) return null;
 
   const kind = normalizeCellKind(rawObject?.['kind'] ?? fallbackKind);
