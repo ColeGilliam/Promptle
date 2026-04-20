@@ -11,6 +11,7 @@ export class SettingsService {
   private readonly highContrastKey = 'promptle-high-contrast';
   private readonly colorblindKey = 'promptle-colorblind';
   private readonly colorblindModes: ColorblindMode[] = ['none', 'deuteranopia', 'protanopia', 'tritanopia', 'achromatopsia'];
+  private readonly hintsKey = 'promptle-hints';
 
   private _isDarkTheme: boolean;
   readonly isDarkTheme$ = new BehaviorSubject<boolean>(false);
@@ -92,6 +93,14 @@ export class SettingsService {
 
   private applyHighContrast(enabled: boolean): void {
     document.body.classList.toggle('high-contrast', enabled);
+  }
+
+  getHints(): boolean {
+    return localStorage.getItem(this.hintsKey) !== 'false';
+  }
+
+  setHints(enabled: boolean): void {
+    localStorage.setItem(this.hintsKey, String(enabled));
   }
 
   private applyColorblind(mode: ColorblindMode): void {

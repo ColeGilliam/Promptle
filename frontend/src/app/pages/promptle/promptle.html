@@ -207,6 +207,14 @@
       </div>
 
       <!-- ══ GUESS INPUT ══ -->
+      <app-game-onboarding-tour
+        *ngIf="answers.length && (!isMultiplayer || gameStarted) && !isSpectating"
+        [forStep]="1"
+        [arrowSide]="'down'"
+        [guessCount]="submittedGuesses.length"
+        [gameReady]="!gameLoading && !gameError && answers.length > 0 && (!isMultiplayer || gameStarted)"
+        [isSpectating]="isSpectating"
+      ></app-game-onboarding-tour>
       <div
         class="guess-actions-card"
         *ngIf="answers.length && (!isMultiplayer || gameStarted) && !isSpectating"
@@ -340,27 +348,38 @@
       </div>
 
       <!-- ══ STANDARD GAME GRID ══ -->
+      <app-game-onboarding-tour
+        *ngIf="!isOneVsOne && !isSpectating && headers.length && submittedGuesses.length > 0"
+        [forStep]="2"
+        [arrowSide]="'down'"
+      ></app-game-onboarding-tour>
       <div
         class="game-grid-card"
         *ngIf="!isOneVsOne && !isSpectating && headers.length && (!isMultiplayer || gameStarted)"
         [@cardEnterDelayed]
       >
-        <div class="game-grid-meta">
-          <p class="game-grid-subtitle" *ngIf="submittedGuesses.length === 0">Submit a guess to start filling the grid.</p>
-          <p class="game-grid-subtitle" *ngIf="submittedGuesses.length > 0">{{ submittedGuesses.length }} guess{{ submittedGuesses.length === 1 ? '' : 'es' }} submitted.</p>
-        </div>
-
         <div class="game-grid-scroll">
-          <div class="game-grid">
-            <div class="column" *ngFor="let header of headers; let i = index">
-              <div class="header">{{ header }}</div>
-              <div
-                class="guess-cell"
-                *ngFor="let guess of displayedSubmittedGuesses"
-                [@cardEnter]
-                [style.background-color]="guess.colors[i]"
-              >
-                {{ guess.values[i] }}
+          <div class="game-grid-inner">
+            <div class="game-grid-meta">
+              <p class="game-grid-subtitle" *ngIf="submittedGuesses.length === 0">Submit a guess to start.</p>
+              <p class="game-grid-subtitle" *ngIf="submittedGuesses.length > 0">{{ submittedGuesses.length }} guess{{ submittedGuesses.length === 1 ? '' : 'es' }} submitted.</p>
+              <div class="grid-color-legend">
+                <span class="gcl-item"><span class="gcl-dot gcl-gray"></span>None</span>
+                <span class="gcl-item"><span class="gcl-dot gcl-yellow"></span>Close</span>
+                <span class="gcl-item"><span class="gcl-dot gcl-green"></span>Correct</span>
+              </div>
+            </div>
+            <div class="game-grid">
+              <div class="column" *ngFor="let header of headers; let i = index">
+                <div class="header">{{ header }}</div>
+                <div
+                  class="guess-cell"
+                  *ngFor="let guess of displayedSubmittedGuesses"
+                  [@cardEnter]
+                  [style.background-color]="guess.colors[i]"
+                >
+                  {{ guess.values[i] }}
+                </div>
               </div>
             </div>
           </div>

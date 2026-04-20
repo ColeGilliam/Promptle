@@ -27,6 +27,7 @@ import { MultiplayerService } from '../../services/multiplayer-promptle';
 import { Subscription, take } from 'rxjs';
 import { PromptleGameCard } from '../../shared/ui/promptle-game-card/promptle-game-card';
 import { PromptleWinPopup } from '../../shared/ui/promptle-win-popup/promptle-win-popup';
+import { GameOnboardingTour } from '../../shared/ui/game-onboarding-tour/game-onboarding-tour';
 import { SettingsService } from '../../services/settings.service';
 
 @Component({
@@ -44,7 +45,8 @@ import { SettingsService } from '../../services/settings.service';
     MatAutocompleteModule,
     PromptleGameCard,
     PromptleWinPopup,
-    NavbarComponent
+    NavbarComponent,
+    GameOnboardingTour
   ],
   animations: [
     trigger('cardEnter', [

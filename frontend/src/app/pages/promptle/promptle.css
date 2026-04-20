@@ -329,15 +329,53 @@
   margin-bottom: 10px;
 }
 
+.game-grid-inner {
+  display: flex;
+  flex-direction: column;
+  width: max-content;
+}
+
 .game-grid-meta {
-  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+  width: 100%;
 }
 
 .game-grid-subtitle {
   margin: 0;
   color: #647b9c;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  white-space: nowrap;
 }
+
+.grid-color-legend {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gcl-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: #7a90b0;
+  white-space: nowrap;
+}
+
+.gcl-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.gcl-gray   { background: var(--feedback-gray,   #9ca3af); }
+.gcl-yellow { background: var(--feedback-yellow, #f59e0b); }
+.gcl-green  { background: var(--feedback-green,  #22c55e); }
 
 .game-grid-scroll {
   overflow-x: auto;
@@ -365,6 +403,10 @@
 
 :host-context(.dark) .game-grid-subtitle {
   color: #9eb2d4;
+}
+
+:host-context(.dark) .gcl-item {
+  color: #6b82a8;
 }
 
 :host-context(.dark) .guess-actions-card {
