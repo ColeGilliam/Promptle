@@ -1,15 +1,57 @@
-import { Component } from '@angular/core';
-import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { CommonModule } from '@angular/common';
+import { Component, Inject } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+
+export type HowToPlayMode = 'promptle' | 'connections' | 'crossword';
+
+interface HowToPlayContent {
+  title: string;
+  steps: string[];
+}
+
+const HOW_TO_PLAY_CONTENT: Record<HowToPlayMode, HowToPlayContent> = {
+  promptle: {
+    title: 'How to Play Promptle',
+    steps: [
+      'Choose a topic, or generate one with AI, to start a round. The game picks one hidden answer from that topic.',
+      'Submit guesses from the list and use the grid to compare each guess against the hidden answer.',
+      'Green means an exact match in that column, yellow means part of your guess overlaps with the answer, and gray means it does not match.',
+      'Keep narrowing it down until you find the correct answer.',
+      'You can play solo or in multiplayer, including standard, chaos, and 1v1 modes.',
+    ],
+  },
+  connections: {
+    title: 'How to Play Connections',
+    steps: [
+      'Enter a topic to generate a custom board made of four hidden groups of four words.',
+      'Select exactly four words that you think belong together, then submit the set.',
+      'A correct set locks into place as a solved row. A wrong set costs one of your four mistakes.',
+      'If you are one word away from a correct set, the board tells you.',
+      'Solve all four groups before you run out of mistakes.',
+    ],
+  },
+  crossword: {
+    title: 'How to Play Crossword',
+    steps: [
+      'Enter a topic to generate a themed crossword, then click any square or clue to activate a word.',
+      'Type letters directly into the grid. Arrow keys move around the board, and space or enter flips between across and down.',
+      'Use Check Letter, Check Word, or Check Puzzle to verify what you have filled. Checked correct answers turn green and checked wrong clues turn red.',
+      'Use Save if you want to keep one crossword on this device and return to it later.',
+      'Reveal Letter and Reveal Word uncover the active answer. Reveal Puzzle asks for confirmation before filling the whole grid.',
+      'Fill every square correctly to finish the crossword and lock in your solve time.',
+    ],
+  },
+};
 
 @Component({
   selector: 'app-how-to-play-dialog',
   standalone: true,
-  imports: [MatDialogModule, MatButtonModule, MatIconModule],
+  imports: [CommonModule, MatDialogModule, MatButtonModule, MatIconModule],
   template: `
     <div class="htp-header">
-      <h2 class="htp-title">How to Play</h2>
+      <h2 class="htp-title">{{ content.title }}</h2>
       <button class="htp-close" (click)="close()" aria-label="Close">
         <mat-icon>close</mat-icon>
       </button>
@@ -17,11 +59,7 @@ import { MatIconModule } from '@angular/material/icon';
 
     <mat-dialog-content class="htp-body">
       <ol class="htp-steps">
-        <li>Choose a topic, or generate one with AI, to start a round. The game picks one hidden answer from that topic.</li>
-        <li>Submit guesses from the list and use the grid to compare each guess against the hidden answer.</li>
-        <li><strong>Green</strong> means an exact match in that column, <strong>yellow</strong> means part of your guess overlaps with the answer, and <strong>gray</strong> means it does not match.</li>
-        <li>Keep narrowing it down until you find the correct answer.</li>
-        <li>You can play solo or in multiplayer, including standard, chaos, and 1v1 modes. Each new round can give you a different answer, even in the same topic.</li>
+        <li *ngFor="let step of content.steps">{{ step }}</li>
       </ol>
     </mat-dialog-content>
   `,
@@ -116,7 +154,14 @@ import { MatIconModule } from '@angular/material/icon';
   `]
 })
 export class HowToPlayDialogComponent {
-  constructor(private dialogRef: MatDialogRef<HowToPlayDialogComponent>) {}
+  readonly content: HowToPlayContent;
+
+  constructor(
+    private dialogRef: MatDialogRef<HowToPlayDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) data: { mode?: HowToPlayMode } | null
+  ) {
+    this.content = HOW_TO_PLAY_CONTENT[data?.mode ?? 'promptle'];
+  }
 
   close() {
     this.dialogRef.close();

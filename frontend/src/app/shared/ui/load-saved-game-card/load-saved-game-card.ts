@@ -16,20 +16,15 @@ export class LoadSavedGameCard {
   @Input() savedAt: string | null = null;
 
   @Output() continueClicked = new EventEmitter<void>();
-  @Output() cancelClicked = new EventEmitter<void>();
-  @Output() startNewClicked = new EventEmitter<void>();
+  @Output() restartClicked = new EventEmitter<void>();
   @Output() deleteClicked = new EventEmitter<void>();
 
   onContinueClicked(): void {
     this.continueClicked.emit();
   }
 
-  onCancelClicked(): void {
-    this.cancelClicked.emit();
-  }
-
-  onStartNewClicked(): void {
-    this.startNewClicked.emit();
+  onRestartClicked(): void {
+    this.restartClicked.emit();
   }
 
   onDeleteClicked(): void {

@@ -28,19 +28,11 @@
 
     <button
       matButton="outlined"
-      class="rect-btn promp3-btn saved-btn saved-btn--new"
-      (click)="onStartNewClicked()"
+      class="rect-btn promp3-btn saved-btn saved-btn--restart"
+      (click)="onRestartClicked()"
     >
-      <mat-icon>add</mat-icon>
-      New Game
-    </button>
-
-    <button
-      matButton="outlined"
-      class="rect-btn promp3-btn saved-btn saved-btn--cancel"
-      (click)="onCancelClicked()"
-    >
-      Cancel
+      <mat-icon>replay</mat-icon>
+      Restart Game
     </button>
 
     <button
@@ -49,7 +41,7 @@
       (click)="onDeleteClicked()"
     >
       <mat-icon>delete_outline</mat-icon>
-      Delete Save
+      Delete Game
     </button>
   </div>
 

@@ -1,0 +1,382 @@
+<div class="crossword-view" [style.--crossword-accent]="activeAccent">
+  <div class="letters-bg" aria-hidden="true">
+    <span class="fl fl-1">C</span>
+    <span class="fl fl-2">R</span>
+    <span class="fl fl-3">O</span>
+    <span class="fl fl-4">S</span>
+    <span class="fl fl-5">S</span>
+    <span class="fl fl-6">W</span>
+    <span class="fl fl-7">O</span>
+    <span class="fl fl-8">R</span>
+    <span class="fl fl-9">D</span>
+  </div>
+
+  <div class="page-glow" aria-hidden="true"></div>
+
+  <app-navbar></app-navbar>
+
+  <main class="crossword-main">
+    <section class="hero-card">
+      <div class="hero-copy">
+        <h1>Build a custom crossword for any topic</h1>
+        <p>
+          Enter a topic like cartoon characters, space, etc. The app then generates a custom crossword puzzle
+          based on your topic.
+        </p>
+      </div>
+
+      <div class="hero-stats" *ngIf="activePuzzle">
+        <div class="hero-stat">
+          <span class="hero-stat-label">Filled</span>
+          <strong>{{ filledCellCount }}/{{ totalFillableCells }}</strong>
+        </div>
+
+        <div class="hero-stat">
+          <span class="hero-stat-label">Solved clues</span>
+          <strong>{{ solvedClueCount }}/{{ totalClueCount }}</strong>
+        </div>
+
+        <div class="hero-stat">
+          <span class="hero-stat-label">Time</span>
+          <strong>{{ formatTime(elapsedSeconds) }}</strong>
+        </div>
+
+        <button
+          matButton="outlined"
+          class="rect-btn secondary-btn hero-new-topic-btn"
+          type="button"
+          (click)="requestNewTopic()"
+        >
+          <mat-icon>edit</mat-icon>
+          New Topic
+        </button>
+      </div>
+    </section>
+
+    <section class="panel-grid" *ngIf="showTopicPrompt">
+      <section class="panel-card panel-card--controls">
+        <div class="panel-header" *ngIf="canUseAI; else crosswordDisabled">
+          <div>
+            <span class="eyebrow">Generate</span>
+            <h2>Topic Prompt</h2>
+          </div>
+        </div>
+
+        <ng-container *ngIf="canUseAI">
+          <app-load-saved-game-card
+            *ngIf="showSavedGamePrompt"
+            [topic]="savedGameTopic"
+            [savedAt]="savedGameSavedAt"
+            (continueClicked)="continueSavedGame()"
+            (restartClicked)="restartSavedGame()"
+            (deleteClicked)="deleteSavedGameConfirm()"
+          ></app-load-saved-game-card>
+
+          <mat-form-field appearance="fill" class="topic-field" subscriptSizing="dynamic">
+            <mat-label>Enter a topic</mat-label>
+            <input
+              matInput
+              placeholder="Cartoon characters, space..."
+              [(ngModel)]="topic"
+              (keydown.enter)="generateGame()"
+            >
+          </mat-form-field>
+
+          <div class="control-actions">
+            <button
+              matButton="filled"
+              class="rect-btn promp1-btn generate-btn"
+              type="button"
+              (click)="generateGame()"
+              [disabled]="!topic.trim() || loading"
+            >
+              <mat-spinner *ngIf="loading" diameter="18"></mat-spinner>
+              <mat-icon *ngIf="!loading">auto_awesome</mat-icon>
+              Generate Crossword
+            </button>
+          </div>
+
+          <p class="control-error" *ngIf="error">{{ error }}</p>
+        </ng-container>
+
+        <ng-template #crosswordDisabled>
+          <div class="crossword-disabled">
+            <div class="crossword-disabled__icon">
+              <mat-icon>block</mat-icon>
+            </div>
+            <div class="crossword-disabled__copy">
+              <span class="eyebrow">Unavailable</span>
+              <h2>Sorry! Crossword generation is currently disabled, please try again later.</h2>
+            </div>
+          </div>
+        </ng-template>
+      </section>
+    </section>
+
+    <section class="game-layout" *ngIf="showGameLayout">
+      <section class="board-panel panel-card">
+        <ng-container *ngIf="activePuzzle as puzzle; else loadingBoard">
+          <div class="panel-header board-header">
+            <div class="board-header-copy">
+              <span class="eyebrow">Current Puzzle</span>
+              <h2>{{ puzzle.topic }}</h2>
+            </div>
+
+            <div class="board-header-side">
+              <div class="board-header-status">
+                <div class="status-stack">
+                  <span
+                    class="status-pill"
+                    [class.status-pill--complete]="completed"
+                    [class.status-pill--pending]="!completed && hasUnsavedChanges"
+                  >
+                    <mat-icon>{{ statusIcon }}</mat-icon>
+                    {{ statusLabel }}
+                  </span>
+                  <span class="status-pill" *ngIf="savedTimestamp && !hasUnsavedChanges">
+                    <mat-icon>schedule</mat-icon>
+                    Saved {{ savedTimestamp }}
+                  </span>
+                  <span class="status-pill" *ngIf="solvedAtLabel">
+                    <mat-icon>schedule</mat-icon>
+                    {{ solvedAtLabel }}
+                  </span>
+                </div>
+
+                <div class="board-header-actions">
+                  <button matButton="filled" class="rect-btn promp2-btn" type="button" (click)="saveGame()" [disabled]="!activeGame">
+                    <mat-icon>save</mat-icon>
+                    Save
+                  </button>
+
+                  <button matButton="filled" class="rect-btn promp1-btn" type="button" (click)="resetPuzzle()">
+                    <mat-icon>refresh</mat-icon>
+                    Reset
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="board-actions">
+            <div class="board-action-row">
+              <button
+                matButton="outlined"
+                class="rect-btn secondary-btn"
+                type="button"
+                (click)="checkActiveLetter()"
+                [disabled]="completed || !activeCell"
+              >
+                <mat-icon>check_circle</mat-icon>
+                Check Letter
+              </button>
+
+              <button
+                matButton="outlined"
+                class="rect-btn secondary-btn"
+                type="button"
+                (click)="checkActiveClue()"
+                [disabled]="completed"
+              >
+                <mat-icon>spellcheck</mat-icon>
+                Check Word
+              </button>
+
+              <button
+                matButton="filled"
+                class="rect-btn promp2-btn"
+                type="button"
+                (click)="checkPuzzle()"
+                [disabled]="completed"
+              >
+                Check Puzzle
+              </button>
+            </div>
+
+            <div class="board-action-row">
+              <button
+                matButton="outlined"
+                class="rect-btn secondary-btn"
+                type="button"
+                (click)="revealActiveCell()"
+                [disabled]="completed || !activeCell"
+              >
+                <mat-icon>visibility</mat-icon>
+                Reveal Letter
+              </button>
+
+              <button
+                matButton="outlined"
+                class="rect-btn secondary-btn"
+                type="button"
+                (click)="revealActiveClue()"
+                [disabled]="completed || !activeClue"
+              >
+                <mat-icon>preview</mat-icon>
+                Reveal Word
+              </button>
+
+              <button
+                matButton="filled"
+                class="rect-btn promp2-btn"
+                type="button"
+                (click)="revealPuzzle()"
+                [disabled]="completed"
+              >
+                <mat-icon>visibility_off</mat-icon>
+                Reveal Puzzle
+              </button>
+            </div>
+
+            <div class="board-action-row">
+              <button matButton="outlined" class="rect-btn secondary-btn" type="button" (click)="toggleDirection()">
+                <mat-icon>swap_horiz</mat-icon>
+                {{ activeDirection === 'across' ? 'Switch to Down' : 'Switch to Across' }}
+              </button>
+
+              <button
+                matButton="outlined"
+                class="rect-btn secondary-btn"
+                type="button"
+                (click)="clearActiveClue()"
+                [disabled]="completed"
+              >
+                <mat-icon>backspace</mat-icon>
+                Clear Word
+              </button>
+            </div>
+          </div>
+
+          <div
+            class="feedback-banner"
+            [class.feedback-banner--success]="feedbackTone === 'success'"
+            [class.feedback-banner--danger]="feedbackTone === 'danger'"
+          >
+            <mat-icon>
+              {{
+                feedbackTone === 'success'
+                  ? 'task_alt'
+                  : feedbackTone === 'danger'
+                    ? 'warning'
+                    : 'tips_and_updates'
+              }}
+            </mat-icon>
+            <span>{{ feedback }}</span>
+          </div>
+
+          <div class="active-clue-card active-clue-card--inline" *ngIf="activeClue as clue">
+            <div class="active-clue-header">
+              <h3>{{ clue.number }} {{ clue.direction | titlecase }}</h3>
+            </div>
+            <p>{{ clue.clue }}</p>
+          </div>
+
+          <div class="board-shell">
+            <div class="crossword-grid" [style.--grid-size]="puzzle.size">
+              <ng-container *ngFor="let row of puzzle.cells; let rowIndex = index">
+                <ng-container *ngFor="let cell of row; let colIndex = index">
+                  <div
+                    *ngIf="cell as playableCell; else blockedCell"
+                    class="crossword-cell"
+                    [class.crossword-cell--active]="isActiveCell(rowIndex, colIndex)"
+                    [class.crossword-cell--highlight]="isInActiveClue(rowIndex, colIndex)"
+                    [class.crossword-cell--wrong]="isWrongCell(rowIndex, colIndex)"
+                    [class.crossword-cell--checked-correct]="isCellCheckedCorrect(rowIndex, colIndex)"
+                  >
+                    <span class="cell-number" *ngIf="playableCell.number">{{ playableCell.number }}</span>
+
+                    <input
+                      class="cell-input"
+                      type="text"
+                      [value]="guesses[rowIndex][colIndex]"
+                      [attr.aria-label]="getCellAriaLabel(rowIndex, colIndex)"
+                      [attr.data-crossword-cell]="rowIndex + '-' + colIndex"
+                      autocomplete="off"
+                      autocapitalize="characters"
+                      inputmode="text"
+                      spellcheck="false"
+                      (focus)="onCellFocus(rowIndex, colIndex)"
+                      (click)="onCellClick(rowIndex, colIndex)"
+                      (input)="onCellInput($event, rowIndex, colIndex)"
+                      (keydown)="onCellKeydown($event, rowIndex, colIndex)"
+                    >
+                  </div>
+
+                  <ng-template #blockedCell>
+                    <div class="crossword-cell crossword-cell--blocked" aria-hidden="true"></div>
+                  </ng-template>
+                </ng-container>
+              </ng-container>
+            </div>
+          </div>
+        </ng-container>
+
+        <ng-template #loadingBoard>
+          <div class="board-loading-state" aria-live="polite">
+            <mat-spinner diameter="34"></mat-spinner>
+            <div class="board-loading-copy">
+              <h3>Generating crossword…</h3>
+              <p>Putting your puzzle together.</p>
+            </div>
+          </div>
+        </ng-template>
+      </section>
+
+      <section class="sidebar-stack" *ngIf="activePuzzle as puzzle">
+        <section class="panel-card clues-panel">
+          <div class="clue-group">
+            <div class="panel-header clue-header">
+              <div>
+                <span class="eyebrow">Clues</span>
+                <h2>Across</h2>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              class="clue-button"
+              *ngFor="let clue of puzzle.clues.across; trackBy: trackClue"
+              [class.clue-button--active]="activeClue?.id === clue.id"
+              [class.clue-button--checked-correct]="isClueCheckedCorrect(clue)"
+              [class.clue-button--checked-wrong]="isClueCheckedWrong(clue)"
+              (click)="selectClue(clue)"
+              [attr.aria-label]="getClueButtonLabel(clue)"
+            >
+              <span class="clue-number">{{ clue.number }}</span>
+              <span class="clue-copy">
+                <span class="clue-text">{{ clue.clue }}</span>
+                <span class="clue-progress">{{ getClueFillCount(clue) }}/{{ clue.cells.length }}</span>
+              </span>
+            </button>
+          </div>
+
+          <div class="clue-group">
+            <div class="panel-header clue-header">
+              <div>
+                <span class="eyebrow">Clues</span>
+                <h2>Down</h2>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              class="clue-button"
+              *ngFor="let clue of puzzle.clues.down; trackBy: trackClue"
+              [class.clue-button--active]="activeClue?.id === clue.id"
+              [class.clue-button--checked-correct]="isClueCheckedCorrect(clue)"
+              [class.clue-button--checked-wrong]="isClueCheckedWrong(clue)"
+              (click)="selectClue(clue)"
+              [attr.aria-label]="getClueButtonLabel(clue)"
+            >
+              <span class="clue-number">{{ clue.number }}</span>
+              <span class="clue-copy">
+                <span class="clue-text">{{ clue.clue }}</span>
+                <span class="clue-progress">{{ getClueFillCount(clue) }}/{{ clue.cells.length }}</span>
+              </span>
+            </button>
+          </div>
+        </section>
+      </section>
+    </section>
+  </main>
+</div>
