@@ -243,6 +243,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
 
     this.route.queryParamMap.subscribe(params => {
       const loadSaved    = params.get('loadSaved');
+      const restartSaved = params.get('restartSaved');
       const aiTopic      = params.get('topic');
       const topicIdParam = params.get('id');
       const topicId      = topicIdParam ? Number(topicIdParam) : NaN;
@@ -287,18 +288,15 @@ export class PromptleComponent implements OnInit, OnDestroy {
       this.gameStarted   = true;   // SP starts immediately
       this.multiplayerService.leaveRoom();
 
+      if (restartSaved === 'true') {
+        this.gameError = '';
+        this.restoreSavedGame(true);
+        return;
+      }
+
       if (loadSaved === 'true') {
         this.gameError = '';
-        this.auth.user$.pipe(take(1)).subscribe(user => {
-          if (user && user.sub) {
-            this.http.get<any>(`/api/load-game/${encodeURIComponent(user.sub)}`).subscribe({
-              next:  (payload) => payload?.topic ? this.applySavedPayload(payload) : (this.gameError = 'No saved game found.'),
-              error: ()        => (this.gameError = 'No saved game found.')
-            });
-          } else {
-            if (!this.loadFromLocalStorage()) this.gameError = 'No saved game found.';
-          }
-        });
+        this.restoreSavedGame(false);
         return;
       }
 
@@ -626,18 +624,33 @@ export class PromptleComponent implements OnInit, OnDestroy {
     return this.loadFromLocalStorage();
   }
 
-  private loadFromLocalStorage(): boolean {
+  private restoreSavedGame(clearProgress: boolean): void {
+    this.auth.user$.pipe(take(1)).subscribe(user => {
+      if (user && user.sub) {
+        this.http.get<any>(`/api/load-game/${encodeURIComponent(user.sub)}`).subscribe({
+          next:  (payload) => payload?.topic ? this.applySavedPayload(payload, { clearProgress }) : (this.gameError = 'No saved game found.'),
+          error: ()        => (this.gameError = 'No saved game found.')
+        });
+        return;
+      }
+
+      if (!this.loadFromLocalStorage(clearProgress)) this.gameError = 'No saved game found.';
+    });
+  }
+
+  private loadFromLocalStorage(clearProgress: boolean = false): boolean {
     try {
       const raw = localStorage.getItem('promptle_saved_game');
       if (!raw) return false;
       const payload = JSON.parse(raw);
       if (!payload?.topic) return false;
-      this.applySavedPayload(payload);
+      this.applySavedPayload(payload, { clearProgress });
       return true;
     } catch (e) { return false; }
   }
 
-  private applySavedPayload(payload: any) {
+  private applySavedPayload(payload: any, options: { clearProgress?: boolean } = {}) {
+    const clearProgress = !!options.clearProgress;
     const hydrated = hydrateGameData({
       topic: payload?.topic,
       headers: payload?.headers,
@@ -649,7 +662,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.topic   = hydrated.topic;
     this.headers = hydrated.headers;
     this.answers = hydrated.answers;
-    this.submittedGuesses = Array.isArray(payload.submittedGuesses)
+    this.submittedGuesses = clearProgress ? [] : Array.isArray(payload.submittedGuesses)
       ? payload.submittedGuesses.map((g: any) => ({
           name:   typeof g?.name === 'string' ? g.name : undefined,
           values: Array.isArray(g?.values) ? g.values : [],
@@ -660,9 +673,11 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.guessQuery     = '';
     this.filterAnswers(this.guessQuery);
     this.correctAnswer  = hydrated.correctAnswer;
-    this.isGameOver     = !!payload.isGameOver;
+    this.isGameOver     = clearProgress ? false : !!payload.isGameOver;
     this.isViewingCompletedGame = false;
-    this.savedTimestamp = payload.savedAt ? new Date(payload.savedAt).toLocaleString() : null;
+    this.savedTimestamp = clearProgress ? null : payload.savedAt ? new Date(payload.savedAt).toLocaleString() : null;
+    this.gameError      = '';
+    this.myFinishTimeMs = null;
 
     const correct = this.answers.find(a => a.name === this.correctAnswer.name);
     if (correct) {
@@ -671,6 +686,11 @@ export class PromptleComponent implements OnInit, OnDestroy {
     } else {
       this.backendHeaders = [];
       this.backendRow     = [];
+    }
+
+    if (!this.isMultiplayer && !this.isGameOver) {
+      this.stopStopwatch();
+      this.startStopwatch();
     }
   }
 
