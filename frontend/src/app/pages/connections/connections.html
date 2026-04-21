@@ -239,15 +239,29 @@
           <p>You have 4 chances to find all the connections.</p>
         </div>
 
-        <app-game-feedback-card
-          *ngIf="showGameFeedback"
-          [submittedChoice]="feedbackChoice"
-          [submitting]="feedbackSubmitting"
-          [error]="feedbackError"
-          (liked)="submitGameFeedback(true)"
-          (disliked)="submitGameFeedback(false)"
-        ></app-game-feedback-card>
       </section>
     </section>
   </main>
 </div>
+
+<app-game-end-popup
+  *ngIf="showEndPopup"
+  [accent]="endPopupAccent"
+  [title]="endPopupTitle"
+  [summary]="endPopupSummary"
+  [detail]="endPopupDetail"
+  [stats]="endPopupStats"
+  [recapRows]="guessRecapRows"
+  viewLabel="View Board"
+  playAgainLabel="Play Again"
+  [shareText]="shareText"
+  [showFeedback]="showGameFeedback"
+  [feedbackChoice]="feedbackChoice"
+  [feedbackSubmitting]="feedbackSubmitting"
+  [feedbackError]="feedbackError"
+  (returnHome)="returnHome()"
+  (playAgain)="playAgain()"
+  (viewGame)="viewCompletedBoard()"
+  (likedGame)="submitGameFeedback(true)"
+  (dislikedGame)="submitGameFeedback(false)"
+></app-game-end-popup>

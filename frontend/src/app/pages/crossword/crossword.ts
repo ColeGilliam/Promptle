@@ -7,6 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { Router } from '@angular/router';
 import { take } from 'rxjs';
 import { AuthenticationService } from '../../services/authentication.service';
 import {
@@ -22,8 +23,8 @@ import {
 import { NavbarComponent } from '../../shared/components/navbar/navbar';
 import { LoadSavedGameCard } from '../../shared/ui/load-saved-game-card/load-saved-game-card';
 import { GameFeedbackService } from '../../services/game-feedback';
-import { GameFeedbackCard } from '../../shared/ui/game-feedback-card/game-feedback-card';
 import { CustomGameSessionService } from '../../services/custom-game-session';
+import { GameEndPopup, GameEndPopupStat } from '../../shared/ui/game-end-popup/game-end-popup';
 
 type FeedbackTone = 'neutral' | 'success' | 'danger';
 const CROSSWORD_GENERATION_ERROR = 'Sorry! The puzzle failed to generate. Please try again.';
@@ -48,6 +49,12 @@ interface SavedCrosswordState {
   checkedCorrectCellKeys: string[];
   checkedCorrectClueIds: string[];
   checkedIncorrectClueIds: string[];
+  letterCheckCount: number;
+  wordCheckCount: number;
+  puzzleCheckCount: number;
+  letterRevealCount: number;
+  wordRevealCount: number;
+  puzzleRevealCount: number;
 }
 
 interface ClueCheckSummary {
@@ -70,7 +77,7 @@ interface ClueCheckSummary {
     MatProgressSpinnerModule,
     NavbarComponent,
     LoadSavedGameCard,
-    GameFeedbackCard,
+    GameEndPopup,
   ],
   templateUrl: './crossword.html',
   styleUrls: ['./crossword.css'],
@@ -102,6 +109,15 @@ export class CrosswordComponent implements OnInit, OnDestroy {
   feedbackChoice: boolean | null = null;
   feedbackSubmitting = false;
   feedbackError = '';
+  viewingEndedPuzzle = false;
+  showIncorrectCompletionPopup = false;
+  letterCheckCount = 0;
+  wordCheckCount = 0;
+  puzzleCheckCount = 0;
+  letterRevealCount = 0;
+  wordRevealCount = 0;
+  puzzleRevealCount = 0;
+  private hasShownIncorrectCompletionPopup = false;
   private auth0Id = '';
   private currentPlayId = '';
   private sessionInteracted = false;
@@ -121,7 +137,8 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     private crosswordGameService: CrosswordGameService,
     private http: HttpClient,
     private gameFeedbackService: GameFeedbackService,
-    private customGameSessionService: CustomGameSessionService
+    private customGameSessionService: CustomGameSessionService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -214,6 +231,55 @@ export class CrosswordComponent implements OnInit, OnDestroy {
 
   get showGameFeedback(): boolean {
     return this.completed && !!this.activeGame;
+  }
+
+  get showEndPopup(): boolean {
+    return this.completed && !!this.activeGame && !this.viewingEndedPuzzle;
+  }
+
+  get endPopupAccent(): 'success' | 'revealed' {
+    return this.revealed ? 'revealed' : 'success';
+  }
+
+  get endPopupTitle(): string {
+    return this.revealed ? 'Puzzle Revealed' : 'Victory!';
+  }
+
+  get endPopupSummary(): string {
+    const topicName = this.activeGame?.topic || this.topic;
+    return this.revealed
+      ? `${topicName} is fully revealed.`
+      : `You solved the ${topicName} crossword.`;
+  }
+
+  get endPopupDetail(): string {
+    return this.revealed
+      ? 'You can review the filled grid and try a new or the same topic when ready!'
+      : 'Challenge a friend to try and beat you or play again!.';
+  }
+
+  get endPopupStats(): GameEndPopupStat[] {
+    return [
+      { icon: 'timer', label: this.formatTime(this.elapsedSeconds) },
+      { icon: 'check_circle', label: `${this.letterCheckCount} letter checks` },
+      { icon: 'spellcheck', label: `${this.wordCheckCount} word checks` },
+      { icon: 'rule', label: `${this.puzzleCheckCount} puzzle checks` },
+      { icon: 'visibility', label: `${this.letterRevealCount} letter reveals` },
+      { icon: 'preview', label: `${this.wordRevealCount} word reveals` },
+      { icon: 'visibility_off', label: `${this.puzzleRevealCount} puzzle reveals` },
+    ];
+  }
+
+  get shareText(): string {
+    const topicName = (this.activeGame?.topic || this.topic).trim() || 'Crossword';
+    const status = this.revealed ? 'Revealed' : 'Solved';
+    return [
+      `Crossword: ${topicName}`,
+      `${status} · ${this.formatTime(this.elapsedSeconds)}`,
+      `${this.totalClueCount} clues`,
+      `${this.letterCheckCount} letter checks · ${this.wordCheckCount} word checks · ${this.puzzleCheckCount} puzzle checks`,
+      `${this.letterRevealCount} letter reveals · ${this.wordRevealCount} word reveals · ${this.puzzleRevealCount} puzzle reveals`,
+    ].join('\n');
   }
 
   generateGame(): void {
@@ -359,6 +425,12 @@ export class CrosswordComponent implements OnInit, OnDestroy {
       checkedCorrectCellKeys: [...this.checkedCorrectCellKeys],
       checkedCorrectClueIds: [...this.checkedCorrectClueIds],
       checkedIncorrectClueIds: [...this.checkedIncorrectClueIds],
+      letterCheckCount: this.letterCheckCount,
+      wordCheckCount: this.wordCheckCount,
+      puzzleCheckCount: this.puzzleCheckCount,
+      letterRevealCount: this.letterRevealCount,
+      wordRevealCount: this.wordRevealCount,
+      puzzleRevealCount: this.puzzleRevealCount,
     };
 
     try {
@@ -444,18 +516,20 @@ export class CrosswordComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.letterCheckCount += 1;
+
     const key = this.getCellKey(cell.row, cell.col);
     this.wrongCellKeys.delete(key);
     this.checkedCorrectCellKeys.delete(key);
 
     if (guess === cell.solution) {
       this.checkedCorrectCellKeys.add(key);
-      this.feedback = 'That cell is correct.';
+      this.feedback = 'That letter is correct.';
       this.feedbackTone = 'success';
       this.maybeCompletePuzzle();
     } else {
       this.wrongCellKeys.add(key);
-      this.feedback = 'That cell is incorrect.';
+      this.feedback = 'That letter is incorrect.';
       this.feedbackTone = 'danger';
     }
 
@@ -475,6 +549,8 @@ export class CrosswordComponent implements OnInit, OnDestroy {
       this.setActiveCell(missingCell.row, missingCell.col, true);
       return;
     }
+
+    this.wordCheckCount += 1;
 
     const summary = this.summarizeClue(clue);
     this.applyWordCheckResult(clue, summary);
@@ -497,6 +573,8 @@ export class CrosswordComponent implements OnInit, OnDestroy {
 
   checkPuzzle(): void {
     if (!this.activePuzzle) return;
+
+    this.puzzleCheckCount += 1;
 
     // Rebuild the checked state from scratch so clue and cell highlights stay in sync.
     const correctCellKeys = new Set<string>();
@@ -546,9 +624,10 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     const cell = this.activePuzzle.cells[this.activeCell.row]?.[this.activeCell.col];
     if (!cell) return;
 
+    this.letterRevealCount += 1;
     this.setGuess(cell.row, cell.col, cell.solution);
     this.checkedCorrectCellKeys.add(this.getCellKey(cell.row, cell.col));
-    this.feedback = 'Cell revealed.';
+    this.feedback = 'Letter revealed.';
     this.feedbackTone = 'success';
     this.markDirty();
     this.maybeCompletePuzzle();
@@ -560,6 +639,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     const clue = this.activeClue;
     if (!clue) return;
 
+    this.wordRevealCount += 1;
     for (const cell of clue.cells) {
       const solution = this.activePuzzle.cells[cell.row]?.[cell.col]?.solution ?? '';
       this.setGuess(cell.row, cell.col, solution);
@@ -580,6 +660,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     const confirmed = window.confirm('Reveal the entire crossword? This will fill every answer and end the current game.');
     if (!confirmed) return;
 
+    this.puzzleRevealCount += 1;
     // Treat a full reveal like a terminal state: fill everything, mark it reviewed, and stop the timer.
     this.wrongCellKeys.clear();
     this.checkedCorrectCellKeys.clear();
@@ -601,6 +682,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     this.solvedAt = null;
     this.feedback = `${this.activePuzzle.topic} revealed.`;
     this.feedbackTone = 'success';
+    this.viewingEndedPuzzle = false;
     this.stopTimer();
     this.markDirty();
   }
@@ -814,6 +896,15 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     this.completed = completed;
     this.revealed = !!savedState?.revealed;
     this.solvedAt = completed ? savedState?.solvedAt ?? null : null;
+    this.viewingEndedPuzzle = false;
+    this.showIncorrectCompletionPopup = false;
+    this.hasShownIncorrectCompletionPopup = false;
+    this.letterCheckCount = savedState?.letterCheckCount ?? 0;
+    this.wordCheckCount = savedState?.wordCheckCount ?? 0;
+    this.puzzleCheckCount = savedState?.puzzleCheckCount ?? 0;
+    this.letterRevealCount = savedState?.letterRevealCount ?? 0;
+    this.wordRevealCount = savedState?.wordRevealCount ?? 0;
+    this.puzzleRevealCount = savedState?.puzzleRevealCount ?? 0;
     this.activeDirection = savedState?.activeDirection ?? 'across';
     this.activeCell = this.resolveSavedActiveCell(puzzle, savedState?.activeCell);
     this.wrongCellKeys = new Set(savedState?.wrongCellKeys ?? []);
@@ -860,6 +951,15 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     this.completed = false;
     this.revealed = false;
     this.solvedAt = null;
+    this.viewingEndedPuzzle = false;
+    this.showIncorrectCompletionPopup = false;
+    this.hasShownIncorrectCompletionPopup = false;
+    this.letterCheckCount = 0;
+    this.wordCheckCount = 0;
+    this.puzzleCheckCount = 0;
+    this.letterRevealCount = 0;
+    this.wordRevealCount = 0;
+    this.puzzleRevealCount = 0;
     this.savedTimestamp = null;
     this.hasUnsavedChanges = false;
     this.wrongCellKeys.clear();
@@ -887,9 +987,40 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     this.solvedAt = new Date().toISOString();
     this.feedback = `${this.activePuzzle.topic} complete.`;
     this.feedbackTone = 'success';
+    this.viewingEndedPuzzle = false;
     this.stopTimer();
     // Only genuine solves are positive recommendation signals; reveal remains neutral.
     this.finalizeCurrentSession('completed');
+  }
+
+  returnHome(): void {
+    this.loading = false;
+    this.error = '';
+    this.topic = '';
+    this.feedback = 'Enter a topic and generate a crossword.';
+    this.feedbackTone = 'neutral';
+    this.showTopicPrompt = true;
+    this.showSavedGameCard = true;
+    this.clearActivePuzzleState();
+    this.refreshSavedGameMetadata();
+    this.router.navigate(['/crossword']);
+  }
+
+  playAgain(): void {
+    const replayTopic = (this.activeGame?.topic || this.topic).trim();
+    if (!replayTopic) return;
+
+    this.viewingEndedPuzzle = false;
+    this.topic = replayTopic;
+    this.generateGame();
+  }
+
+  viewCompletedPuzzle(): void {
+    this.viewingEndedPuzzle = true;
+  }
+
+  dismissIncorrectCompletionPopup(): void {
+    this.showIncorrectCompletionPopup = false;
   }
 
   private updateTimerState(): void {
@@ -1060,6 +1191,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     this.clearValidationForCell(row, col);
     this.guesses[row][col] = sanitizeCrosswordCellValue(value);
     this.markDirty();
+    this.syncIncorrectCompletionPopup();
   }
 
   private clearValidationForCell(row: number, col: number): void {
@@ -1085,6 +1217,31 @@ export class CrosswordComponent implements OnInit, OnDestroy {
   private markDirty(): void {
     if (!this.activePuzzle) return;
     this.hasUnsavedChanges = true;
+  }
+
+  private syncIncorrectCompletionPopup(): void {
+    if (!this.activePuzzle || this.completed || this.revealed) {
+      this.showIncorrectCompletionPopup = false;
+      this.hasShownIncorrectCompletionPopup = false;
+      return;
+    }
+
+    const isFilled = this.filledCellCount === this.totalFillableCells;
+    if (!isFilled) {
+      this.showIncorrectCompletionPopup = false;
+      this.hasShownIncorrectCompletionPopup = false;
+      return;
+    }
+
+    if (this.isPuzzleCompleteWithGuesses(this.activePuzzle, this.guesses)) {
+      this.showIncorrectCompletionPopup = false;
+      return;
+    }
+
+    if (!this.hasShownIncorrectCompletionPopup) {
+      this.showIncorrectCompletionPopup = true;
+      this.hasShownIncorrectCompletionPopup = true;
+    }
   }
 
   private formatDirection(direction: CrosswordDirection): string {

@@ -7,6 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { Router } from '@angular/router';
 import { take } from 'rxjs';
 import { AuthenticationService } from '../../services/authentication.service';
 import {
@@ -16,8 +17,8 @@ import {
 } from '../../services/connections-game';
 import { NavbarComponent } from '../../shared/components/navbar/navbar';
 import { GameFeedbackService } from '../../services/game-feedback';
-import { GameFeedbackCard } from '../../shared/ui/game-feedback-card/game-feedback-card';
 import { CustomGameSessionService } from '../../services/custom-game-session';
+import { GameEndPopup, GameEndPopupRecapRow, GameEndPopupStat } from '../../shared/ui/game-end-popup/game-end-popup';
 
 interface BoardWord {
   // Stable keys let the board keep selection/shake state even as tiles are shuffled or removed.
@@ -46,7 +47,7 @@ interface ConnectionsGroupState extends ConnectionsGroup {
     MatInputModule,
     MatProgressSpinnerModule,
     NavbarComponent,
-    GameFeedbackCard,
+    GameEndPopup,
   ],
   templateUrl: './connections.html',
   styleUrls: ['./connections.css'],
@@ -75,10 +76,14 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
   boardWords: BoardWord[] = [];
   solvedGroups: ConnectionsGroupState[] = [];
   remainingGroups: ConnectionsGroupState[] = [];
+  allGroups: ConnectionsGroupState[] = [];
   isResolvingGuess = false;
   feedbackChoice: boolean | null = null;
   feedbackSubmitting = false;
   feedbackError = '';
+  viewingEndedBoard = false;
+  elapsedSeconds = 0;
+  guessRecapRows: GameEndPopupRecapRow[] = [];
   private auth0Id = '';
   private currentPlayId = '';
   private sessionInteracted = false;
@@ -86,13 +91,15 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
 
   // Hold onto the shake timer so a reset/new generation can cancel stale animations cleanly.
   private shakeTimeout: ReturnType<typeof setTimeout> | null = null;
+  private timerHandle: ReturnType<typeof window.setInterval> | null = null;
 
   constructor(
     private auth: AuthenticationService,
     private connectionsGameService: ConnectionsGameService,
     private http: HttpClient,
     private gameFeedbackService: GameFeedbackService,
-    private customGameSessionService: CustomGameSessionService
+    private customGameSessionService: CustomGameSessionService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -108,6 +115,7 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     // Treat leaving an active custom board as abandonment once the player has interacted.
     this.finalizeCurrentSession('abandoned', { keepalive: true });
+    this.stopTimer();
   }
 
   get canUseAI(): boolean {
@@ -144,6 +152,50 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
     return this.boardWords.length > 1 && !this.loading && !this.gameOver && !this.isResolvingGuess;
   }
 
+  get showEndPopup(): boolean {
+    return this.gameOver && !!this.activeTopic && !this.viewingEndedBoard;
+  }
+
+  get endPopupAccent(): 'success' | 'revealed' {
+    return this.gameWon ? 'success' : 'revealed';
+  }
+
+  get endPopupTitle(): string {
+    return this.gameWon ? 'Victory!' : 'Round Over';
+  }
+
+  get endPopupSummary(): string {
+    return this.gameWon
+      ? `You solved every group in ${this.activeTopic}.`
+      : `${this.activeTopic} has been revealed.`;
+  }
+
+  get endPopupDetail(): string {
+    return this.gameWon
+      ? 'Share your results with a friend or try another topic!'
+      : 'Challenge a friend or try again!';
+  }
+
+  get endPopupStats(): GameEndPopupStat[] {
+    return [
+      { icon: 'connections_groups', label: `${this.solvedCount}/4 groups solved` },
+      { icon: 'timer', label: this.formatTime(this.elapsedSeconds) },
+      { icon: 'favorite', label: `${this.mistakesLeft}/${this.maxMistakes} mistakes left` },
+    ];
+  }
+
+  get shareText(): string {
+    const topicName = this.activeTopic.trim() || 'Connections';
+    const status = this.gameWon ? 'Solved' : 'Revealed';
+    const recap = this.guessRecapRows
+      .map((row) => row.colors.map((color) => this.colorToEmoji(color)).join(''))
+      .join('\n');
+    const summary = `${status} · ${this.solvedCount}/4 groups · ${this.formatTime(this.elapsedSeconds)}`;
+    return recap
+      ? `Connections: ${topicName}\n${summary}\n\n${recap}`
+      : `Connections: ${topicName}\n${summary}`;
+  }
+
   get showGameFeedback(): boolean {
     return this.gameOver && !!this.activeTopic;
   }
@@ -165,6 +217,12 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
       default:
         return 'tips_and_updates';
     }
+  }
+
+  formatTime(totalSeconds: number): string {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   }
 
   generateGame(): void {
@@ -284,6 +342,10 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
     const matchedGroup = this.remainingGroups.find((group) => this.matchesGroup(group));
 
     if (matchedGroup) {
+      this.guessRecapRows = [
+        ...this.guessRecapRows,
+        this.createGuessRecapRow(this.selectedWordKeys),
+      ];
       this.solvedGroups = this.sortGroups([
         ...this.solvedGroups,
         matchedGroup,
@@ -297,6 +359,8 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
         this.feedbackTone = 'success';
         this.gameOver = true;
         this.gameWon = true;
+        this.viewingEndedBoard = false;
+        this.stopTimer();
         this.finalizeCurrentSession('completed');
       } else {
         this.feedback = `Solved: ${matchedGroup.category}`;
@@ -314,6 +378,10 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
       ? 'One away. Three of those words belong together.'
       : 'Not a group. Try a different mix.';
     this.feedbackTone = oneAway ? 'one_away' : 'danger';
+    this.guessRecapRows = [
+      ...this.guessRecapRows,
+      this.createGuessRecapRow(this.selectedWordKeys),
+    ];
 
     this.clearPendingShake();
     this.shakeTimeout = setTimeout(() => {
@@ -326,8 +394,30 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
         this.revealRemainingGroups();
         this.feedback = 'Out of lives! Answers are now revealed.';
         this.feedbackTone = 'danger';
+        this.viewingEndedBoard = false;
+        this.stopTimer();
       }
     }, 430);
+  }
+
+  returnHome(): void {
+    this.resetBoardState();
+    this.topic = '';
+    this.showTopicPrompt = true;
+    this.router.navigate(['/connections']);
+  }
+
+  playAgain(): void {
+    const replayTopic = this.activeTopic.trim();
+    if (!replayTopic) return;
+
+    this.viewingEndedBoard = false;
+    this.topic = replayTopic;
+    this.generateGame();
+  }
+
+  viewCompletedBoard(): void {
+    this.viewingEndedBoard = true;
   }
 
   isSelected(wordKey: string): boolean {
@@ -364,7 +454,10 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
     this.selectedWordKeys = [];
     this.shakingWordKeys = [];
     this.isResolvingGuess = false;
+    this.elapsedSeconds = 0;
+    this.guessRecapRows = [];
     this.resetGameFeedback();
+    this.viewingEndedBoard = false;
 
     const groups: ConnectionsGroupState[] = [];
     const words: BoardWord[] = [];
@@ -390,10 +483,14 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
     });
 
     this.remainingGroups = groups;
+    this.allGroups = groups.map((group) => ({ ...group, wordKeys: [...group.wordKeys] }));
     this.solvedGroups = [];
     this.boardWords = this.shuffleArray(words);
+    this.elapsedSeconds = 0;
+    this.guessRecapRows = [];
     this.feedback = 'Select four words that share a connection.';
     this.feedbackTone = 'neutral';
+    this.startTimer();
     this.startSession(game.topic);
   }
 
@@ -447,8 +544,13 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
     this.boardWords = [];
     this.solvedGroups = [];
     this.remainingGroups = [];
+    this.allGroups = [];
     this.isResolvingGuess = false;
+    this.elapsedSeconds = 0;
+    this.guessRecapRows = [];
+    this.stopTimer();
     this.resetGameFeedback();
+    this.viewingEndedBoard = false;
     this.resetSessionState();
   }
 
@@ -456,6 +558,38 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
     this.feedbackChoice = null;
     this.feedbackSubmitting = false;
     this.feedbackError = '';
+  }
+
+  private createGuessRecapRow(wordKeys: string[]): GameEndPopupRecapRow {
+    return {
+      colors: wordKeys.map((wordKey) => this.getRecapColorForWord(wordKey)),
+    };
+  }
+
+  private getRecapColorForWord(wordKey: string): string {
+    const word = this.boardWords.find((entry) => entry.key === wordKey);
+    const groupIndex = word?.groupIndex ?? this.findGroupIndexForWordKey(wordKey);
+    const difficulty = this.allGroups.find((group) => group.index === groupIndex)?.difficulty;
+    return difficulty ?? 'gray';
+  }
+
+  private findGroupIndexForWordKey(wordKey: string): number {
+    return this.allGroups.find((group) => group.wordKeys.includes(wordKey))?.index ?? -1;
+  }
+
+  private colorToEmoji(color: string): string {
+    switch (color) {
+      case 'yellow':
+        return '🟨';
+      case 'green':
+        return '🟩';
+      case 'blue':
+        return '🟦';
+      case 'purple':
+        return '🟪';
+      default:
+        return '⬛';
+    }
   }
 
   private createPlayId(): string {
@@ -544,5 +678,18 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
       [next[index], next[swapIndex]] = [next[swapIndex], next[index]];
     }
     return next;
+  }
+
+  private startTimer(): void {
+    this.stopTimer();
+    this.timerHandle = window.setInterval(() => {
+      this.elapsedSeconds += 1;
+    }, 1000);
+  }
+
+  private stopTimer(): void {
+    if (!this.timerHandle) return;
+    window.clearInterval(this.timerHandle);
+    this.timerHandle = null;
   }
 }

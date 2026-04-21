@@ -376,16 +376,53 @@
             </button>
           </div>
         </section>
-
-        <app-game-feedback-card
-          *ngIf="showGameFeedback"
-          [submittedChoice]="feedbackChoice"
-          [submitting]="feedbackSubmitting"
-          [error]="feedbackError"
-          (liked)="submitGameFeedback(true)"
-          (disliked)="submitGameFeedback(false)"
-        ></app-game-feedback-card>
       </section>
     </section>
   </main>
+</div>
+
+<app-game-end-popup
+  *ngIf="showEndPopup"
+  [accent]="endPopupAccent"
+  [title]="endPopupTitle"
+  [summary]="endPopupSummary"
+  [detail]="endPopupDetail"
+  [stats]="endPopupStats"
+  viewLabel="View Puzzle"
+  playAgainLabel="Play Again"
+  [shareText]="shareText"
+  [showFeedback]="showGameFeedback"
+  [feedbackChoice]="feedbackChoice"
+  [feedbackSubmitting]="feedbackSubmitting"
+  [feedbackError]="feedbackError"
+  (returnHome)="returnHome()"
+  (playAgain)="playAgain()"
+  (viewGame)="viewCompletedPuzzle()"
+  (likedGame)="submitGameFeedback(true)"
+  (dislikedGame)="submitGameFeedback(false)"
+></app-game-end-popup>
+
+<div
+  class="incorrect-completion-overlay"
+  *ngIf="showIncorrectCompletionPopup"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="incorrect-completion-title"
+>
+  <div class="incorrect-completion-card">
+    <div class="incorrect-completion-icon">
+      <mat-icon>warning</mat-icon>
+    </div>
+    <h2 id="incorrect-completion-title">Not quite!</h2>
+    <p>One or more of your answers are incorrect.</p>
+    <button
+      matButton="filled"
+      class="rect-btn promp2-btn"
+      type="button"
+      (click)="dismissIncorrectCompletionPopup()"
+    >
+      <mat-icon>edit</mat-icon>
+      Keep Solving
+    </button>
+  </div>
 </div>

@@ -1,0 +1,71 @@
+<div class="end-overlay" role="dialog" aria-modal="true" aria-labelledby="end-popup-title">
+  <div class="end-card" [class.end-card--revealed]="accent === 'revealed'">
+    <div class="end-glow" aria-hidden="true"></div>
+
+    <div class="end-icon"><mat-icon>{{ titleIcon }}</mat-icon></div>
+    <h2 id="end-popup-title" class="end-title">{{ title }}</h2>
+    <p class="end-summary" *ngIf="summary">{{ summary }}</p>
+    <p class="end-detail" *ngIf="detail">{{ detail }}</p>
+
+    <div class="end-stats" *ngIf="stats.length > 0">
+      <div class="end-stat" *ngFor="let stat of stats">
+        <span class="end-stat-icon end-stat-icon--connections" *ngIf="stat.icon === 'connections_groups'" aria-hidden="true">
+          <span class="connections-dot connections-dot--yellow"></span>
+          <span class="connections-dot connections-dot--green"></span>
+          <span class="connections-dot connections-dot--blue"></span>
+          <span class="connections-dot connections-dot--purple"></span>
+        </span>
+        <mat-icon *ngIf="stat.icon !== 'connections_groups'">{{ stat.icon }}</mat-icon>
+        <span>{{ stat.label }}</span>
+      </div>
+    </div>
+
+    <div class="end-grid" *ngIf="recapRows.length > 0">
+      <div class="end-grid-row" *ngFor="let row of recapRows">
+        <span
+          class="end-cell"
+          *ngFor="let color of row.colors"
+          [class.cell-yellow]="color === 'yellow'"
+          [class.cell-green]="color === 'green'"
+          [class.cell-blue]="color === 'blue'"
+          [class.cell-purple]="color === 'purple'"
+          [class.cell-gray]="color === 'gray'"
+        ></span>
+      </div>
+    </div>
+
+    <app-game-feedback-card
+      *ngIf="showFeedback"
+      class="end-feedback-card"
+      [submittedChoice]="feedbackChoice"
+      [submitting]="feedbackSubmitting"
+      [error]="feedbackError"
+      (liked)="onLikedGame()"
+      (disliked)="onDislikedGame()"
+    ></app-game-feedback-card>
+
+    <div class="end-actions">
+      <button matButton="filled" class="rect-btn view-game-btn" (click)="onViewGame()">
+        <mat-icon>visibility</mat-icon>
+        {{ viewLabel }}
+      </button>
+      <button matButton="filled" class="rect-btn promp2-btn" (click)="onReturnHome()">
+        <mat-icon>home</mat-icon>
+        Return Home
+      </button>
+      <button matButton="filled" class="rect-btn promp1-btn" (click)="onPlayAgain()">
+        <mat-icon>replay</mat-icon>
+        {{ playAgainLabel }}
+      </button>
+      <button
+        matButton="filled"
+        class="rect-btn share-btn"
+        (click)="copyShare()"
+        *ngIf="shareText"
+      >
+        <mat-icon>{{ copied ? 'check' : 'share' }}</mat-icon>
+        {{ copied ? 'Copied!' : 'Share' }}
+      </button>
+    </div>
+  </div>
+</div>
