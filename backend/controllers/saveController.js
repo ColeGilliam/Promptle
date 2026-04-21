@@ -1,7 +1,10 @@
 // controllers/saveController.js
 import { getUsersCollection } from '../config/db.js';
+import { appLogger } from '../lib/logger.js';
 
 let cachedUsersCollection = null;
+const saveLogger = appLogger.child({ component: 'saved-game' });
+
 function getCachedUsersCollection() {
   if (!cachedUsersCollection) cachedUsersCollection = getUsersCollection();
   return cachedUsersCollection;
@@ -27,7 +30,11 @@ export async function saveGame(req, res) {
 
     return res.json({ success: true });
   } catch (err) {
-    console.error('Error saving game:', err);
+    saveLogger.error('saved_game_save_failed', {
+      requestId: req.id || null,
+      auth0Id,
+      error: err,
+    });
     return res.status(500).json({ error: 'Server error saving game' });
   }
 }
@@ -46,7 +53,11 @@ export async function loadGame(req, res) {
 
     return res.json(user.savedGame);
   } catch (err) {
-    console.error('Error loading saved game:', err);
+    saveLogger.error('saved_game_load_failed', {
+      requestId: req.id || null,
+      auth0Id,
+      error: err,
+    });
     return res.status(500).json({ error: 'Server error loading saved game' });
   }
 }
@@ -69,7 +80,11 @@ export async function deleteSavedGame(req, res) {
 
     return res.json({ success: true });
   } catch (err) {
-    console.error('Error deleting saved game:', err);
+    saveLogger.error('saved_game_delete_failed', {
+      requestId: req.id || null,
+      auth0Id,
+      error: err,
+    });
     return res.status(500).json({ error: 'Server error deleting saved game' });
   }
 }

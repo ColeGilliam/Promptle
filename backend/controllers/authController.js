@@ -1,12 +1,14 @@
 // controllers/authController.js
 import { getUsersCollection } from '../config/db.js';
 import { ManagementClient } from 'auth0';
+import { appLogger } from '../lib/logger.js';
 
 const auth0Manager = new ManagementClient({
   domain: process.env.AUTH0_DOMAIN,
   clientId: process.env.AUTH0_M2M_CLIENT_ID,
   clientSecret: process.env.AUTH0_M2M_CLIENT_SECRET,
 });
+const authLogger = appLogger.child({ component: 'auth' });
 
 // Module-level cache (initialized on first use)
 let cachedUsersCollection = null;
@@ -48,7 +50,11 @@ export async function authUser(req, res) {
 
     res.json({ status: 'new-user-created' });
   } catch (err) {
-    console.error('Error in auth-user:', err);
+    authLogger.error('auth_user_failed', {
+      requestId: req.id || null,
+      auth0Id,
+      error: err,
+    });
     res.status(500).json({ error: 'Server error in auth' });
   }
 }
@@ -72,7 +78,11 @@ export async function deleteUserAccount(req, res) {
 
     res.json({ status: 'account-deleted-successfully' });
   } catch (err) {
-    console.error('Error in delete-user:', err);
+    authLogger.error('delete_user_failed', {
+      requestId: req.id || null,
+      auth0Id,
+      error: err,
+    });
     res.status(500).json({ error: 'Failed to fully delete account' });
   }
 }
@@ -90,7 +100,11 @@ export async function incrementWin(req, res) {
     );
     res.json({ success: true, message: 'Win counted' });
   } catch (err) {
-    console.error('Error incrementing win:', err);
+    authLogger.error('increment_win_failed', {
+      requestId: req.id || null,
+      auth0Id,
+      error: err,
+    });
     res.status(500).json({ error: 'Server error' });
   }
 }

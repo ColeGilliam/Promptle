@@ -5,8 +5,10 @@ import { generateSubjects } from './subjectController.js';  // adjust path if ne
 import { getIo } from '../sockets/socketState.js';
 import { fetchDevSettings } from './devSettingsController.js';
 import { normalizeGameAnswer, normalizeGamePayload } from '../services/gameCells.js';
+import { appLogger } from '../lib/logger.js';
 
 const DEV_EMAIL = 'promptle99@gmail.com';
+const gameLogger = appLogger.child({ component: 'multiplayer' });
 
 async function isDevAccount(auth0Id) {
   if (!auth0Id) return false;
@@ -154,7 +156,13 @@ export async function startGame(req, res) {
 
     res.json(gameData);
   } catch (err) {
-    console.error('startGame error:', err);
+    gameLogger.error('start_game_failed', {
+      requestId: req.id || null,
+      topicId: req.query?.topicId || null,
+      room: req.query?.room || null,
+      answer: req.query?.answer || null,
+      error: err,
+    });
     res.status(500).json({ error: err.message || 'Server error' });
   }
 }
@@ -165,6 +173,7 @@ export async function startGame(req, res) {
 export const createMultiplayerGame = async (req, res) => {
   try {
     const { topic, id, mode, auth0Id } = req.body;
+    const normalizedTopic = typeof topic === 'string' ? topic.trim() : '';
 
     const isDevUser = await isDevAccount(auth0Id);
 
@@ -180,14 +189,20 @@ export const createMultiplayerGame = async (req, res) => {
 
     let gameData;
 
-    if (topic) {
+    if (normalizedTopic) {
       // ── AI / custom topic path ──
-      console.log('Generating AI game for custom topic:', topic);
+      gameLogger.debug('multiplayer_ai_generation_requested', {
+        requestId: req.id || null,
+        auth0Id: auth0Id || null,
+        topic: normalizedTopic,
+        mode: mode || 'standard',
+      });
 
       // Simulate the POST body your generateSubjects expects
       const aiReq = {
+        id: req.id,
         body: {
-          topic: topic.trim(),
+          topic: normalizedTopic,
           minCategories: 6,
           maxCategories: 8,
           auth0Id,
@@ -215,6 +230,12 @@ export const createMultiplayerGame = async (req, res) => {
       });
 
       if (!aiOutput || !aiOutput.topic || !aiOutput.headers || !aiOutput.answers) {
+        gameLogger.error('multiplayer_ai_generation_invalid_payload', {
+          requestId: req.id || null,
+          auth0Id: auth0Id || null,
+          topic: normalizedTopic,
+          mode: mode || 'standard',
+        });
         return res.status(500).json({ error: 'AI generation failed to produce valid game data' });
       }
 
@@ -222,7 +243,12 @@ export const createMultiplayerGame = async (req, res) => {
 
     } else if (id) {
       // ── Existing numeric topic from DB ──
-      console.log('Using existing topicId:', id);
+      gameLogger.debug('multiplayer_existing_topic_selected', {
+        requestId: req.id || null,
+        auth0Id: auth0Id || null,
+        topicId: id,
+        mode: mode || 'standard',
+      });
       gameData = await buildGameData(id, true);
     } else {
       return res.status(400).json({ error: 'Either "topic" (custom) or "id" (existing) required' });
@@ -237,6 +263,13 @@ export const createMultiplayerGame = async (req, res) => {
     }
 
     if (await roomExists(roomId)) {
+      gameLogger.error('multiplayer_room_code_generation_failed', {
+        requestId: req.id || null,
+        auth0Id: auth0Id || null,
+        topicId: id || null,
+        topic: normalizedTopic || null,
+        attempts,
+      });
       return res.status(500).json({ error: 'Failed to generate unique room code' });
     }
 
@@ -249,20 +282,46 @@ export const createMultiplayerGame = async (req, res) => {
       started: false,
       isMultiplayer: true,
       mode: mode || 'standard',
-      source: topic ? 'ai' : 'db'
+      source: normalizedTopic ? 'ai' : 'db'
     });
 
-    console.log(`Multiplayer room created: ${roomId} (${topic ? 'AI' : 'DB'})`);
+    gameLogger.debug('multiplayer_room_created', {
+      requestId: req.id || null,
+      auth0Id: auth0Id || null,
+      roomId,
+      topicId: id || null,
+      topic: normalizedTopic || null,
+      mode: mode || 'standard',
+      source: normalizedTopic ? 'ai' : 'db',
+    });
 
     res.status(201).json({ roomId });
 
   } catch (error) {
-    if (error?.statusCode) { 
+    if (error?.statusCode) {
+      if (error.statusCode >= 500) {
+        gameLogger.error('multiplayer_room_creation_failed', {
+          requestId: req.id || null,
+          auth0Id: req.body?.auth0Id || null,
+          topicId: req.body?.id || null,
+          topic: typeof req.body?.topic === 'string' ? req.body.topic.trim() : null,
+          mode: req.body?.mode || 'standard',
+          statusCode: error.statusCode,
+          payload: error.payload || null,
+          error,
+        });
+      }
       return res.status(error.statusCode).json(error.payload || { error: error.message || 'Failed to create multiplayer game' });
     }
 
-    console.error('createMultiplayerGame error:', error.message || error);
-    console.error(error.stack);
+    gameLogger.error('multiplayer_room_creation_failed', {
+      requestId: req.id || null,
+      auth0Id: req.body?.auth0Id || null,
+      topicId: req.body?.id || null,
+      topic: typeof req.body?.topic === 'string' ? req.body.topic.trim() : null,
+      mode: req.body?.mode || 'standard',
+      error,
+    });
     res.status(500).json({ error: 'Failed to create multiplayer game: ' + (error.message || 'unknown') });
   }
 };
@@ -283,7 +342,10 @@ export async function listRooms(req, res) {
       .limit(50)
       .toArray();
 
-    console.log(`[listRooms] Found ${rooms.length} active room(s)`);
+    gameLogger.debug('multiplayer_rooms_listed', {
+      requestId: req.id || null,
+      roomCount: rooms.length,
+    });
 
     // Enrich with live player count from the socket.io adapter
     const io = getIo();
@@ -305,7 +367,10 @@ export async function listRooms(req, res) {
 
     res.json(enriched);
   } catch (err) {
-    console.error('listRooms error:', err);
+    gameLogger.error('multiplayer_room_list_failed', {
+      requestId: req.id || null,
+      error: err,
+    });
     res.status(500).json({ error: 'Failed to list rooms' });
   }
 }
@@ -321,7 +386,11 @@ export async function getRoomMode(roomId) {
     const coll = getMultiplayerGamesColl();
     const doc = await coll.findOne({ _id: roomId }, { projection: { mode: 1 } });
     return doc?.mode || 'standard';
-  } catch {
+  } catch (error) {
+    gameLogger.error('multiplayer_room_mode_lookup_failed', {
+      roomId,
+      error,
+    });
     return 'standard';
   }
 }
@@ -330,9 +399,12 @@ export async function markRoomStarted(roomId) {
   try {
     const coll = getMultiplayerGamesColl();
     await coll.updateOne({ _id: roomId }, { $set: { started: true } });
-    console.log(`[markRoomStarted] Room ${roomId} marked as started`);
+    gameLogger.debug('multiplayer_room_started', { roomId });
   } catch (err) {
-    console.error('[markRoomStarted] error:', err);
+    gameLogger.error('multiplayer_room_start_mark_failed', {
+      roomId,
+      error: err,
+    });
   }
 }
 
@@ -355,10 +427,19 @@ export async function deleteRoom(req, res) {
       return res.status(404).json({ error: 'Room not found.' });
     }
 
-    console.log(`[deleteRoom] Room ${roomId} deleted by dev account`);
+    gameLogger.debug('multiplayer_room_deleted', {
+      requestId: req.id || null,
+      roomId,
+      auth0Id,
+    });
     res.json({ success: true });
   } catch (err) {
-    console.error('deleteRoom error:', err);
+    gameLogger.error('multiplayer_room_delete_failed', {
+      requestId: req.id || null,
+      roomId: req.params?.roomId || null,
+      auth0Id: req.body?.auth0Id || null,
+      error: err,
+    });
     res.status(500).json({ error: 'Failed to delete room.' });
   }
 }

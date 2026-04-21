@@ -1,6 +1,7 @@
 // config/db.js
 import { MongoClient, ServerApiVersion } from 'mongodb';
-import { MONGODB_URI } from './config.js';
+import { DB_NAME, DB_PING_INTERVAL_MS, MONGODB_URI, NODE_ENV } from './config.js';
+import { appLogger } from '../lib/logger.js';
 
 let client;
 let db;
@@ -8,9 +9,53 @@ let topicCollection;
 let guessesCollection;
 let usersCollection;
 let topicModerationAttemptsCollection;
+let dbPingTimer = null;
+let lastDbPingFailedAt = null;
 
 let cachedMultiplayerGamesCollection = null;
 let cachedDevSettingsCollection = null;
+const dbLogger = appLogger.child({ component: 'db' });
+
+function resetCachedCollections() {
+  topicCollection = null;
+  guessesCollection = null;
+  usersCollection = null;
+  topicModerationAttemptsCollection = null;
+  cachedMultiplayerGamesCollection = null;
+  cachedDevSettingsCollection = null;
+}
+
+function startDbPingMonitor() {
+  if (!db || dbPingTimer || NODE_ENV === 'test') {
+    return;
+  }
+
+  // This is an app-level availability check so we notice the DB dropping after startup.
+  dbPingTimer = setInterval(async () => {
+    try {
+      await db.command({ ping: 1 });
+
+      if (lastDbPingFailedAt) {
+        dbLogger.error('db_ping_recovered', {
+          dbName: db.databaseName,
+          recoveredAt: new Date(),
+          lastDbPingFailedAt,
+        });
+        lastDbPingFailedAt = null;
+      }
+    } catch (error) {
+      lastDbPingFailedAt = new Date();
+      dbLogger.error('db_ping_failed', {
+        dbName: db?.databaseName || DB_NAME,
+        failedAt: lastDbPingFailedAt,
+        error,
+      });
+    }
+  }, DB_PING_INTERVAL_MS);
+
+  // Do not keep the Node process alive solely because the periodic ping timer exists.
+  dbPingTimer.unref?.();
+}
 
 export function getMultiplayerGamesCollection() {
   if (!cachedMultiplayerGamesCollection) {
@@ -27,6 +72,7 @@ export function getDevSettingsCollection() {
 }
 
 export async function connectDB() {
+  // Controllers import collection accessors directly, so initialize all shared handles here once.
   if (db) return { db, topicCollection, guessesCollection, usersCollection, topicModerationAttemptsCollection }; // Already connected
 
   try {
@@ -39,18 +85,25 @@ export async function connectDB() {
     });
 
     await client.connect();
-    console.log('Connected to MongoDB!');
+    db = client.db(DB_NAME);
 
-    db = client.db('promptle');
     topicCollection = db.collection('topic');
     guessesCollection = db.collection('guesses');
     usersCollection = db.collection('users');
     topicModerationAttemptsCollection = db.collection('topicModerationAttempts');
+    startDbPingMonitor();
+
+    dbLogger.warn('db_connected', {
+      dbName: db.databaseName,
+    });
 
     return { db, topicCollection, guessesCollection, usersCollection, topicModerationAttemptsCollection };
   } catch (err) {
-    console.error('Error connecting to MongoDB:', err);
-    process.exit(1);
+    dbLogger.error('db_connect_failed', {
+      dbName: DB_NAME,
+      error: err,
+    });
+    throw err;
   }
 }
 
@@ -74,7 +127,25 @@ export function getTopicModerationAttemptsCollection() {
   return topicModerationAttemptsCollection;
 }
 
-// Optional: Close connection on shutdown (add to server.js if needed)
+// Close connection on shutdown
 export async function closeDB() {
-  if (client) await client.close();
+  if (dbPingTimer) {
+    clearInterval(dbPingTimer);
+    dbPingTimer = null;
+  }
+
+  if (!client) {
+    return;
+  }
+
+  await client.close();
+  client = null;
+  db = null;
+  lastDbPingFailedAt = null;
+  // Drop cached collection references so the next startup path cannot accidentally reuse stale handles.
+  resetCachedCollections();
+
+  dbLogger.warn('db_connection_closed', {
+    dbName: DB_NAME,
+  });
 }

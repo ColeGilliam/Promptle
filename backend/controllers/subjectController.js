@@ -10,8 +10,10 @@ import {
   TOPIC_NOT_ALLOWED_ERROR,
 } from '../services/topicModeration.js';
 import { normalizeGameAnswer, normalizeGamePayload } from '../services/gameCells.js';
+import { appLogger } from '../lib/logger.js';
 
 const DEV_EMAIL = 'promptle99@gmail.com';
+const subjectLogger = appLogger.child({ component: 'subjects' });
 
 async function isDevAccount(auth0Id) {
   if (!auth0Id) return false;
@@ -28,7 +30,7 @@ const openai = OPENAI_API_KEY ? new OpenAI({ apiKey: OPENAI_API_KEY }) : null;
 export function createGenerateSubjectsHandler({
   openaiClient = openai,
   apiKey = OPENAI_API_KEY,
-  logger = console,
+  logger = subjectLogger,
   isDevAccountFn = isDevAccount,
   fetchDevSettingsFn = fetchDevSettings,
   moderateTopicInputFn = moderateTopicInput,
@@ -55,6 +57,11 @@ export function createGenerateSubjectsHandler({
     }
 
     if (!openaiClient || !apiKey) {
+      logger.error('subject_generation_missing_api_key', {
+        requestId: req.id || null,
+        auth0Id: auth0Id || null,
+        topic: normalizedTopic,
+      });
       return res.status(500).json({ error: 'OpenAI API key is missing. Set OPENAI_API_KEY in your environment.' });
     }
 
@@ -67,7 +74,12 @@ export function createGenerateSubjectsHandler({
         topic: normalizedTopic,
       });
     } catch (error) {
-      logger.error('Error moderating topic input:', error);
+      logger.error('topic_moderation_failed', {
+        requestId: req.id || null,
+        auth0Id: auth0Id || null,
+        topic: normalizedTopic,
+        error,
+      });
       return res.status(500).json({ error: TOPIC_MODERATION_FAILED_ERROR });
     }
 
@@ -80,24 +92,25 @@ export function createGenerateSubjectsHandler({
           moderationResult,
         });
       } catch (error) {
-        logger.error('Failed to log rejected topic attempt:', error);
+        logger.error('blocked_topic_attempt_log_failed', {
+          requestId: req.id || null,
+          auth0Id: auth0Id || null,
+          topic: normalizedTopic,
+          error,
+        });
       }
 
-      // Log the blocked attempt with user ID, topic, flagged categories, and moderation model used, using warn level if available, otherwise fallback to info
-      if (typeof logger.warn === 'function') {
-        logger.warn('[AI topic blocked]', {
-          auth0Id: auth0Id || null,
-          topic: normalizedTopic,
-          flaggedCategories: moderationResult.flaggedCategories,
-          moderationModel: moderationResult.moderationModel,
-        });
-      } else {
-        logger.info('[AI topic blocked]', {
-          auth0Id: auth0Id || null,
-          topic: normalizedTopic,
-          flaggedCategories: moderationResult.flaggedCategories,
-          moderationModel: moderationResult.moderationModel,
-        });
+      const blockedLogPayload = {
+        requestId: req.id || null,
+        auth0Id: auth0Id || null,
+        topic: normalizedTopic,
+        flaggedCategories: moderationResult.flaggedCategories,
+        moderationModel: moderationResult.moderationModel,
+      };
+      if (typeof logger.info === 'function') {
+        logger.info('ai_topic_blocked', blockedLogPayload);
+      } else if (typeof logger.debug === 'function') {
+        logger.debug('ai_topic_blocked', blockedLogPayload);
       }
 
       // Returns a user error message indicating the topic is not allowed
@@ -181,7 +194,13 @@ export function createGenerateSubjectsHandler({
       try {
         parsed = JSON.parse(raw);
       } catch (error) {
-        logger.error('Failed to parse OpenAI response as JSON:', raw, error);
+        logger.error('subject_generation_invalid_json', {
+          requestId: req.id || null,
+          auth0Id: auth0Id || null,
+          topic: normalizedTopic,
+          raw,
+          error,
+        });
         return res.status(500).json({ error: 'AI response was not valid JSON.' });
       }
 
@@ -203,11 +222,24 @@ export function createGenerateSubjectsHandler({
       }
 
       if (!columns.length || !answers.length) {
+        logger.error('subject_generation_missing_required_fields', {
+          requestId: req.id || null,
+          auth0Id: auth0Id || null,
+          topic: normalizedTopic,
+          hasColumns: Boolean(columns.length),
+          hasAnswers: Boolean(answers.length),
+        });
         return res.status(500).json({ error: 'AI response was missing columns or answers.' });
       }
 
       if (answers.length < MIN_COUNT) {
-        logger.error('AI response contained too few subjects:', answers.length);
+        logger.error('subject_generation_too_few_answers', {
+          requestId: req.id || null,
+          auth0Id: auth0Id || null,
+          topic: normalizedTopic,
+          answerCount: answers.length,
+          minRequired: MIN_COUNT,
+        });
         return res.status(500).json({ error: `AI returned too few subjects. Need at least ${MIN_COUNT}.` });
       }
 
@@ -228,7 +260,9 @@ export function createGenerateSubjectsHandler({
         correctAnswer,
       });
 
-      logger.info('[AI subjects] summary', {
+      const successLogPayload = {
+        requestId: req.id || null,
+        auth0Id: auth0Id || null,
         topic: payload.topic,
         headers: payload.headers,
         headersCount: payload.headers.length,
@@ -239,11 +273,21 @@ export function createGenerateSubjectsHandler({
         correctAnswer: payload.correctAnswer?.name,
         correctAnswerCells: payload.correctAnswer?.cells || [],
         tokenUsage: completion.usage || 'No usage data',
-      });
+      };
+      if (typeof logger.debug === 'function') {
+        logger.debug('subject_generation_succeeded', successLogPayload);
+      } else if (typeof logger.info === 'function') {
+        logger.info('subject_generation_succeeded', successLogPayload);
+      }
 
       res.json(payload);
     } catch (error) {
-      logger.error('Error generating subjects from OpenAI:', error);
+      logger.error('subject_generation_failed', {
+        requestId: req.id || null,
+        auth0Id: auth0Id || null,
+        topic: normalizedTopic,
+        error,
+      });
       res.status(500).json({ error: 'Failed to generate subjects.' });
     }
   };
