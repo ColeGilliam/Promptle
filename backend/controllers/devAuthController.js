@@ -11,8 +11,10 @@ import {
   DEV_AUTH_EMAIL,
   DEV_AUTH_NAME,
 } from '../config/config.js';
+import { appLogger } from '../lib/logger.js';
 
 let cachedUsersCollection = null;
+const devAuthLogger = appLogger.child({ component: 'dev-auth' });
 
 function getCachedUsersCollection() {
   if (!cachedUsersCollection) cachedUsersCollection = getUsersCollection();
@@ -62,7 +64,11 @@ export async function getDevAuthSession(_req, res) {
       },
     });
   } catch (err) {
-    console.error('Error creating dev auth session:', err);
+    devAuthLogger.error('dev_auth_session_create_failed', {
+      requestId: _req.id || null,
+      auth0Id: DEV_AUTH0_ID,
+      error: err,
+    });
     return res.status(500).json({ error: 'Failed to create dev auth session.' });
   }
 }

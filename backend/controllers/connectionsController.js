@@ -9,8 +9,10 @@ import {
   TOPIC_NOT_ALLOWED_ERROR,
 } from '../services/topicModeration.js';
 import { normalizeConnectionsGamePayload } from '../services/connectionsGame.js';
+import { appLogger } from '../lib/logger.js';
 
 const DEV_EMAIL = 'promptle99@gmail.com';
+const connectionsLogger = appLogger.child({ component: 'connections' });
 
 // Matches the same dev identity check used elsewhere to restrict access.
 async function isDevAccount(auth0Id) {
@@ -29,7 +31,7 @@ const openai = OPENAI_API_KEY ? new OpenAI({ apiKey: OPENAI_API_KEY }) : null;
 export function createGenerateConnectionsHandler({
   openaiClient = openai,
   apiKey = OPENAI_API_KEY,
-  logger = console,
+  logger = connectionsLogger,
   isDevAccountFn = isDevAccount,
   fetchDevSettingsFn = fetchDevSettings,
   moderateTopicInputFn = moderateTopicInput,
@@ -54,6 +56,11 @@ export function createGenerateConnectionsHandler({
     }
 
     if (!openaiClient || !apiKey) {
+      logger.error('connections_generation_missing_api_key', {
+        requestId: req.id || null,
+        auth0Id: auth0Id || null,
+        topic: normalizedTopic,
+      });
       return res.status(500).json({ error: 'OpenAI API key is missing. Set OPENAI_API_KEY in your environment.' });
     }
 
@@ -65,7 +72,12 @@ export function createGenerateConnectionsHandler({
         topic: normalizedTopic,
       });
     } catch (error) {
-      logger.error('Error moderating connections topic input:', error);
+      logger.error('connections_topic_moderation_failed', {
+        requestId: req.id || null,
+        auth0Id: auth0Id || null,
+        topic: normalizedTopic,
+        error,
+      });
       return res.status(500).json({ error: TOPIC_MODERATION_FAILED_ERROR });
     }
 
@@ -78,23 +90,25 @@ export function createGenerateConnectionsHandler({
           moderationResult,
         });
       } catch (error) {
-        logger.error('Failed to log rejected connections topic attempt:', error);
+        logger.error('blocked_connections_topic_attempt_log_failed', {
+          requestId: req.id || null,
+          auth0Id: auth0Id || null,
+          topic: normalizedTopic,
+          error,
+        });
       }
 
-      if (typeof logger.warn === 'function') {
-        logger.warn('[Connections topic blocked]', {
-          auth0Id: auth0Id || null,
-          topic: normalizedTopic,
-          flaggedCategories: moderationResult.flaggedCategories,
-          moderationModel: moderationResult.moderationModel,
-        });
-      } else {
-        logger.info('[Connections topic blocked]', {
-          auth0Id: auth0Id || null,
-          topic: normalizedTopic,
-          flaggedCategories: moderationResult.flaggedCategories,
-          moderationModel: moderationResult.moderationModel,
-        });
+      const blockedLogPayload = {
+        requestId: req.id || null,
+        auth0Id: auth0Id || null,
+        topic: normalizedTopic,
+        flaggedCategories: moderationResult.flaggedCategories,
+        moderationModel: moderationResult.moderationModel,
+      };
+      if (typeof logger.info === 'function') {
+        logger.info('connections_topic_blocked', blockedLogPayload);
+      } else if (typeof logger.debug === 'function') {
+        logger.debug('connections_topic_blocked', blockedLogPayload);
       }
 
       return res.status(400).json({
@@ -156,7 +170,13 @@ export function createGenerateConnectionsHandler({
       try {
         parsed = JSON.parse(raw);
       } catch (error) {
-        logger.error('Failed to parse Connections AI response as JSON:', raw, error);
+        logger.error('connections_generation_invalid_json', {
+          requestId: req.id || null,
+          auth0Id: auth0Id || null,
+          topic: normalizedTopic,
+          raw,
+          error,
+        });
         return res.status(500).json({ error: 'AI response was not valid JSON.' });
       }
 
@@ -165,11 +185,19 @@ export function createGenerateConnectionsHandler({
         // Accept small model drift in field names/order, but enforce a strict 4x4 game contract.
         payload = normalizeConnectionsGamePayload(parsed, normalizedTopic);
       } catch (error) {
-        logger.error('Connections AI response failed validation:', error, parsed);
+        logger.error('connections_generation_validation_failed', {
+          requestId: req.id || null,
+          auth0Id: auth0Id || null,
+          topic: normalizedTopic,
+          parsed,
+          error,
+        });
         return res.status(500).json({ error: error.message || 'AI response was not a valid Connections puzzle.' });
       }
 
-      logger.info('[AI connections] summary', {
+      const successLogPayload = {
+        requestId: req.id || null,
+        auth0Id: auth0Id || null,
         topic: payload.topic,
         groups: payload.groups.map((group) => ({
           category: group.category,
@@ -177,11 +205,21 @@ export function createGenerateConnectionsHandler({
           words: group.words,
         })),
         tokenUsage: completion.usage || 'No usage data',
-      });
+      };
+      if (typeof logger.debug === 'function') {
+        logger.debug('connections_generation_succeeded', successLogPayload);
+      } else if (typeof logger.info === 'function') {
+        logger.info('connections_generation_succeeded', successLogPayload);
+      }
 
       res.json(payload);
     } catch (error) {
-      logger.error('Error generating Connections game from OpenAI:', error);
+      logger.error('connections_generation_failed', {
+        requestId: req.id || null,
+        auth0Id: auth0Id || null,
+        topic: normalizedTopic,
+        error,
+      });
       // Keep the client response generic rather than exposing raw SDK or model details.
       res.status(500).json({ error: 'Failed to generate Connections puzzle.' });
     }

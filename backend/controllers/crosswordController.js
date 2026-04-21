@@ -11,10 +11,12 @@ import {
   buildCrosswordGameFromCandidatePool,
   normalizeCrosswordCandidatePool,
 } from '../services/crosswordGame.js';
+import { appLogger } from '../lib/logger.js';
 
 const DEV_EMAIL = 'promptle99@gmail.com';
 const GENERATION_ATTEMPTS = 3;
 const CROSSWORD_GENERATION_ERROR = 'Sorry! The puzzle failed to generate. Please try again.';
+const crosswordLogger = appLogger.child({ component: 'crossword' });
 
 async function isDevAccount(auth0Id) {
   if (!auth0Id) return false;
@@ -31,7 +33,7 @@ const openai = OPENAI_API_KEY ? new OpenAI({ apiKey: OPENAI_API_KEY }) : null;
 export function createGenerateCrosswordHandler({
   openaiClient = openai,
   apiKey = OPENAI_API_KEY,
-  logger = console,
+  logger = crosswordLogger,
   isDevAccountFn = isDevAccount,
   fetchDevSettingsFn = fetchDevSettings,
   moderateTopicInputFn = moderateTopicInput,
@@ -54,6 +56,11 @@ export function createGenerateCrosswordHandler({
     }
 
     if (!openaiClient || !apiKey) {
+      logger.error('crossword_generation_missing_api_key', {
+        requestId: req.id || null,
+        auth0Id: auth0Id || null,
+        topic: normalizedTopic,
+      });
       return res.status(500).json({ error: CROSSWORD_GENERATION_ERROR });
     }
 
@@ -64,7 +71,12 @@ export function createGenerateCrosswordHandler({
         topic: normalizedTopic,
       });
     } catch (error) {
-      logger.error('Error moderating crossword topic input:', error);
+      logger.error('crossword_topic_moderation_failed', {
+        requestId: req.id || null,
+        auth0Id: auth0Id || null,
+        topic: normalizedTopic,
+        error,
+      });
       return res.status(500).json({ error: CROSSWORD_GENERATION_ERROR });
     }
 
@@ -76,23 +88,25 @@ export function createGenerateCrosswordHandler({
           moderationResult,
         });
       } catch (error) {
-        logger.error('Failed to log rejected crossword topic attempt:', error);
+        logger.error('blocked_crossword_topic_attempt_log_failed', {
+          requestId: req.id || null,
+          auth0Id: auth0Id || null,
+          topic: normalizedTopic,
+          error,
+        });
       }
 
-      if (typeof logger.warn === 'function') {
-        logger.warn('[Crossword topic blocked]', {
-          auth0Id: auth0Id || null,
-          topic: normalizedTopic,
-          flaggedCategories: moderationResult.flaggedCategories,
-          moderationModel: moderationResult.moderationModel,
-        });
-      } else {
-        logger.info('[Crossword topic blocked]', {
-          auth0Id: auth0Id || null,
-          topic: normalizedTopic,
-          flaggedCategories: moderationResult.flaggedCategories,
-          moderationModel: moderationResult.moderationModel,
-        });
+      const blockedLogPayload = {
+        requestId: req.id || null,
+        auth0Id: auth0Id || null,
+        topic: normalizedTopic,
+        flaggedCategories: moderationResult.flaggedCategories,
+        moderationModel: moderationResult.moderationModel,
+      };
+      if (typeof logger.info === 'function') {
+        logger.info('crossword_topic_blocked', blockedLogPayload);
+      } else if (typeof logger.debug === 'function') {
+        logger.debug('crossword_topic_blocked', blockedLogPayload);
       }
 
       return res.status(400).json({
@@ -154,7 +168,14 @@ export function createGenerateCrosswordHandler({
         try {
           parsed = JSON.parse(raw);
         } catch (error) {
-          logger.error(`Failed to parse Crossword AI response as JSON on attempt ${attempt}:`, raw, error);
+          logger.error('crossword_generation_invalid_json', {
+            requestId: req.id || null,
+            auth0Id: auth0Id || null,
+            topic: normalizedTopic,
+            attempt,
+            raw,
+            error,
+          });
           continue;
         }
 
@@ -162,7 +183,14 @@ export function createGenerateCrosswordHandler({
         try {
           candidatePool = normalizeCrosswordCandidatePool(parsed, normalizedTopic);
         } catch (error) {
-          logger.error(`Crossword AI candidate pool failed validation on attempt ${attempt}:`, error, parsed);
+          logger.error('crossword_candidate_pool_validation_failed', {
+            requestId: req.id || null,
+            auth0Id: auth0Id || null,
+            topic: normalizedTopic,
+            attempt,
+            parsed,
+            error,
+          });
           continue;
         }
 
@@ -171,11 +199,20 @@ export function createGenerateCrosswordHandler({
           // The builder handles actual layout search so the model does not have to solve the grid itself.
           result = buildCrosswordGameFromCandidatePool(candidatePool);
         } catch (error) {
-          logger.error(`Crossword candidate pool could not be constructed on attempt ${attempt}:`, error, candidatePool);
+          logger.error('crossword_construction_failed', {
+            requestId: req.id || null,
+            auth0Id: auth0Id || null,
+            topic: normalizedTopic,
+            attempt,
+            candidatePool,
+            error,
+          });
           continue;
         }
 
-        logger.info('[AI crossword] summary', {
+        const successLogPayload = {
+          requestId: req.id || null,
+          auth0Id: auth0Id || null,
           topic: result.puzzle.topic,
           size: result.puzzle.size,
           entryCount: result.puzzle.entries.length,
@@ -185,14 +222,31 @@ export function createGenerateCrosswordHandler({
           actualWordCount: result.stats.actualWordCount,
           attempt,
           tokenUsage: completion.usage || 'No usage data',
-        });
+        };
+        if (typeof logger.debug === 'function') {
+          logger.debug('crossword_generation_succeeded', successLogPayload);
+        } else if (typeof logger.info === 'function') {
+          logger.info('crossword_generation_succeeded', successLogPayload);
+        }
 
         return res.json(result.puzzle);
       } catch (error) {
-        logger.error(`Error generating crossword from OpenAI on attempt ${attempt}:`, error);
+        logger.error('crossword_generation_attempt_failed', {
+          requestId: req.id || null,
+          auth0Id: auth0Id || null,
+          topic: normalizedTopic,
+          attempt,
+          error,
+        });
       }
     }
 
+    logger.error('crossword_generation_exhausted', {
+      requestId: req.id || null,
+      auth0Id: auth0Id || null,
+      topic: normalizedTopic,
+      attempts: GENERATION_ATTEMPTS,
+    });
     return res.status(500).json({ error: CROSSWORD_GENERATION_ERROR });
   };
 }
