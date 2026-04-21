@@ -130,6 +130,27 @@
   line-height: 18px;
 }
 
+.crossword-nav-icon {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  width: 18px;
+  height: 18px;
+}
+
+.crossword-nav-cell {
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.96);
+  opacity: 0.96;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+
+.crossword-nav-cell--blocked {
+  background: rgba(49, 46, 129, 0.7);
+  box-shadow: none;
+  opacity: 1;
+}
+
 .game-brand-name {
   font-size: 1.02rem;
   font-weight: 800;
@@ -204,6 +225,16 @@
   background: rgba(139, 92, 246, 0.18);
   color: #c4b5fd;
   box-shadow: inset 0 0 0 1px rgba(139, 92, 246, 0.18);
+}
+
+:host-context(.dark) .crossword-nav-cell {
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+:host-context(.dark) .crossword-nav-cell--blocked {
+  background: rgba(76, 29, 149, 0.72);
+  box-shadow: none;
 }
 
 :host-context(.dark) .game-brand-name {
@@ -439,5 +470,15 @@
 
   .game-brand-name {
     font-size: 0.76rem;
+  }
+}
+
+@media (max-width: 680px) {
+  .game-brand-name {
+    display: none;
+  }
+
+  .game-brand {
+    padding-right: 8px;
   }
 }

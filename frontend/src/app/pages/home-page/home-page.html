@@ -286,6 +286,43 @@
     ></app-load-saved-game-card>
   </section>
 
+  <section class="side-games-section">
+    <h2 class="section-title reveal">Try Another Mode</h2>
+    <div class="side-games-grid">
+      <a class="side-game-card reveal" routerLink="/connections">
+        <div class="side-game-card-icon side-game-card-icon--connections">
+          <mat-icon>grid_view</mat-icon>
+        </div>
+        <div class="side-game-card-copy">
+          <h3>Connections</h3>
+          <p>Generate a topic board and find four overlapping groups before your mistakes run out.</p>
+        </div>
+        <mat-icon class="side-game-card-arrow">arrow_forward</mat-icon>
+      </a>
+
+      <a class="side-game-card side-game-card--crossword reveal" style="--delay: 90ms" routerLink="/crossword">
+        <div class="side-game-card-icon side-game-card-icon--crossword">
+          <span class="crossword-mode-icon" aria-hidden="true">
+            <span class="crossword-mode-cell"></span>
+            <span class="crossword-mode-cell"></span>
+            <span class="crossword-mode-cell crossword-mode-cell--blocked"></span>
+            <span class="crossword-mode-cell"></span>
+            <span class="crossword-mode-cell crossword-mode-cell--blocked"></span>
+            <span class="crossword-mode-cell"></span>
+            <span class="crossword-mode-cell crossword-mode-cell--blocked"></span>
+            <span class="crossword-mode-cell"></span>
+            <span class="crossword-mode-cell"></span>
+          </span>
+        </div>
+        <div class="side-game-card-copy">
+          <h3>Crossword</h3>
+          <p>Generate a custom crossword based around a topic of your choice.</p>
+        </div>
+        <mat-icon class="side-game-card-arrow">arrow_forward</mat-icon>
+      </a>
+    </div>
+  </section>
+
   <app-mini-footer></app-mini-footer>
 </div>
 
