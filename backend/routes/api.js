@@ -10,6 +10,13 @@ import { getProfile, updateProfile } from '../controllers/userController.js';
 import { saveGame, loadGame, deleteSavedGame } from '../controllers/saveController.js';
 import { getDevSettings, updateDevSettings } from '../controllers/devSettingsController.js';
 import { getDevAuthSession } from '../controllers/devAuthController.js';
+import { saveGameFeedback } from '../controllers/gameFeedbackController.js';
+import {
+  finalizeCustomGameSession,
+  markCustomGameSessionInteracted,
+  startCustomGameSession,
+} from '../controllers/customGameSessionController.js';
+import { getRecommendations } from '../controllers/recommendationController.js';
 
 
 const router = express.Router();
@@ -30,6 +37,11 @@ router.get('/api/profile/:auth0Id', getProfile);
 router.put('/api/update-profile', updateProfile);
 router.post('/api/increment-win', incrementWin);
 router.post('/api/save-game', saveGame);
+router.post('/api/game-feedback', saveGameFeedback);
+router.post('/api/custom-game-session/start', startCustomGameSession);
+router.post('/api/custom-game-session/interacted', markCustomGameSessionInteracted);
+router.post('/api/custom-game-session/finalize', finalizeCustomGameSession);
+router.get('/api/recommendations/:auth0Id', getRecommendations);
 router.get('/api/load-game/:auth0Id', loadGame);
 router.delete('/api/delete-saved-game/:auth0Id', deleteSavedGame);
 router.post('/api/game/multiplayer', createMultiplayerGame);

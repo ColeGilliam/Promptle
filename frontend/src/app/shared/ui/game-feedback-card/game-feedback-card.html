@@ -1,0 +1,33 @@
+<section class="feedback-card" [class.feedback-card--submitted]="hasSubmitted">
+  <div class="feedback-copy">
+    <p>{{ hasSubmitted ? 'Thanks for the feedback.' : title }}</p>
+  </div>
+
+  <div class="feedback-actions">
+    <button
+      matButton="outlined"
+      class="feedback-btn feedback-btn--up"
+      type="button"
+      (click)="onLiked()"
+      [disabled]="submitting || hasSubmitted"
+      [class.feedback-btn--selected]="submittedChoice === true"
+      aria-label="Like this game"
+    >
+      <mat-icon>{{ submitting && submittedChoice === null ? 'hourglass_top' : 'thumb_up' }}</mat-icon>
+    </button>
+
+    <button
+      matButton="outlined"
+      class="feedback-btn feedback-btn--down"
+      type="button"
+      (click)="onDisliked()"
+      [disabled]="submitting || hasSubmitted"
+      [class.feedback-btn--selected]="submittedChoice === false"
+      aria-label="Dislike this game"
+    >
+      <mat-icon>{{ submitting && submittedChoice === null ? 'hourglass_top' : 'thumb_down' }}</mat-icon>
+    </button>
+  </div>
+
+  <p class="feedback-error" *ngIf="error">{{ error }}</p>
+</section>

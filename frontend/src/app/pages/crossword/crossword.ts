@@ -21,6 +21,9 @@ import {
 } from '../../services/crossword-game';
 import { NavbarComponent } from '../../shared/components/navbar/navbar';
 import { LoadSavedGameCard } from '../../shared/ui/load-saved-game-card/load-saved-game-card';
+import { GameFeedbackService } from '../../services/game-feedback';
+import { GameFeedbackCard } from '../../shared/ui/game-feedback-card/game-feedback-card';
+import { CustomGameSessionService } from '../../services/custom-game-session';
 
 type FeedbackTone = 'neutral' | 'success' | 'danger';
 const CROSSWORD_GENERATION_ERROR = 'Sorry! The puzzle failed to generate. Please try again.';
@@ -67,6 +70,7 @@ interface ClueCheckSummary {
     MatProgressSpinnerModule,
     NavbarComponent,
     LoadSavedGameCard,
+    GameFeedbackCard,
   ],
   templateUrl: './crossword.html',
   styleUrls: ['./crossword.css'],
@@ -95,6 +99,13 @@ export class CrosswordComponent implements OnInit, OnDestroy {
   savedGameSavedAt: string | null = null;
   showSavedGameCard = true;
   hasUnsavedChanges = false;
+  feedbackChoice: boolean | null = null;
+  feedbackSubmitting = false;
+  feedbackError = '';
+  private auth0Id = '';
+  private currentPlayId = '';
+  private sessionInteracted = false;
+  private sessionFinalized = false;
 
   wrongCellKeys = new Set<string>();
   checkedCorrectCellKeys = new Set<string>();
@@ -108,7 +119,9 @@ export class CrosswordComponent implements OnInit, OnDestroy {
   constructor(
     private auth: AuthenticationService,
     private crosswordGameService: CrosswordGameService,
-    private http: HttpClient
+    private http: HttpClient,
+    private gameFeedbackService: GameFeedbackService,
+    private customGameSessionService: CustomGameSessionService
   ) {}
 
   ngOnInit(): void {
@@ -116,12 +129,15 @@ export class CrosswordComponent implements OnInit, OnDestroy {
 
     this.auth.user$.subscribe((user) => {
       this.isDevAccount = user?.email === 'promptle99@gmail.com';
+      this.auth0Id = user?.sub ?? '';
     });
 
     this.refreshSavedGameMetadata();
   }
 
   ngOnDestroy(): void {
+    // If the player leaves a custom crossword mid-solve after typing, count it as abandonment.
+    this.finalizeCurrentSession('abandoned', { keepalive: true });
     this.stopTimer();
   }
 
@@ -196,6 +212,10 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     return 'edit';
   }
 
+  get showGameFeedback(): boolean {
+    return this.completed && !!this.activeGame;
+  }
+
   generateGame(): void {
     const normalizedTopic = this.topic.trim();
     if (!normalizedTopic || this.loading || !this.canUseAI) return;
@@ -267,7 +287,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     if (!confirmed) return;
 
     this.removeSavedGame(false);
-    this.activateGame(savedState.game);
+    this.activateGame(savedState.game, undefined, { trackSession: false });
     this.feedback = 'Crossword restarted.';
     this.feedbackTone = 'success';
     this.showTopicPrompt = false;
@@ -283,6 +303,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     const confirmed = !this.hasPuzzle || window.confirm('Start a new topic? Your current crossword progress will be cleared.');
     if (!confirmed) return;
 
+    this.finalizeCurrentSession('abandoned', { keepalive: true });
     this.loading = false;
     this.error = '';
     this.topic = '';
@@ -292,6 +313,32 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     this.showSavedGameCard = true;
     this.clearActivePuzzleState();
     this.refreshSavedGameMetadata();
+  }
+
+  submitGameFeedback(liked: boolean): void {
+    if (!this.showGameFeedback || this.feedbackSubmitting || this.feedbackChoice !== null || !this.activeGame) return;
+
+    this.feedbackSubmitting = true;
+    this.feedbackError = '';
+
+    this.auth.user$.pipe(take(1)).subscribe((user) => {
+      this.gameFeedbackService.submitFeedback({
+        auth0Id: user?.sub || '',
+        topic: this.activeGame?.topic || this.topic,
+        liked,
+        gameType: 'crossword',
+        result: this.revealed ? 'revealed' : 'won',
+      }).subscribe({
+        next: () => {
+          this.feedbackChoice = liked;
+          this.feedbackSubmitting = false;
+        },
+        error: () => {
+          this.feedbackChoice = liked;
+          this.feedbackSubmitting = false;
+        },
+      });
+    });
   }
 
   saveGame(): void {
@@ -334,7 +381,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     const confirmed = window.confirm(`Reset "${this.activePuzzle.topic}"? All entered cells will be cleared.`);
     if (!confirmed) return;
 
-    this.activateGame(this.activeGame);
+    this.activateGame(this.activeGame, undefined, { trackSession: false });
     this.feedback = 'Grid reset. Start solving again.';
     this.feedbackTone = 'neutral';
   }
@@ -374,6 +421,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     const clue = this.activeClue;
     if (!clue) return;
 
+    this.markSessionInteracted();
     for (const cell of clue.cells) {
       this.setGuess(cell.row, cell.col, '');
     }
@@ -577,6 +625,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     const letters = input.value.toUpperCase().replace(NON_ALPHANUMERIC_CELL_VALUE, '');
 
     if (!letters) {
+      this.markSessionInteracted();
       this.setGuess(row, col, '');
       return;
     }
@@ -589,6 +638,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
 
     const clueLetters = letters.split('');
     let lastWrittenIndex = startIndex;
+    this.markSessionInteracted();
 
     clueLetters.forEach((letter, offset) => {
       const targetCell = clue.cells[startIndex + offset];
@@ -627,6 +677,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
         return;
       case 'Delete':
         event.preventDefault();
+        this.markSessionInteracted();
         this.setGuess(row, col, '');
         return;
       case 'Enter':
@@ -745,7 +796,11 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     }
   }
 
-  private activateGame(game: CrosswordGameData, savedState?: SavedCrosswordState): void {
+  private activateGame(
+    game: CrosswordGameData,
+    savedState?: SavedCrosswordState,
+    options: { trackSession?: boolean } = {}
+  ): void {
     const puzzle = createCrosswordPuzzleFromGame(game);
     const guesses = this.coerceSavedGuesses(puzzle, savedState?.guesses);
     const completed = this.isPuzzleCompleteWithGuesses(puzzle, guesses) || !!savedState?.completed;
@@ -770,7 +825,12 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     this.clueLookup = new Map(puzzle.clues.all.map((clue) => [clue.id, clue]));
     this.error = '';
     this.showTopicPrompt = false;
+    this.resetGameFeedback();
     this.updateTimerState();
+    if (options.trackSession !== false && !savedState) {
+      // Saved-game restores and same-topic resets should not create a fresh recommendation signal.
+      this.startSession(game.topic);
+    }
   }
 
   private resolveSavedActiveCell(puzzle: CrosswordPuzzle, savedCell: CrosswordPosition | null | undefined): CrosswordPosition | null {
@@ -807,6 +867,8 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     this.checkedCorrectClueIds.clear();
     this.checkedIncorrectClueIds.clear();
     this.clueLookup.clear();
+    this.resetGameFeedback();
+    this.resetSessionState();
   }
 
   private isPuzzleCompleteWithGuesses(puzzle: CrosswordPuzzle, guesses: string[][]): boolean {
@@ -826,6 +888,8 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     this.feedback = `${this.activePuzzle.topic} complete.`;
     this.feedbackTone = 'success';
     this.stopTimer();
+    // Only genuine solves are positive recommendation signals; reveal remains neutral.
+    this.finalizeCurrentSession('completed');
   }
 
   private updateTimerState(): void {
@@ -924,6 +988,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     if (this.completed) return;
 
     if (this.guesses[row]?.[col]) {
+      this.markSessionInteracted();
       this.setGuess(row, col, '');
       return;
     }
@@ -935,6 +1000,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     if (cellIndex <= 0) return;
 
     const previousCell = clue.cells[cellIndex - 1];
+    this.markSessionInteracted();
     this.setGuess(previousCell.row, previousCell.col, '');
     this.setActiveCell(previousCell.row, previousCell.col, true);
   }
@@ -1027,5 +1093,90 @@ export class CrosswordComponent implements OnInit, OnDestroy {
 
   private getCellKey(row: number, col: number): string {
     return `${row}:${col}`;
+  }
+
+  private resetGameFeedback(): void {
+    this.feedbackChoice = null;
+    this.feedbackSubmitting = false;
+    this.feedbackError = '';
+  }
+
+  private createPlayId(): string {
+    return typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
+
+  private resetSessionState(): void {
+    this.currentPlayId = '';
+    this.sessionInteracted = false;
+    this.sessionFinalized = false;
+  }
+
+  // Start one trackable custom-game session so later interaction/finalization calls all refer back to the same play attempt.
+  private startSession(topic: string): void {
+
+    const auth0Id = this.auth0Id.trim();
+    if (!auth0Id) {
+      this.resetSessionState();
+      return;
+    }
+
+    const playId = this.createPlayId();
+    this.currentPlayId = playId;
+    this.sessionInteracted = false;
+    this.sessionFinalized = false;
+
+    this.customGameSessionService.startSession({
+      playId,
+      auth0Id,
+      topic,
+      gameType: 'crossword',
+    }).subscribe({
+      error: () => {
+        this.resetSessionState();
+      },
+    });
+  }
+
+  // Record the first meaningful move so we can identify a session as abandoned only if the user played at all.
+  private markSessionInteracted(): void {
+    const auth0Id = this.auth0Id.trim();
+    if (!auth0Id || !this.currentPlayId || this.sessionInteracted || this.completed) return;
+
+    this.sessionInteracted = true;
+    this.customGameSessionService.markInteracted({
+      playId: this.currentPlayId,
+      auth0Id,
+    }).subscribe({
+      error: () => {
+        this.sessionInteracted = false;
+      },
+    });
+  }
+
+  // Close the active session once when the board is solved or the player leaves mid-game, which turns the session into recommendation signal.
+  private finalizeCurrentSession(
+    finalState: 'completed' | 'abandoned',
+    options: { keepalive?: boolean } = {}
+  ): void {
+    const auth0Id = this.auth0Id.trim();
+    if (!auth0Id || !this.currentPlayId || this.sessionFinalized) return;
+    // Same-topic resets do not call this path; only real exits or completed boards should finalize.
+    if (finalState === 'abandoned' && (!this.sessionInteracted || this.completed)) return;
+
+    this.sessionFinalized = true;
+    this.customGameSessionService.finalizeSession(
+      {
+        playId: this.currentPlayId,
+        auth0Id,
+        finalState,
+      },
+      options
+    ).subscribe({
+      error: () => {
+        this.sessionFinalized = false;
+      },
+    });
   }
 }

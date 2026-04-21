@@ -238,6 +238,15 @@
           <p>Select four words that belong together, then submit the set.</p>
           <p>You have 4 chances to find all the connections.</p>
         </div>
+
+        <app-game-feedback-card
+          *ngIf="showGameFeedback"
+          [submittedChoice]="feedbackChoice"
+          [submitting]="feedbackSubmitting"
+          [error]="feedbackError"
+          (liked)="submitGameFeedback(true)"
+          (disliked)="submitGameFeedback(false)"
+        ></app-game-feedback-card>
       </section>
     </section>
   </main>
