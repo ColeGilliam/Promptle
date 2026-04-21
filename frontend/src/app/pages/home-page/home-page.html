@@ -279,9 +279,10 @@
     <app-load-saved-game-card
       [topic]="savedGameTopic"
       [savedAt]="savedGameSavedAt"
+      [showCancel]="true"
       (continueClicked)="continueSaved()"
+      (restartClicked)="restartSaved()"
       (cancelClicked)="cancelLoadConfirm()"
-      (startNewClicked)="cancelLoadConfirm(); newGame()"
       (deleteClicked)="deleteSavedConfirm()"
     ></app-load-saved-game-card>
   </section>

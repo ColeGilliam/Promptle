@@ -14,13 +14,20 @@ import { MatIconModule } from '@angular/material/icon';
 export class LoadSavedGameCard {
   @Input() topic: string | null = null;
   @Input() savedAt: string | null = null;
+  @Input() showCancel = false;
+  @Input() secondaryActionLabel = 'Restart Game';
 
   @Output() continueClicked = new EventEmitter<void>();
+  @Output() cancelClicked = new EventEmitter<void>();
   @Output() restartClicked = new EventEmitter<void>();
   @Output() deleteClicked = new EventEmitter<void>();
 
   onContinueClicked(): void {
     this.continueClicked.emit();
+  }
+
+  onCancelClicked(): void {
+    this.cancelClicked.emit();
   }
 
   onRestartClicked(): void {

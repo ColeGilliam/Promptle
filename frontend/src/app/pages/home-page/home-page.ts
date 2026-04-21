@@ -296,6 +296,11 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
     this.router.navigate(['/game'], { queryParams: { loadSaved: 'true' } });
   }
 
+  restartSaved() {
+    this.showLoadConfirm = false;
+    this.router.navigate(['/game'], { queryParams: { restartSaved: 'true' } });
+  }
+
   /** Ask user to confirm deletion, then delete saved game */
   deleteSavedConfirm() {
     if (this.isMultiplayer) return; // Disabled in multiplayer

@@ -28,11 +28,21 @@
 
     <button
       matButton="outlined"
-      class="rect-btn promp3-btn saved-btn saved-btn--restart"
+      class="rect-btn promp3-btn saved-btn saved-btn--secondary"
       (click)="onRestartClicked()"
     >
       <mat-icon>replay</mat-icon>
-      Restart Game
+      {{ secondaryActionLabel }}
+    </button>
+
+    <button
+      *ngIf="showCancel"
+      matButton="outlined"
+      class="rect-btn promp3-btn saved-btn saved-btn--secondary"
+      (click)="onCancelClicked()"
+    >
+      <mat-icon>close</mat-icon>
+      Cancel
     </button>
 
     <button
