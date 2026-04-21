@@ -85,7 +85,7 @@ function stringifyValue(value: unknown): string {
   return String(value).trim();
 }
 
-function tokenizeDisplay(value: string): string[] {
+export function tokenizeDisplay(value: string): string[] {
   return stringifyValue(value).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
 }
 
@@ -166,9 +166,6 @@ function formatNumberDisplay(display: string, numericParts: GameCellParts = {}):
   return `${trimmedDisplay} ${unit}`;
 }
 
-function normalizeDisplay(value: string): string {
-  return tokenizeDisplay(value).join(' ');
-}
 
 // Normalizes a single column definition, ensuring it has a header and optional kind/unit, with fallbacks to handle legacy formats
 function normalizeColumn(rawColumn: unknown, fallbackHeader = '', fallbackKind: GameCellKind | '' = ''): HydratedGameColumn | null {

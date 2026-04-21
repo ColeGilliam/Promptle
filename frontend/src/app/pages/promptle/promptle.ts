@@ -9,6 +9,7 @@ import {
   GameData,
   HydratedGameAnswer,
   hydrateGameData,
+  tokenizeDisplay,
 } from '../../services/setup-game';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NavbarComponent } from '../../shared/components/navbar/navbar';
@@ -28,6 +29,7 @@ import { Subscription, take } from 'rxjs';
 import { PromptleGameCard } from '../../shared/ui/promptle-game-card/promptle-game-card';
 import { PromptleWinPopup } from '../../shared/ui/promptle-win-popup/promptle-win-popup';
 import { GameOnboardingTour } from '../../shared/ui/game-onboarding-tour/game-onboarding-tour';
+import { GameHintBubble } from '../../shared/ui/game-hint-bubble/game-hint-bubble';
 import { SettingsService } from '../../services/settings.service';
 
 @Component({
@@ -46,7 +48,8 @@ import { SettingsService } from '../../services/settings.service';
     PromptleGameCard,
     PromptleWinPopup,
     NavbarComponent,
-    GameOnboardingTour
+    GameOnboardingTour,
+    GameHintBubble
   ],
   animations: [
     trigger('cardEnter', [
@@ -87,6 +90,10 @@ export class PromptleComponent implements OnInit, OnDestroy {
   gameLoading = false;
   gameError = '';
   savedTimestamp: string | null = null;
+
+  // Contextual hint visibility
+  showSkipTurnHint = true;
+  showPowerupHint = true;
 
   //─────────────────────────────────────
   // === Share ===
@@ -342,7 +349,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.powerupSub = this.multiplayerService.onPowerupEffect().subscribe(data => {
       if (this.isSpectating) return;
       if (data.type === 'blackout') this.startBlackout(data.fromPlayerName);
-      if (data.type === 'freeze')   this.startFreeze(data.fromPlayerName);
+      if (data.type === 'freeze')   this.startFreeze();
       this.cdr.detectChanges();
     });
   }
@@ -479,7 +486,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
     }, 1000);
   }
 
-  private startFreeze(fromPlayerName: string) {
+  private startFreeze() {
     const DURATION = 8;
     this.isFrozen = true;
     this.freezeSecondsLeft = DURATION;
@@ -697,6 +704,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.myFinishTimeMs   = null;
     this.stopStopwatch();
     this.startStopwatch();
+    this.showSkipTurnHint  = true;
+    this.showPowerupHint   = true;
   }
 
   private loadGame(params: { topic?: string; topicId?: number; room?: string; answer?: string; auth0Id?: string }) {
@@ -863,18 +872,13 @@ export class PromptleComponent implements OnInit, OnDestroy {
     if (!cell) return [];
     const tokens = Array.isArray(cell.parts?.tokens) && cell.parts.tokens.length
       ? cell.parts.tokens
-      : this.tokenize(cell.display);
+      : tokenizeDisplay(cell.display);
 
-    return Array.from(new Set(tokens.map(token => this.normalizeDisplay(token)).filter(Boolean)));
+    return Array.from(new Set(tokens.map((token: string) => this.normalizeDisplay(token)).filter(Boolean)));
   }
 
   private normalizeDisplay(value: string): string {
-    return this.tokenize(value).join(' ');
-  }
-
-  tokenize(value: string): string[] {
-    if (!value) return [];
-    return value.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+    return tokenizeDisplay(value).join(' ');
   }
 
   // Count the number of overlapping items between two arrays of strings.

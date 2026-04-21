@@ -1,5 +1,5 @@
 @if (visible) {
-  <div class="bubble-wrap" [class.arrow-up]="arrowSide === 'up'" [class.arrow-down]="arrowSide === 'down'" [@bubble]>
+  <div class="bubble-wrap" [class.arrow-up]="arrowSide === 'up'" [class.arrow-down]="arrowSide === 'down'" [class.align-left]="align === 'left'" [class.align-right]="align === 'right'" [@bubble]>
 
     <!-- Step 1: guess input -->
     @if (forStep === 1) {
@@ -21,6 +21,15 @@
           <span class="dot dot-green"></span> Correct
         </span>
         <button class="bubble-next" (click)="next()">Got it</button>
+        <button class="bubble-skip" (click)="skip()" aria-label="Dismiss">&times;</button>
+      </div>
+    }
+
+    <!-- Step 3: timer hint -->
+    @if (forStep === 3) {
+      <div class="bubble-row">
+        <mat-icon class="bubble-icon">timer</mat-icon>
+        <span class="bubble-text">Your time is being tracked — it'll appear on your results screen.</span>
         <button class="bubble-skip" (click)="skip()" aria-label="Dismiss">&times;</button>
       </div>
     }

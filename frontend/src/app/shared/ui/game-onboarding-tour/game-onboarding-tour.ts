@@ -5,6 +5,8 @@ import { animate, style, transition, trigger } from '@angular/animations';
 import { Subscription } from 'rxjs';
 import { GameTourService } from './game-tour.service';
 
+const STEP3_TIMEOUT_MS = 6000;
+
 @Component({
   selector: 'app-game-onboarding-tour',
   standalone: true,
@@ -24,32 +26,48 @@ import { GameTourService } from './game-tour.service';
   ]
 })
 export class GameOnboardingTour implements OnInit, OnChanges, OnDestroy {
-  /** Which step this instance is responsible for rendering */
   @Input() forStep!: number;
-  /** Arrow direction — 'down' means the tail points downward toward the target below */
   @Input() arrowSide: 'up' | 'down' = 'down';
+  @Input() align: 'left' | 'center' | 'right' = 'center';
 
-  // Only the first instance (forStep=1) needs these to trigger the tour
   @Input() guessCount = 0;
   @Input() gameReady = false;
   @Input() isSpectating = false;
 
   step = 0;
   private sub?: Subscription;
+  private timer?: ReturnType<typeof setTimeout>;
 
   constructor(private tourService: GameTourService) {}
 
   ngOnInit() {
-    this.sub = this.tourService.step$.subscribe(s => this.step = s);
+    this.sub = this.tourService.step$.subscribe(s => {
+      this.step = s;
+      this.clearTimer();
+      // Start 6s timer when step 3 becomes active
+      if (s === 3 && this.forStep === 3) {
+        this.timer = setTimeout(() => this.tourService.skip(), STEP3_TIMEOUT_MS);
+      }
+    });
   }
 
   ngOnChanges(changes: SimpleChanges) {
     if (this.isSpectating) return;
+
+    // Start the tour when the game is ready
     if (changes['gameReady'] && this.gameReady) {
       this.tourService.start();
     }
-    if (changes['guessCount'] && this.guessCount === 1 && this.step === 1) {
-      this.tourService.advance();
+
+    if (changes['guessCount']) {
+      // After 1 guess move to step 2
+      if (this.guessCount >= 1 && this.step === 1) {
+        this.tourService.advance();
+      }
+      // After 3 guesses move to step 3
+      if (this.guessCount >= 3 && this.step === 2) {
+        this.tourService.advance();
+      }
     }
   }
 
@@ -58,5 +76,15 @@ export class GameOnboardingTour implements OnInit, OnChanges, OnDestroy {
   next() { this.tourService.advance(); }
   skip() { this.tourService.skip(); }
 
-  ngOnDestroy() { this.sub?.unsubscribe(); }
+  private clearTimer() {
+    if (this.timer) {
+      clearTimeout(this.timer);
+      this.timer = undefined;
+    }
+  }
+
+  ngOnDestroy() {
+    this.sub?.unsubscribe();
+    this.clearTimer();
+  }
 }

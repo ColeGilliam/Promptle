@@ -15,7 +15,7 @@ export class GameTourService {
 
   advance() {
     const next = this.stepSubject.value + 1;
-    if (next > 2) {
+    if (next > 3) {
       this.finish();
     } else {
       this.stepSubject.next(next);

@@ -4,7 +4,6 @@
   height: 0;
   overflow: visible;
   z-index: 500;
-  width: 100%;
 }
 
 .bubble-wrap {
@@ -13,7 +12,7 @@
   left: 50%;
   transform: translateX(-50%);
   width: max-content;
-  max-width: min(520px, 92vw);
+  max-width: min(560px, 92vw);
   z-index: 500;
   pointer-events: auto;
 
@@ -24,24 +23,12 @@
   padding: 7px 10px;
 }
 
-.bubble-wrap.align-left {
-  left: 0;
-  transform: none;
-}
-
-.bubble-wrap.align-right {
-  left: auto;
-  right: 0;
-  transform: none;
-}
-
 :host-context(.dark) .bubble-wrap {
   background: #13172a;
   border-color: rgba(139, 92, 246, 0.35);
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
 }
 
-/* ── Single row ── */
 .bubble-row {
   display: flex;
   align-items: center;
@@ -63,43 +50,9 @@
   font-size: 0.8rem;
   color: #475569;
   white-space: nowrap;
-  display: flex;
-  align-items: center;
-  gap: 4px;
 }
 
 :host-context(.dark) .bubble-text { color: #94a3b8; }
-
-/* ── Inline color dots ── */
-.dot {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
-  vertical-align: middle;
-  flex-shrink: 0;
-}
-
-.dot-gray   { background: var(--feedback-gray,   #9ca3af); }
-.dot-yellow { background: var(--feedback-yellow, #f59e0b); }
-.dot-green  { background: var(--feedback-green,  #22c55e); }
-
-/* ── Buttons ── */
-.bubble-next {
-  background: #6366f1;
-  color: #fff;
-  border: none;
-  border-radius: 5px;
-  padding: 3px 10px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
-  transition: background 0.15s ease;
-}
-
-.bubble-next:hover { background: #4f46e5; }
 
 .bubble-skip {
   background: none;
@@ -117,7 +70,7 @@
 :host-context(.dark) .bubble-skip       { color: #475569; }
 :host-context(.dark) .bubble-skip:hover { color: #64748b; }
 
-/* ── Speech bubble tails ── */
+/* ── Arrow down ── */
 .bubble-wrap.arrow-down::after {
   content: '';
   position: absolute;
@@ -143,6 +96,7 @@
 :host-context(.dark) .bubble-wrap.arrow-down::after  { border-top-color: #13172a; }
 :host-context(.dark) .bubble-wrap.arrow-down::before { border-top-color: rgba(139, 92, 246, 0.35); }
 
+/* ── Arrow up ── */
 .bubble-wrap.arrow-up::after {
   content: '';
   position: absolute;

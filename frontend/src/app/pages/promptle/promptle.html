@@ -112,6 +112,11 @@
       </div>
 
       <!-- ══ STOPWATCH (standard mode only — not shown in 1v1) ══ -->
+      <app-game-onboarding-tour
+        *ngIf="!isOneVsOne && !gameLoading && gameStarted && !isGameOver"
+        [forStep]="3"
+        [arrowSide]="'down'"
+      ></app-game-onboarding-tour>
       <div class="stopwatch-bar" *ngIf="!isOneVsOne && !gameLoading && gameStarted && !isGameOver">
         <mat-icon>timer</mat-icon>
         <span class="stopwatch-value">{{ formatTime(stopwatchMs) }}</span>
@@ -127,6 +132,14 @@
       </div>
 
       <!-- ══ 1v1 SKIP-TURN POWER-UP ══ -->
+      <app-game-hint-bubble
+        *ngIf="isOneVsOne && gameStarted && !isGameOver"
+        icon="bolt"
+        message="Skip Turn ends your opponent's turn early — one use only!"
+        arrowSide="down"
+        [show]="showSkipTurnHint"
+        (dismissed)="showSkipTurnHint = false"
+      ></app-game-hint-bubble>
       <div class="skip-turn-bar" *ngIf="isOneVsOne && gameStarted && !isGameOver">
         <button
           class="powerup-btn skip-turn-btn"
@@ -144,6 +157,14 @@
       </div>
 
       <!-- ══ POWER-UPS (chaos mode only — not while spectating) ══ -->
+      <app-game-hint-bubble
+        *ngIf="isChaos && gameStarted && !isGameOver && !isSpectating"
+        icon="auto_awesome"
+        message="<strong>Ad Break</strong> blinds opponents &nbsp;·&nbsp; <strong>Peek</strong> reveals a hidden value &nbsp;·&nbsp; <strong>Freeze</strong> locks opponent input. Each is one use only!"
+        arrowSide="down"
+        [show]="showPowerupHint"
+        (dismissed)="showPowerupHint = false"
+      ></app-game-hint-bubble>
       <div class="powerup-bar" *ngIf="isChaos && gameStarted && !isGameOver && !isSpectating">
         <span class="powerup-label">POWER-UPS</span>
 
@@ -211,6 +232,7 @@
         *ngIf="answers.length && (!isMultiplayer || gameStarted) && !isSpectating"
         [forStep]="1"
         [arrowSide]="'down'"
+        [align]="'left'"
         [guessCount]="submittedGuesses.length"
         [gameReady]="!gameLoading && !gameError && answers.length > 0 && (!isMultiplayer || gameStarted)"
         [isSpectating]="isSpectating"

@@ -1,0 +1,9 @@
+@if (visible) {
+  <div class="bubble-wrap" [class.arrow-up]="arrowSide === 'up'" [class.arrow-down]="arrowSide === 'down'" [@bubble]>
+    <div class="bubble-row">
+      <mat-icon class="bubble-icon">{{ icon }}</mat-icon>
+      <span class="bubble-text" [innerHTML]="message"></span>
+      <button class="bubble-skip" (click)="dismiss()" aria-label="Dismiss">&times;</button>
+    </div>
+  </div>
+}
