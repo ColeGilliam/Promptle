@@ -376,6 +376,15 @@
             </button>
           </div>
         </section>
+
+        <app-game-feedback-card
+          *ngIf="showGameFeedback"
+          [submittedChoice]="feedbackChoice"
+          [submitting]="feedbackSubmitting"
+          [error]="feedbackError"
+          (liked)="submitGameFeedback(true)"
+          (disliked)="submitGameFeedback(false)"
+        ></app-game-feedback-card>
       </section>
     </section>
   </main>

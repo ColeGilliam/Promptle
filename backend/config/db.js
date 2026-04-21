@@ -9,6 +9,8 @@ let topicCollection;
 let guessesCollection;
 let usersCollection;
 let topicModerationAttemptsCollection;
+let gameFeedbackCollection;
+let customGameSessionsCollection;
 let dbPingTimer = null;
 let lastDbPingFailedAt = null;
 
@@ -21,6 +23,8 @@ function resetCachedCollections() {
   guessesCollection = null;
   usersCollection = null;
   topicModerationAttemptsCollection = null;
+  gameFeedbackCollection = null;
+  customGameSessionsCollection = null;
   cachedMultiplayerGamesCollection = null;
   cachedDevSettingsCollection = null;
 }
@@ -73,7 +77,17 @@ export function getDevSettingsCollection() {
 
 export async function connectDB() {
   // Controllers import collection accessors directly, so initialize all shared handles here once.
-  if (db) return { db, topicCollection, guessesCollection, usersCollection, topicModerationAttemptsCollection }; // Already connected
+  if (db) {
+    return {
+      db,
+      topicCollection,
+      guessesCollection,
+      usersCollection,
+      topicModerationAttemptsCollection,
+      gameFeedbackCollection,
+      customGameSessionsCollection,
+    };
+  }
 
   try {
     client = new MongoClient(MONGODB_URI, {
@@ -91,13 +105,23 @@ export async function connectDB() {
     guessesCollection = db.collection('guesses');
     usersCollection = db.collection('users');
     topicModerationAttemptsCollection = db.collection('topicModerationAttempts');
+    gameFeedbackCollection = db.collection('gameFeedback');
+    customGameSessionsCollection = db.collection('customGameSessions');
     startDbPingMonitor();
 
     dbLogger.warn('db_connected', {
       dbName: db.databaseName,
     });
 
-    return { db, topicCollection, guessesCollection, usersCollection, topicModerationAttemptsCollection };
+    return {
+      db,
+      topicCollection,
+      guessesCollection,
+      usersCollection,
+      topicModerationAttemptsCollection,
+      gameFeedbackCollection,
+      customGameSessionsCollection,
+    };
   } catch (err) {
     dbLogger.error('db_connect_failed', {
       dbName: DB_NAME,
@@ -127,7 +151,16 @@ export function getTopicModerationAttemptsCollection() {
   return topicModerationAttemptsCollection;
 }
 
-// Close connection on shutdown
+export function getGameFeedbackCollection() {
+  if (!gameFeedbackCollection) throw new Error('Database not connected. Call connectDB() first!');
+  return gameFeedbackCollection;
+}
+
+export function getCustomGameSessionsCollection() {
+  if (!customGameSessionsCollection) throw new Error('Database not connected. Call connectDB() first!');
+  return customGameSessionsCollection;
+}
+
 export async function closeDB() {
   if (dbPingTimer) {
     clearInterval(dbPingTimer);

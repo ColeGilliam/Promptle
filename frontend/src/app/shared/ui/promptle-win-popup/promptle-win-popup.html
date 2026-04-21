@@ -33,6 +33,16 @@
       </div>
     </div>
 
+    <app-game-feedback-card
+      *ngIf="showFeedback"
+      class="win-feedback-card"
+      [submittedChoice]="feedbackChoice"
+      [submitting]="feedbackSubmitting"
+      [error]="feedbackError"
+      (liked)="onLikedGame()"
+      (disliked)="onDislikedGame()"
+    ></app-game-feedback-card>
+
     <div class="win-actions">
       <button matButton="filled" class="rect-btn view-game-btn" (click)="onViewGame()">
         <mat-icon>visibility</mat-icon>

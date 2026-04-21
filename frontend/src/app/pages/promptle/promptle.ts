@@ -28,6 +28,8 @@ import { Subscription, take } from 'rxjs';
 import { PromptleGameCard } from '../../shared/ui/promptle-game-card/promptle-game-card';
 import { PromptleWinPopup } from '../../shared/ui/promptle-win-popup/promptle-win-popup';
 import { SettingsService } from '../../services/settings.service';
+import { GameFeedbackService } from '../../services/game-feedback';
+import { CustomGameSessionService } from '../../services/custom-game-session';
 
 @Component({
   selector: 'app-promptle',
@@ -91,6 +93,13 @@ export class PromptleComponent implements OnInit, OnDestroy {
   //─────────────────────────────────────
   private shareIdParam = '';
   private shareTopicParam = '';
+  private currentSinglePlayerSource: 'custom' | 'popular' | '' = '';
+  feedbackChoice: boolean | null = null;
+  feedbackSubmitting = false;
+  feedbackError = '';
+  private customSessionPlayId = '';
+  private customSessionInteracted = false;
+  private customSessionFinalized = false;
 
   get guessColors(): string[][] {
     return this.submittedGuesses.map(g => g.colors);
@@ -218,7 +227,9 @@ export class PromptleComponent implements OnInit, OnDestroy {
     private http: HttpClient,
     private multiplayerService: MultiplayerService,
     private cdr: ChangeDetectorRef,
-    private settings: SettingsService
+    private settings: SettingsService,
+    private gameFeedbackService: GameFeedbackService,
+    private customGameSessionService: CustomGameSessionService
   ) { }
 
   ngOnInit() {
@@ -256,6 +267,9 @@ export class PromptleComponent implements OnInit, OnDestroy {
         this.currentRoom  = room;
         this.isMultiplayer = true;
         this.gameStarted  = false;
+        this.currentSinglePlayerSource = '';
+        this.resetCustomGameFeedback();
+        this.resetCustomGameSession();
 
         this.auth.user$.pipe(take(1)).subscribe(user => {
           if (user?.sub) {
@@ -305,6 +319,9 @@ export class PromptleComponent implements OnInit, OnDestroy {
       if (aiTopic && aiTopic.trim()) {
         this.shareTopicParam = aiTopic.trim();
         this.shareIdParam = '';
+        this.currentSinglePlayerSource = 'custom';
+        this.resetCustomGameFeedback();
+        this.resetCustomGameSession();
         this.auth.user$.pipe(take(1)).subscribe(user => {
           this.loadGame({ topic: aiTopic.trim(), auth0Id: user?.sub || '' });
         });
@@ -313,9 +330,14 @@ export class PromptleComponent implements OnInit, OnDestroy {
       if (!isNaN(topicId)) {
         this.shareIdParam = String(topicId);
         this.shareTopicParam = '';
+        this.currentSinglePlayerSource = 'popular';
+        this.resetCustomGameFeedback();
+        this.resetCustomGameSession();
         this.loadGame({ topicId, answer: answerSeed }); return;
       }
 
+      this.currentSinglePlayerSource = '';
+      this.resetCustomGameSession();
       this.gameError = 'No valid topic or game ID provided.';
     });
   }
@@ -662,6 +684,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
       correctAnswer: this.correctAnswer,
       submittedGuesses: this.submittedGuesses,
       isGameOver: this.isGameOver,
+      source: this.currentSinglePlayerSource || undefined,
       singlePlayerHint: this.singlePlayerHint,
       singlePlayerHintUsed: this.singlePlayerHintUsed
     };
@@ -724,6 +747,11 @@ export class PromptleComponent implements OnInit, OnDestroy {
     });
 
     this.topic   = hydrated.topic;
+    this.currentSinglePlayerSource = payload?.source === 'custom'
+      ? 'custom'
+      : payload?.source === 'popular'
+        ? 'popular'
+        : '';
     this.headers = hydrated.headers;
     this.answers = hydrated.answers;
     this.submittedGuesses = clearProgress ? [] : Array.isArray(payload.submittedGuesses)
@@ -742,6 +770,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.savedTimestamp = clearProgress ? null : payload.savedAt ? new Date(payload.savedAt).toLocaleString() : null;
     this.gameError      = '';
     this.myFinishTimeMs = null;
+    this.resetCustomGameFeedback();
+    this.resetCustomGameSession();
     this.singlePlayerHint = clearProgress || !payload?.singlePlayerHint
       ? null
       : {
@@ -784,6 +814,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.isViewingCompletedGame = false;
     this.gameError        = '';
     this.myFinishTimeMs   = null;
+    this.resetCustomGameFeedback();
     this.singlePlayerHint = null;
     this.singlePlayerHintUsed = false;
     this.stopStopwatch();
@@ -828,9 +859,14 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.guessQuery       = '';
     this.isGameOver       = false;
     this.isViewingCompletedGame = false;
+    this.resetCustomGameFeedback();
+    this.resetCustomGameSession();
     this.singlePlayerHint = null;
     this.singlePlayerHintUsed = false;
     this.filterAnswers(this.guessQuery);
+    if (this.shouldTrackCustomSession()) {
+      this.startCustomGameSession(this.topic);
+    }
     if (!this.isMultiplayer) {
       this.stopStopwatch();
       this.startStopwatch();
@@ -985,12 +1021,145 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.isGameOver = true;
     this.isViewingCompletedGame = false;
     this.stopStopwatch();
+    this.finalizeCustomGameSession('completed');
     if (this.isMultiplayer) return;
     this.auth.user$.pipe(take(1)).subscribe(user => {
       if (user?.sub) {
         this.http.post('/api/increment-win', { auth0Id: user.sub })
           .subscribe({ error: (e) => console.error('Failed to update stats', e) });
       }
+    });
+  }
+
+  get showCustomGameFeedback(): boolean {
+    return !this.isMultiplayer && this.currentSinglePlayerSource === 'custom';
+  }
+
+  private resetCustomGameFeedback() {
+    this.feedbackChoice = null;
+    this.feedbackSubmitting = false;
+    this.feedbackError = '';
+  }
+
+  private resetCustomGameSession() {
+    this.customSessionPlayId = '';
+    this.customSessionInteracted = false;
+    this.customSessionFinalized = false;
+  }
+
+  private shouldTrackCustomSession(): boolean {
+    return !this.isMultiplayer && this.currentSinglePlayerSource === 'custom' && !!this.topic.trim();
+  }
+
+  private createPlayId(): string {
+    return typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
+
+  private startCustomGameSession(topic: string) {
+    this.auth.user$.pipe(take(1)).subscribe((user) => {
+      const auth0Id = user?.sub?.trim() || '';
+      if (!auth0Id) {
+        this.resetCustomGameSession();
+        return;
+      }
+
+      const playId = this.createPlayId();
+      this.customSessionPlayId = playId;
+      this.customSessionInteracted = false;
+      this.customSessionFinalized = false;
+
+      this.customGameSessionService.startSession({
+        playId,
+        auth0Id,
+        topic,
+        gameType: 'promptle',
+      }).subscribe({
+        error: () => {
+          this.resetCustomGameSession();
+        },
+      });
+    });
+  }
+
+  private markCustomGameSessionInteracted() {
+    if (!this.shouldTrackCustomSession() || !this.customSessionPlayId || this.customSessionInteracted) {
+      return;
+    }
+
+    this.auth.user$.pipe(take(1)).subscribe((user) => {
+      const auth0Id = user?.sub?.trim() || '';
+      if (!auth0Id) return;
+
+      this.customSessionInteracted = true;
+      this.customGameSessionService.markInteracted({
+        playId: this.customSessionPlayId,
+        auth0Id,
+      }).subscribe({
+        error: () => {
+          this.customSessionInteracted = false;
+        },
+      });
+    });
+  }
+
+  private finalizeCustomGameSession(
+    finalState: 'completed' | 'abandoned',
+    options: { keepalive?: boolean } = {}
+  ) {
+    if (!this.shouldTrackCustomSession() || !this.customSessionPlayId || this.customSessionFinalized) {
+      return;
+    }
+
+    if (finalState === 'abandoned' && (!this.customSessionInteracted || this.isGameOver)) {
+      return;
+    }
+
+    this.auth.user$.pipe(take(1)).subscribe((user) => {
+      const auth0Id = user?.sub?.trim() || '';
+      if (!auth0Id) return;
+
+      this.customSessionFinalized = true;
+      this.customGameSessionService.finalizeSession(
+        {
+          playId: this.customSessionPlayId,
+          auth0Id,
+          finalState,
+        },
+        options
+      ).subscribe({
+        error: () => {
+          this.customSessionFinalized = false;
+        },
+      });
+    });
+  }
+
+  submitCustomGameFeedback(liked: boolean) {
+    if (!this.showCustomGameFeedback || this.feedbackSubmitting || this.feedbackChoice !== null) return;
+    if (!this.topic.trim()) return;
+
+    this.feedbackSubmitting = true;
+    this.feedbackError = '';
+
+    this.auth.user$.pipe(take(1)).subscribe(user => {
+      this.gameFeedbackService.submitFeedback({
+        auth0Id: user?.sub || '',
+        topic: this.topic,
+        liked,
+        gameType: 'promptle',
+        result: 'won',
+      }).subscribe({
+        next: () => {
+          this.feedbackChoice = liked;
+          this.feedbackSubmitting = false;
+        },
+        error: () => {
+          this.feedbackChoice = liked;
+          this.feedbackSubmitting = false;
+        },
+      });
     });
   }
 
@@ -1014,6 +1183,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
     const isCorrect = this.selectedGuess === this.correctAnswer.name;
     const finishMs  = isCorrect ? this.stopwatchMs : undefined;
 
+    this.markCustomGameSessionInteracted();
     this.selectedGuess = '';
     this.guessQuery    = '';
 
@@ -1061,7 +1231,11 @@ export class PromptleComponent implements OnInit, OnDestroy {
     return this.players.map(p => p.name || 'Unknown').join(', ');
   }
 
-  quitGame() { this.router.navigate(['/']); }
+  quitGame() {
+    // Leaving an unsolved custom game after interaction counts as abandonment.
+    this.finalizeCustomGameSession('abandoned', { keepalive: true });
+    this.router.navigate(['/']);
+  }
 
   viewCompletedGame() {
     if (!this.isGameOver) return;
@@ -1095,6 +1269,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    // Covers direct route changes and browser exits while a custom game is still active.
+    this.finalizeCustomGameSession('abandoned', { keepalive: true });
     this.stopStopwatch();
     this.stopTurnCountdown();
     this.opponentGuessSub?.unsubscribe();

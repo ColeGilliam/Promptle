@@ -106,7 +106,6 @@
 
       <div class="dev-delete-bar" *ngIf="isGameOver && isViewingCompletedGame && !iLost && !isSpectating">
         <button matButton class="rect-btn promp2-btn" (click)="returnToResultsPopup()">
-          <mat-icon>arrow_back</mat-icon>
           BACK TO RESULTS
         </button>
       </div>
@@ -396,10 +395,16 @@
   [guessCount]="submittedGuesses.length"
   [guessColors]="guessColors"
   [shareUrl]="shareUrl"
+  [showFeedback]="showCustomGameFeedback"
+  [feedbackChoice]="feedbackChoice"
+  [feedbackSubmitting]="feedbackSubmitting"
+  [feedbackError]="feedbackError"
   (returnHome)="quitGame()"
   (playAgain)="restartGame()"
   (spectate)="startSpectating()"
   (viewGame)="viewCompletedGame()"
+  (likedGame)="submitCustomGameFeedback(true)"
+  (dislikedGame)="submitCustomGameFeedback(false)"
 ></app-promptle-win-popup>
 
 <!-- ══ LOSS OVERLAY (1v1 only) ══ -->

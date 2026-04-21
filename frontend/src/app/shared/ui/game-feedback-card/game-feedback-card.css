@@ -1,0 +1,116 @@
+:host {
+  display: block;
+}
+
+.feedback-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(15, 118, 110, 0.12);
+  background: rgba(255, 255, 255, 0.42);
+}
+
+:host-context(.dark) .feedback-card {
+  border-color: rgba(45, 212, 191, 0.14);
+  background: rgba(15, 23, 42, 0.42);
+}
+
+.feedback-card--submitted {
+  border-color: rgba(34, 197, 94, 0.24);
+}
+
+.feedback-copy {
+  display: grid;
+  gap: 2px;
+  text-align: left;
+}
+
+.feedback-copy p,
+.feedback-error {
+  margin: 0;
+  color: #41526e;
+  line-height: 1.35;
+  font-size: 0.92rem;
+}
+
+:host-context(.dark) .feedback-copy p,
+:host-context(.dark) .feedback-error {
+  color: #a9b7cf;
+}
+
+.feedback-actions {
+  display: flex;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.feedback-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  border-radius: 999px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.feedback-btn mat-icon {
+  margin: 0;
+  display: block;
+  width: 24px;
+  height: 24px;
+  font-size: 24px;
+  line-height: 24px;
+}
+
+.feedback-btn--selected.feedback-btn--up {
+  background: rgba(34, 197, 94, 0.14) !important;
+  border-color: rgba(34, 197, 94, 0.32) !important;
+  color: #166534 !important;
+}
+
+.feedback-btn--selected.feedback-btn--down {
+  background: rgba(239, 68, 68, 0.12) !important;
+  border-color: rgba(239, 68, 68, 0.28) !important;
+  color: #991b1b !important;
+}
+
+:host-context(.dark) .feedback-btn--selected.feedback-btn--up {
+  background: rgba(21, 128, 61, 0.28) !important;
+  border-color: rgba(74, 222, 128, 0.26) !important;
+  color: #dcfce7 !important;
+}
+
+:host-context(.dark) .feedback-btn--selected.feedback-btn--down {
+  background: rgba(127, 29, 29, 0.36) !important;
+  border-color: rgba(248, 113, 113, 0.24) !important;
+  color: #fee2e2 !important;
+}
+
+.feedback-error {
+  color: #b91c1c;
+  font-size: 0.82rem;
+  flex-basis: 100%;
+}
+
+:host-context(.dark) .feedback-error {
+  color: #fca5a5;
+}
+
+@media (max-width: 600px) {
+  .feedback-card {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .feedback-actions {
+    width: 100%;
+  }
+}

@@ -6,6 +6,7 @@ import { Router, RouterModule } from '@angular/router';
 import { AuthenticationService } from '../../services/authentication.service';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { take } from 'rxjs';
+import { RecommendationItem, RecommendationsService } from '../../services/recommendations';
 
 // Angular Material modules
 import { MatCardModule } from '@angular/material/card';
@@ -57,6 +58,8 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
   filteredTopics: TopicInfo[] = [];
   customTopic = '';
   matchedCustomTopic: TopicInfo | null = null;
+  recommendations: RecommendationItem[] = [];
+  isCustomTopicFocused = false;
 
   isMultiplayer = false;  // false = single-player, true = multiplayer
   multiplayerMode: 'standard' | 'chaos' | '1v1' = 'standard'; // only relevant when isMultiplayer = true
@@ -100,11 +103,20 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
     return this.matchedCustomTopic;
   }
 
+  get customTopicIdeas(): RecommendationItem[] {
+    return this.recommendations.filter((item) => item.type === 'custom').slice(0, 3);
+  }
+
+  get showCustomTopicIdeas(): boolean {
+    return !this.isMultiplayer && this.isLoggedIn && this.isCustomTopicFocused && this.customTopicIdeas.length > 0;
+  }
+
   constructor(
     private topicsService: TopicsListService,
     private router: Router,
     private auth: AuthenticationService,
-    private http: HttpClient
+    private http: HttpClient,
+    private recommendationsService: RecommendationsService
   ) { }
 
   ngOnInit() {
@@ -115,6 +127,9 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
     // Subscribe to Auth0's real authentication state
     this.auth.isAuthenticated$.subscribe((status) => {
       this.isLoggedIn = status;
+      if (!status) {
+        this.recommendations = [];
+      }
     });
 
     this.auth.user$.subscribe((user) => {
@@ -123,9 +138,14 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
         this.myAuth0Id = user.sub ?? '';
         this.isDevAccount = user.email === 'promptle99@gmail.com';
         this.registerUser(user);
+        this.loadRecommendations();
         // Re-run observer so AI card (now in DOM) gets picked up
         setTimeout(() => this.setupRevealObserver(), 50);
+        return;
       }
+
+      this.myAuth0Id = '';
+      this.recommendations = [];
     });
   }
 
@@ -227,6 +247,20 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
     if (!topic) return;
 
     this.startGameFromPayload({ topic });
+  }
+
+  startRecommendedCustomTopic(item: RecommendationItem) {
+    this.startGameFromPayload({ topic: item.topic });
+  }
+
+  onCustomTopicFocus() {
+    this.isCustomTopicFocused = true;
+  }
+
+  onCustomTopicBlur() {
+    window.setTimeout(() => {
+      this.isCustomTopicFocused = false;
+    }, 120);
   }
 
   // ────────────────────────────────────────────────
@@ -455,6 +489,24 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
 
   private updateCustomTopicMatch() {
     this.matchedCustomTopic = this.resolveCustomTopic(this.customTopic);
+  }
+
+  private loadRecommendations() {
+    const auth0Id = this.myAuth0Id.trim();
+    if (!auth0Id) {
+      this.recommendations = [];
+      return;
+    }
+
+    this.recommendationsService.getRecommendations(auth0Id).subscribe({
+      next: ({ items }) => {
+        this.recommendations = items ?? [];
+        setTimeout(() => this.setupRevealObserver(), 50);
+      },
+      error: () => {
+        this.recommendations = [];
+      },
+    });
   }
 
   private startGameFromPayload(payload: { topic?: string; id?: number }) {

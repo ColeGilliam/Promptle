@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -15,6 +15,9 @@ import {
   ConnectionsGroup,
 } from '../../services/connections-game';
 import { NavbarComponent } from '../../shared/components/navbar/navbar';
+import { GameFeedbackService } from '../../services/game-feedback';
+import { GameFeedbackCard } from '../../shared/ui/game-feedback-card/game-feedback-card';
+import { CustomGameSessionService } from '../../services/custom-game-session';
 
 interface BoardWord {
   // Stable keys let the board keep selection/shake state even as tiles are shuffled or removed.
@@ -43,11 +46,12 @@ interface ConnectionsGroupState extends ConnectionsGroup {
     MatInputModule,
     MatProgressSpinnerModule,
     NavbarComponent,
+    GameFeedbackCard,
   ],
   templateUrl: './connections.html',
   styleUrls: ['./connections.css'],
 })
-export class ConnectionsComponent implements OnInit {
+export class ConnectionsComponent implements OnInit, OnDestroy {
   readonly maxMistakes = 4;
 
   // Topic form + request lifecycle state.
@@ -72,6 +76,13 @@ export class ConnectionsComponent implements OnInit {
   solvedGroups: ConnectionsGroupState[] = [];
   remainingGroups: ConnectionsGroupState[] = [];
   isResolvingGuess = false;
+  feedbackChoice: boolean | null = null;
+  feedbackSubmitting = false;
+  feedbackError = '';
+  private auth0Id = '';
+  private currentPlayId = '';
+  private sessionInteracted = false;
+  private sessionFinalized = false;
 
   // Hold onto the shake timer so a reset/new generation can cancel stale animations cleanly.
   private shakeTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -79,7 +90,9 @@ export class ConnectionsComponent implements OnInit {
   constructor(
     private auth: AuthenticationService,
     private connectionsGameService: ConnectionsGameService,
-    private http: HttpClient
+    private http: HttpClient,
+    private gameFeedbackService: GameFeedbackService,
+    private customGameSessionService: CustomGameSessionService
   ) {}
 
   ngOnInit(): void {
@@ -88,7 +101,13 @@ export class ConnectionsComponent implements OnInit {
 
     this.auth.user$.subscribe((user) => {
       this.isDevAccount = user?.email === 'promptle99@gmail.com';
+      this.auth0Id = user?.sub ?? '';
     });
+  }
+
+  ngOnDestroy(): void {
+    // Treat leaving an active custom board as abandonment once the player has interacted.
+    this.finalizeCurrentSession('abandoned', { keepalive: true });
   }
 
   get canUseAI(): boolean {
@@ -123,6 +142,10 @@ export class ConnectionsComponent implements OnInit {
   get canShuffleBoard(): boolean {
     // Solved/revealed states should freeze the board so shuffle only applies to active unsolved tiles.
     return this.boardWords.length > 1 && !this.loading && !this.gameOver && !this.isResolvingGuess;
+  }
+
+  get showGameFeedback(): boolean {
+    return this.gameOver && !!this.activeTopic;
   }
 
   get solvedCount(): number {
@@ -189,6 +212,7 @@ export class ConnectionsComponent implements OnInit {
 
     // Connections only allows four active guesses at a time.
     if (this.selectedWordKeys.length >= 4) return;
+    this.markSessionInteracted();
     this.selectedWordKeys = [...this.selectedWordKeys, word.key];
   }
 
@@ -203,9 +227,36 @@ export class ConnectionsComponent implements OnInit {
     const confirmed = window.confirm('Start a new topic? Your current Connections board will be cleared.');
     if (!confirmed) return;
 
+    this.finalizeCurrentSession('abandoned', { keepalive: true });
     this.resetBoardState();
     this.topic = '';
     this.showTopicPrompt = true;
+  }
+
+  submitGameFeedback(liked: boolean): void {
+    if (!this.showGameFeedback || this.feedbackSubmitting || this.feedbackChoice !== null) return;
+
+    this.feedbackSubmitting = true;
+    this.feedbackError = '';
+
+    this.auth.user$.pipe(take(1)).subscribe((user) => {
+      this.gameFeedbackService.submitFeedback({
+        auth0Id: user?.sub || '',
+        topic: this.activeTopic,
+        liked,
+        gameType: 'connections',
+        result: this.gameWon ? 'won' : 'revealed',
+      }).subscribe({
+        next: () => {
+          this.feedbackChoice = liked;
+          this.feedbackSubmitting = false;
+        },
+        error: () => {
+          this.feedbackChoice = liked;
+          this.feedbackSubmitting = false;
+        },
+      });
+    });
   }
 
   private loadDevSettings(): void {
@@ -246,6 +297,7 @@ export class ConnectionsComponent implements OnInit {
         this.feedbackTone = 'success';
         this.gameOver = true;
         this.gameWon = true;
+        this.finalizeCurrentSession('completed');
       } else {
         this.feedback = `Solved: ${matchedGroup.category}`;
         this.feedbackTone = 'success';
@@ -312,6 +364,7 @@ export class ConnectionsComponent implements OnInit {
     this.selectedWordKeys = [];
     this.shakingWordKeys = [];
     this.isResolvingGuess = false;
+    this.resetGameFeedback();
 
     const groups: ConnectionsGroupState[] = [];
     const words: BoardWord[] = [];
@@ -341,6 +394,7 @@ export class ConnectionsComponent implements OnInit {
     this.boardWords = this.shuffleArray(words);
     this.feedback = 'Select four words that share a connection.';
     this.feedbackTone = 'neutral';
+    this.startSession(game.topic);
   }
 
   private matchesGroup(group: ConnectionsGroupState): boolean {
@@ -394,6 +448,92 @@ export class ConnectionsComponent implements OnInit {
     this.solvedGroups = [];
     this.remainingGroups = [];
     this.isResolvingGuess = false;
+    this.resetGameFeedback();
+    this.resetSessionState();
+  }
+
+  private resetGameFeedback(): void {
+    this.feedbackChoice = null;
+    this.feedbackSubmitting = false;
+    this.feedbackError = '';
+  }
+
+  private createPlayId(): string {
+    return typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
+
+  private resetSessionState(): void {
+    this.currentPlayId = '';
+    this.sessionInteracted = false;
+    this.sessionFinalized = false;
+  }
+
+  // Start one trackable custom-game session so later interaction/finalization calls all refer back to the same play attempt.
+  private startSession(topic: string): void {
+    const auth0Id = this.auth0Id.trim();
+    if (!auth0Id) {
+      this.resetSessionState();
+      return;
+    }
+
+    const playId = this.createPlayId();
+    this.currentPlayId = playId;
+    this.sessionInteracted = false;
+    this.sessionFinalized = false;
+
+    this.customGameSessionService.startSession({
+      playId,
+      auth0Id,
+      topic,
+      gameType: 'connections',
+    }).subscribe({
+      error: () => {
+        this.resetSessionState();
+      },
+    });
+  }
+
+  // Record the first meaningful move so we can identify a session as abandoned only if the user played at all.
+  private markSessionInteracted(): void {
+    const auth0Id = this.auth0Id.trim();
+    if (!auth0Id || !this.currentPlayId || this.sessionInteracted) return;
+
+    this.sessionInteracted = true;
+    this.customGameSessionService.markInteracted({
+      playId: this.currentPlayId,
+      auth0Id,
+    }).subscribe({
+      error: () => {
+        this.sessionInteracted = false;
+      },
+    });
+  }
+
+  // Close the active session once when the board is solved or the player leaves mid-game, which turns the session into recommendation signal.
+  private finalizeCurrentSession(
+    finalState: 'completed' | 'abandoned',
+    options: { keepalive?: boolean } = {}
+  ): void {
+    const auth0Id = this.auth0Id.trim();
+    if (!auth0Id || !this.currentPlayId || this.sessionFinalized) return;
+    // Same-topic resets do not call this path; only real exits or completed boards should finalize.
+    if (finalState === 'abandoned' && (!this.sessionInteracted || this.gameOver)) return;
+
+    this.sessionFinalized = true;
+    this.customGameSessionService.finalizeSession(
+      {
+        playId: this.currentPlayId,
+        auth0Id,
+        finalState,
+      },
+      options
+    ).subscribe({
+      error: () => {
+        this.sessionFinalized = false;
+      },
+    });
   }
 
   private shuffleArray<T>(items: T[]): T[] {

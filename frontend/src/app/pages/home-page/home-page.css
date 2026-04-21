@@ -611,6 +611,40 @@
   gap: 12px;
 }
 
+.custom-topic-ideas {
+  display: grid;
+  gap: 10px;
+  margin-top: -4px;
+}
+
+.custom-topic-ideas-label {
+  margin: 0;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #0f766e;
+}
+
+.custom-topic-ideas-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.custom-topic-idea-chip {
+  border-radius: 999px !important;
+  border-color: rgba(8, 145, 178, 0.3) !important;
+  background: rgba(240, 253, 250, 0.9) !important;
+  color: #0f172a !important;
+  font-weight: 700;
+  padding-inline: 14px !important;
+}
+
+.custom-topic-idea-chip:hover {
+  background: rgba(204, 251, 241, 0.95) !important;
+}
+
 .topic-match-choice {
   display: flex;
   flex-direction: column;
@@ -843,6 +877,20 @@
   background: rgba(124, 58, 237, 0.18);
   color: #c4b5fd;
   border-color: rgba(124, 58, 237, 0.28);
+}
+
+:host-context(.dark) .custom-topic-ideas-label {
+  color: #67e8f9;
+}
+
+:host-context(.dark) .custom-topic-idea-chip {
+  background: rgba(15, 23, 42, 0.82) !important;
+  border-color: rgba(34, 211, 238, 0.28) !important;
+  color: #e2e8f0 !important;
+}
+
+:host-context(.dark) .custom-topic-idea-chip:hover {
+  background: rgba(30, 41, 59, 0.92) !important;
 }
 
 :host-context(.dark) .crossword-mode-cell {

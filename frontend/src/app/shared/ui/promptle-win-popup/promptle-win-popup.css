@@ -150,6 +150,11 @@
   margin: 16px 0 24px;
 }
 
+.win-feedback-card {
+  margin: 4px 0 18px;
+  text-align: left;
+}
+
 .win-grid-row {
   display: flex;
   gap: 4px;

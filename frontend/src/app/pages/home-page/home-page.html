@@ -227,8 +227,24 @@
                 placeholder="e.g. Marvel Characters, Sitcoms..."
                 [(ngModel)]="customTopic"
                 (ngModelChange)="onCustomTopicChange($event)"
+                (focus)="onCustomTopicFocus()"
+                (blur)="onCustomTopicBlur()"
               >
             </mat-form-field>
+
+            <div class="custom-topic-ideas" *ngIf="showCustomTopicIdeas">
+              <p class="custom-topic-ideas-label">Need ideas?</p>
+              <div class="custom-topic-ideas-list">
+                <button
+                  *ngFor="let item of customTopicIdeas"
+                  matButton="outlined"
+                  class="custom-topic-idea-chip"
+                  (mousedown)="startRecommendedCustomTopic(item)"
+                >
+                  {{ item.topic }}
+                </button>
+              </div>
+            </div>
 
             <div class="topic-match-choice" *ngIf="resolvedCustomTopicMatch as matchedTopic; else defaultCustomStart">
               <p class="play-card-desc topic-match-copy">
