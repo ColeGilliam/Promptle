@@ -17,7 +17,8 @@ const HOW_TO_PLAY_CONTENT: Record<HowToPlayMode, HowToPlayContent> = {
     steps: [
       'Choose a topic, or generate one with AI, to start a round. The game picks one hidden answer from that topic.',
       'Submit guesses from the list and use the grid to compare each guess against the hidden answer.',
-      'Green means an exact match in that column, yellow means part of your guess overlaps with the answer, and gray means it does not match.',
+      'Green means an exact match. For text and list columns, yellow means part of your guess overlaps with the answer.',
+      'For number columns, arrows show whether the correct answer is higher or lower and yellow means you are relatively close. For numbered references, a matching label turns yellow and the arrow shows whether the number is higher or lower.',
       'Keep narrowing it down until you find the correct answer.',
       'You can play solo or in multiplayer, including standard, chaos, and 1v1 modes.',
     ],
