@@ -77,6 +77,34 @@
         </div>
       </div>
 
+      <div class="settings-divider"></div>
+
+      <div class="settings-section">
+        <h2 class="section-title">
+          <mat-icon>visibility</mat-icon>
+          Promptle Answer Preview
+        </h2>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-label">Show the correct Promptle answer at the top for dev accounts</span>
+            <span class="setting-desc">
+              When enabled, the dev account sees the correct answer row pinned near the top of each Promptle game.
+              When disabled, Promptle stays unchanged.
+            </span>
+          </div>
+          <div class="setting-control">
+            <span class="status-pill" [class.status-on]="showPromptleAnswerAtTop" [class.status-off]="!showPromptleAnswerAtTop">
+              {{ showPromptleAnswerAtTop ? 'Enabled' : 'Disabled' }}
+            </span>
+            <mat-slide-toggle
+              [(ngModel)]="showPromptleAnswerAtTop"
+              color="primary"
+            ></mat-slide-toggle>
+          </div>
+        </div>
+      </div>
+
       <div class="settings-footer">
         <div class="save-feedback success" *ngIf="saveSuccess">
           <mat-icon>check_circle</mat-icon>

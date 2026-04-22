@@ -76,6 +76,10 @@ interface PendingOneVsOneGuess {
   isMe: boolean;
 }
 
+interface DevSettingsResponse {
+  showPromptleAnswerAtTop?: boolean;
+}
+
 @Component({
   selector: 'app-promptle',
   standalone: true,
@@ -246,6 +250,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
   private myUsername = '';
   private mySocketId = '';
   isDevAccount = false;
+  showPromptleAnswerAtTop = false;
   private myAuth0Id = '';
 
   // Stopwatch
@@ -335,6 +340,9 @@ export class PromptleComponent implements OnInit, OnDestroy {
       if (user) {
         this.isDevAccount = user.email === 'promptle99@gmail.com';
         this.myAuth0Id = user.sub ?? '';
+        if (this.isDevAccount) {
+          this.loadDevSettings();
+        }
       }
     });
 
@@ -1505,6 +1513,14 @@ export class PromptleComponent implements OnInit, OnDestroy {
     return this.players.map(p => p.name || 'Unknown').join(', ');
   }
 
+  get showDevAnswerPreview(): boolean {
+    return this.isDevAccount
+      && this.showPromptleAnswerAtTop
+      && !this.gameLoading
+      && !this.gameError
+      && !!this.correctAnswer?.values?.length;
+  }
+
   quitGame() {
     // Leaving an unsolved custom game after interaction counts as abandonment.
     this.finalizeCustomGameSession('abandoned', { keepalive: true });
@@ -1536,6 +1552,17 @@ export class PromptleComponent implements OnInit, OnDestroy {
   startSpectating() {
     this.isSpectating = true;
     this.cdr.detectChanges();
+  }
+
+  private loadDevSettings() {
+    this.http.get<DevSettingsResponse>('/api/dev-settings').subscribe({
+      next: (settings) => {
+        this.showPromptleAnswerAtTop = settings.showPromptleAnswerAtTop ?? false;
+      },
+      error: () => {
+        this.showPromptleAnswerAtTop = false;
+      },
+    });
   }
 
   get noGameAnims(): boolean {
