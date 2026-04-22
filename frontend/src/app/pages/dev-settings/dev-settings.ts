@@ -37,6 +37,7 @@ export class DevSettingsComponent implements OnInit {
 
   allowGuestsCreateRooms = false;
   allowAllAIGeneration = false;
+  showPromptleAnswerAtTop = false;
 
   constructor(
     private http: HttpClient,
@@ -60,8 +61,9 @@ export class DevSettingsComponent implements OnInit {
     this.isLoading = true;
     this.http.get<any>('/api/dev-settings').subscribe({
       next: (data) => {
-        this.allowGuestsCreateRooms = data.allowGuestsCreateRooms;
-        this.allowAllAIGeneration = data.allowAllAIGeneration;
+        this.allowGuestsCreateRooms = data.allowGuestsCreateRooms ?? false;
+        this.allowAllAIGeneration = data.allowAllAIGeneration ?? false;
+        this.showPromptleAnswerAtTop = data.showPromptleAnswerAtTop ?? false;
         this.isLoading = false;
       },
       error: () => {
@@ -79,6 +81,7 @@ export class DevSettingsComponent implements OnInit {
       auth0Id: this.myAuth0Id,
       allowGuestsCreateRooms: this.allowGuestsCreateRooms,
       allowAllAIGeneration: this.allowAllAIGeneration,
+      showPromptleAnswerAtTop: this.showPromptleAnswerAtTop,
     }).subscribe({
       next: () => {
         this.isSaving = false;

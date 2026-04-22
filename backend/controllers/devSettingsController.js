@@ -8,6 +8,7 @@ const devSettingsLogger = appLogger.child({ component: 'dev-settings' });
 const DEFAULT_SETTINGS = {
   allowGuestsCreateRooms: false,
   allowAllAIGeneration: false,
+  showPromptleAnswerAtTop: false,
 };
 
 async function isDevAccount(auth0Id) {
@@ -36,6 +37,7 @@ export async function getDevSettings(req, res) {
     res.json({
       allowGuestsCreateRooms: settings.allowGuestsCreateRooms,
       allowAllAIGeneration: settings.allowAllAIGeneration,
+      showPromptleAnswerAtTop: settings.showPromptleAnswerAtTop,
     });
   } catch (err) {
     devSettingsLogger.error('dev_settings_load_failed', {
@@ -48,7 +50,12 @@ export async function getDevSettings(req, res) {
 
 export async function updateDevSettings(req, res) {
   try {
-    const { auth0Id, allowGuestsCreateRooms, allowAllAIGeneration } = req.body;
+    const {
+      auth0Id,
+      allowGuestsCreateRooms,
+      allowAllAIGeneration,
+      showPromptleAnswerAtTop,
+    } = req.body;
 
     if (!(await isDevAccount(auth0Id))) {
       return res.status(403).json({ error: 'Only the dev account can update settings.' });
@@ -56,12 +63,23 @@ export async function updateDevSettings(req, res) {
 
     const coll = getDevSettingsCollection();
     await coll.updateOne(
-      { _id: "global" },
-      { $set: { allowGuestsCreateRooms: !!allowGuestsCreateRooms, allowAllAIGeneration: !!allowAllAIGeneration } },
+      { _id: SETTINGS_ID },
+      {
+        $set: {
+          allowGuestsCreateRooms: !!allowGuestsCreateRooms,
+          allowAllAIGeneration: !!allowAllAIGeneration,
+          showPromptleAnswerAtTop: !!showPromptleAnswerAtTop,
+        },
+      },
       { upsert: true }
     );
 
-    res.json({ success: true, allowGuestsCreateRooms: !!allowGuestsCreateRooms, allowAllAIGeneration: !!allowAllAIGeneration });
+    res.json({
+      success: true,
+      allowGuestsCreateRooms: !!allowGuestsCreateRooms,
+      allowAllAIGeneration: !!allowAllAIGeneration,
+      showPromptleAnswerAtTop: !!showPromptleAnswerAtTop,
+    });
   } catch (err) {
     devSettingsLogger.error('dev_settings_update_failed', {
       requestId: req.id || null,

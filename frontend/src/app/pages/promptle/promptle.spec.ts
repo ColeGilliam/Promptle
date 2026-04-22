@@ -31,6 +31,17 @@ describe('PromptleComponent feedback scoring', () => {
     expect(component).toBeTruthy();
   });
 
+  it('shows the top answer preview only when the dev toggle is enabled and answer data is loaded', () => {
+    component.isDevAccount = true;
+    component.showPromptleAnswerAtTop = true;
+    component.correctAnswer = answer('Correct', [textCell('Correct'), textCell('Marvel')]);
+
+    expect(component.showDevAnswerPreview).toBeTrue();
+
+    component.showPromptleAnswerAtTop = false;
+    expect(component.showDevAnswerPreview).toBeFalse();
+  });
+
   it('marks list-style categories yellow when any item overlaps in the same column', () => {
     const colors = component['evaluateGuessColors'](
       [

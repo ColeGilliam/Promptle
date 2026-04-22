@@ -362,6 +362,56 @@
   border-color: rgba(34, 197, 94, 0.58) !important;
 }
 
+.dev-answer-preview-card {
+  width: 100%;
+  border-radius: 16px;
+  border: 1.5px solid rgba(34, 197, 94, 0.22);
+  background: linear-gradient(135deg, rgba(240, 253, 244, 0.92), rgba(255, 255, 255, 0.82));
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.05), 0 6px 24px rgba(34, 197, 94, 0.12);
+  padding: 16px;
+  box-sizing: border-box;
+  margin-bottom: 10px;
+}
+
+.dev-answer-preview-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.dev-answer-preview-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #166534;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.22);
+  border-radius: 999px;
+  padding: 5px 10px;
+}
+
+.dev-answer-preview-badge mat-icon {
+  width: 14px;
+  height: 14px;
+  font-size: 14px;
+}
+
+.dev-answer-preview-name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #14532d;
+}
+
 .game-grid-card {
   width: 100%;
   border-radius: 16px;
@@ -425,6 +475,22 @@
 
 :host-context(.dark) .hint-btn:hover:not(:disabled) {
   background: rgba(34, 197, 94, 0.22) !important;
+}
+
+:host-context(.dark) .dev-answer-preview-card {
+  background: linear-gradient(135deg, rgba(20, 83, 45, 0.3), rgba(15, 23, 42, 0.84));
+  border-color: rgba(74, 222, 128, 0.22);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.06), 0 6px 24px rgba(0, 0, 0, 0.32);
+}
+
+:host-context(.dark) .dev-answer-preview-badge {
+  color: #bbf7d0;
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(74, 222, 128, 0.22);
+}
+
+:host-context(.dark) .dev-answer-preview-name {
+  color: #dcfce7;
 }
 
 :host-context(.dark) .game-grid-card {
