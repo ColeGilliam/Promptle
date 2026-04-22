@@ -31,6 +31,51 @@ import { SettingsService } from '../../services/settings.service';
 import { GameFeedbackService } from '../../services/game-feedback';
 import { CustomGameSessionService } from '../../services/custom-game-session';
 
+type GuessColor = 'green' | 'yellow' | 'gray';
+type QuantitativeDirection = 'up' | 'down';
+const QUANTITATIVE_CLOSE_RATIO = 0.25; // Number clues turn yellow when the guess is within this percent of the value range.
+
+// Each rendered guess cell keeps both the legacy color and any directional hint.
+interface GuessCellFeedback {
+  color: GuessColor;
+  direction?: QuantitativeDirection;
+}
+
+interface PromptleGuess {
+  name?: string;
+  values: string[];
+  colors: GuessColor[];
+  feedback: GuessCellFeedback[];
+}
+
+interface SpectateGuess extends PromptleGuess {
+  playerId: string;
+  playerName: string;
+  isMe: boolean;
+}
+
+interface OneVsOneGuess extends PromptleGuess {
+  guesserSocketId: string;
+  guesserName: string;
+  isMe: boolean;
+}
+
+interface PendingSpectateGuess {
+  playerId: string;
+  playerName: string;
+  values: string[];
+  colors: string[];
+  isMe: boolean;
+}
+
+interface PendingOneVsOneGuess {
+  guesserSocketId: string;
+  guesserName: string;
+  guessValues: string[];
+  guessColors: string[];
+  isMe: boolean;
+}
+
 @Component({
   selector: 'app-promptle',
   standalone: true,
@@ -79,7 +124,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
   isGameOver = false;
   isViewingCompletedGame = false;
 
-  submittedGuesses: { name?: string; values: string[]; colors: string[] }[] = [];
+  submittedGuesses: PromptleGuess[] = [];
 
   backendHeaders: string[] = [];
   backendRow: string[] = [];
@@ -101,30 +146,70 @@ export class PromptleComponent implements OnInit, OnDestroy {
   private customSessionInteracted = false;
   private customSessionFinalized = false;
 
-  get guessColors(): string[][] {
+  get guessColors(): GuessColor[][] {
     return this.submittedGuesses.map(g => g.colors);
   }
 
-  get displayedSubmittedGuesses(): { name?: string; values: string[]; colors: string[] }[] {
+  get displayedSubmittedGuesses(): PromptleGuess[] {
     return this.reverseForDisplay(this.submittedGuesses);
   }
 
-  get displayedSpectateGuesses(): { playerId: string; playerName: string; values: string[]; colors: string[]; isMe: boolean }[] {
+  get displayedSpectateGuesses(): SpectateGuess[] {
     return this.reverseForDisplay(this.spectateGuesses);
   }
 
-  get displayedOneVsOneGuesses(): {
-    guesserSocketId: string;
-    guesserName: string;
-    values: string[];
-    colors: string[];
-    isMe: boolean;
-  }[] {
+  get displayedOneVsOneGuesses(): OneVsOneGuess[] {
     return this.reverseForDisplay(this.oneVsOneGuesses);
   }
 
   private reverseForDisplay<T>(items: T[]): T[] {
     return [...items].reverse();
+  }
+
+  private queueSpectateGuess(guess: PendingSpectateGuess): void {
+    this.pendingSpectateGuesses.push(guess);
+  }
+
+  private queueOneVsOneGuess(guess: PendingOneVsOneGuess): void {
+    this.pendingOneVsOneGuesses.push(guess);
+  }
+
+  private addSpectateGuess(guess: PendingSpectateGuess): void {
+    const remoteGuess = this.createGuessEntry({
+      values: guess.values,
+      colors: guess.colors,
+    });
+    this.spectateGuesses.push({
+      playerId: guess.playerId,
+      playerName: guess.playerName,
+      values: remoteGuess.values,
+      colors: remoteGuess.colors,
+      feedback: remoteGuess.feedback,
+      isMe: guess.isMe,
+    });
+  }
+
+  private addOneVsOneGuess(guess: PendingOneVsOneGuess): void {
+    const remoteGuess = this.createGuessEntry({
+      values: guess.guessValues,
+      colors: guess.guessColors,
+    });
+    this.oneVsOneGuesses.push({
+      guesserSocketId: guess.guesserSocketId,
+      guesserName: guess.guesserName,
+      values: remoteGuess.values,
+      colors: remoteGuess.colors,
+      feedback: remoteGuess.feedback,
+      isMe: guess.isMe,
+    });
+  }
+
+  // Socket guesses wait in memory until the answer payload is ready, then flush once with complete feedback.
+  private flushPendingMultiplayerGuesses(): void {
+    this.pendingSpectateGuesses.forEach((guess) => this.addSpectateGuess(guess));
+    this.pendingOneVsOneGuesses.forEach((guess) => this.addOneVsOneGuess(guess));
+    this.pendingSpectateGuesses = [];
+    this.pendingOneVsOneGuesses = [];
   }
 
   get shareUrl(): string {
@@ -188,7 +273,9 @@ export class PromptleComponent implements OnInit, OnDestroy {
   // === Spectate state ===
   //─────────────────────────────────────
   isSpectating = false;
-  spectateGuesses: { playerId: string; playerName: string; values: string[]; colors: string[]; isMe: boolean }[] = [];
+  spectateGuesses: SpectateGuess[] = [];
+  // Spectator rows are withheld until the current game payload is ready to compute full feedback.
+  private pendingSpectateGuesses: PendingSpectateGuess[] = [];
 
   //─────────────────────────────────────
   // === 1v1 turn-based state ===
@@ -201,15 +288,12 @@ export class PromptleComponent implements OnInit, OnDestroy {
   iLost = false;
   oneVsOneWinnerName = '';
   skipTurnUsed = false;   // 1v1 skip-turn power-up (once per game)
-  oneVsOneGuesses: {
-    guesserSocketId: string;
-    guesserName: string;
-    values: string[];
-    colors: string[];
-    isMe: boolean;
-  }[] = [];
+  oneVsOneGuesses: OneVsOneGuess[] = [];
+  private pendingOneVsOneGuesses: PendingOneVsOneGuess[] = [];
   private turnCountdownInterval: ReturnType<typeof setInterval> | null = null;
   private oneVsOneSubs: Subscription[] = [];
+  // Rows only render after answers/correctAnswer are hydrated.
+  private gameDataReady = false;
 
   private roomStateSub?:    Subscription;
   private opponentGuessSub?: Subscription;
@@ -396,13 +480,18 @@ export class PromptleComponent implements OnInit, OnDestroy {
     const sub3 = this.multiplayerService.on1v1GuessMade().subscribe(data => {
       const myId = this.multiplayerService.getSocketId() || this.mySocketId;
       const isMe = data.guesserSocketId === myId;
-      this.oneVsOneGuesses.push({
+      const guess = {
         guesserSocketId: data.guesserSocketId,
         guesserName: data.guesserName,
-        values: data.guessValues,
-        colors: data.guessColors,
         isMe,
-      });
+        guessValues: data.guessValues,
+        guessColors: data.guessColors,
+      };
+      if (this.gameDataReady) {
+        this.addOneVsOneGuess(guess);
+      } else {
+        this.queueOneVsOneGuess(guess);
+      }
       if (isMe) {
         // submittedGuesses was already updated optimistically in onSubmitGuess — skip re-add.
         // Just update the player's color indicator in the player list.
@@ -626,13 +715,18 @@ export class PromptleComponent implements OnInit, OnDestroy {
           : p
       );
       if (data.values?.length) {
-        this.spectateGuesses.push({
+        const guess = {
           playerId: data.playerId,
           playerName: data.playerName,
           values: data.values,
           colors: data.colors,
-          isMe: false
-        });
+          isMe: false,
+        };
+        if (this.gameDataReady) {
+          this.addSpectateGuess(guess);
+        } else {
+          this.queueSpectateGuess(guess);
+        }
       }
       this.cdr.detectChanges();
     });
@@ -754,17 +848,16 @@ export class PromptleComponent implements OnInit, OnDestroy {
         : '';
     this.headers = hydrated.headers;
     this.answers = hydrated.answers;
+    this.correctAnswer  = hydrated.correctAnswer;
     this.submittedGuesses = clearProgress ? [] : Array.isArray(payload.submittedGuesses)
-      ? payload.submittedGuesses.map((g: any) => ({
-          name:   typeof g?.name === 'string' ? g.name : undefined,
-          values: Array.isArray(g?.values) ? g.values : [],
-          colors: Array.isArray(g?.colors) ? g.colors : []
+      ? payload.submittedGuesses.map((guess: any) => this.createGuessEntry({
+          name: typeof guess?.name === 'string' ? guess.name : undefined,
+          values: Array.isArray(guess?.values) ? guess.values : [],
+          colors: Array.isArray(guess?.colors) ? guess.colors : [],
         }))
       : [];
     this.selectedGuess  = '';
     this.guessQuery     = '';
-    this.filterAnswers(this.guessQuery);
-    this.correctAnswer  = hydrated.correctAnswer;
     this.isGameOver     = clearProgress ? false : !!payload.isGameOver;
     this.isViewingCompletedGame = false;
     this.savedTimestamp = clearProgress ? null : payload.savedAt ? new Date(payload.savedAt).toLocaleString() : null;
@@ -779,6 +872,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
           value: typeof payload.singlePlayerHint.value === 'string' ? payload.singlePlayerHint.value : ''
         };
     this.singlePlayerHintUsed = clearProgress ? false : !!payload?.singlePlayerHintUsed;
+    this.filterAnswers(this.guessQuery);
 
     const correct = this.answers.find(a => a.name === this.correctAnswer.name);
     if (correct) {
@@ -824,6 +918,10 @@ export class PromptleComponent implements OnInit, OnDestroy {
   private loadGame(params: { topic?: string; topicId?: number; room?: string; answer?: string; auth0Id?: string }) {
     this.gameLoading = true;
     this.gameError   = '';
+    // Every new room/topic load closes the gate again so any incoming rows wait for the matching payload.
+    this.gameDataReady = false;
+    this.pendingSpectateGuesses = [];
+    this.pendingOneVsOneGuesses = [];
     this.dbGameService.fetchGame(params).subscribe({
       next: (data: GameData) => {
         this.applyGameData(data);
@@ -853,6 +951,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
     const correct = this.answers.find(a => a.name === this.correctAnswer.name);
     this.backendHeaders = correct ? [...this.headers] : [];
     this.backendRow     = correct ? [...correct.values] : [];
+    this.gameDataReady = true;
+    this.flushPendingMultiplayerGuesses();
 
     this.submittedGuesses = [];
     this.selectedGuess    = '';
@@ -899,14 +999,61 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.filteredAnswers = result;
   }
 
+  private normalizeGuessColor(color: string): GuessColor {
+    return color === 'green' || color === 'yellow' ? color : 'gray';
+  }
+
+  // Match a persisted/networked guess back to a hydrated answer so we can rebuild richer feedback when possible.
+  private findAnswerByGuess(name?: string, values: string[] = []): HydratedGameAnswer | undefined {
+    const normalizedName = name?.trim().toLowerCase();
+    if (normalizedName) {
+      return this.answers.find((answer) => answer.name.trim().toLowerCase() === normalizedName);
+    }
+
+    return this.answers.find((answer) =>
+      answer.values.length === values.length
+      && answer.values.every((value, index) =>
+        value.trim().toLowerCase() === String(values[index] ?? '').trim().toLowerCase()
+      )
+    );
+  }
+
+  // Create a guess from persisted/network data so we can display it in the UI with proper feedback.
+  private createGuessEntry(payload: {
+    name?: string;
+    values?: string[];
+    colors?: string[];
+  }): PromptleGuess {
+    const name = typeof payload.name === 'string' ? payload.name : undefined;
+    const values = Array.isArray(payload.values)
+      ? payload.values.map((value) => String(value ?? ''))
+      : [];
+    const guessedAnswer = this.findAnswerByGuess(name, values);
+    if (guessedAnswer && this.correctAnswer?.cells?.length) {
+      const feedback = this.evaluateGuessFeedback(guessedAnswer.cells, this.correctAnswer.cells);
+      return {
+        ...(name ? { name } : {}),
+        values,
+        colors: feedback.map(({ color }) => color),
+        feedback,
+      };
+    }
+
+    const colors = Array.isArray(payload.colors)
+      ? payload.colors.map((color) => this.normalizeGuessColor(String(color)))
+      : [];
+    return {
+      ...(name ? { name } : {}),
+      values,
+      colors,
+      feedback: colors.map((color) => ({ color })),
+    };
+  }
+
   private getGuessedNamesLowercase(): Set<string> {
     const set = new Set<string>();
     for (const guess of this.submittedGuesses) {
-      if (guess.name?.trim()) { set.add(guess.name.trim().toLowerCase()); continue; }
-      const matched = this.answers.find(a =>
-        a.values.length === guess.values.length &&
-        a.values.every((v, i) => v.trim().toLowerCase() === String(guess.values[i] ?? '').trim().toLowerCase())
-      );
+      const matched = this.findAnswerByGuess(guess.name, guess.values);
       if (matched) set.add(matched.name.toLowerCase());
     }
     return set;
@@ -916,26 +1063,39 @@ export class PromptleComponent implements OnInit, OnDestroy {
     return this.getGuessedNamesLowercase().has(name.trim().toLowerCase());
   }
 
-  // Evaluate guess colors based on the guessed cells and the correct answer's cells.
-  private evaluateGuessColors(guessedCells: GameCell[], correctCells: GameCell[]): string[] {
-    return guessedCells.map((cell, i) => this.getCellColor(cell, correctCells[i]));
+  // Evaluate cell feedback based on the guessed cells and the correct answer's cells.
+  private evaluateGuessFeedback(guessedCells: GameCell[], correctCells: GameCell[]): GuessCellFeedback[] {
+    return guessedCells.map((cell, index) => this.getCellFeedback(cell, correctCells[index], index));
   }
 
-  // Determine the color of a cell based on its value and the correct answer's cell.
-  private getCellColor(guessedCell?: GameCell, correctCell?: GameCell): string {
+  // Evaluate guess colors based on the guessed cells and the correct answer's cells.
+  private evaluateGuessColors(guessedCells: GameCell[], correctCells: GameCell[]): GuessColor[] {
+    return this.evaluateGuessFeedback(guessedCells, correctCells).map(({ color }) => color);
+  }
+
+  // Determine the feedback of a cell based on its value and the correct answer's cell.
+  private getCellFeedback(
+    guessedCell?: GameCell,
+    correctCell?: GameCell,
+    columnIndex: number = -1
+  ): GuessCellFeedback {
     const guessNorm = this.normalizeDisplay(guessedCell?.display ?? '');
     const correctNorm = this.normalizeDisplay(correctCell?.display ?? '');
 
-    if (!guessNorm || !correctNorm) return 'gray';
-    if (this.hasMatchingNumberValue(guessedCell, correctCell)) return 'green';
-    if (guessNorm === correctNorm) return 'green';
+    if (!guessNorm || !correctNorm) return { color: 'gray' };
+    if (this.hasMatchingNumberValue(guessedCell, correctCell)) return { color: 'green' };
+    if (this.hasMatchingReferenceValue(guessedCell, correctCell)) return { color: 'green' };
+    if (guessNorm === correctNorm) return { color: 'green' };
 
-    if (this.hasListItemMatch(guessedCell, correctCell)) return 'yellow';
+    const quantitativeFeedback = this.getQuantitativeCellFeedback(guessedCell, correctCell, columnIndex);
+    if (quantitativeFeedback) return quantitativeFeedback;
+
+    if (this.hasListItemMatch(guessedCell, correctCell)) return { color: 'yellow' };
     if (guessedCell?.kind === 'reference' || correctCell?.kind === 'reference') {
-      return this.hasReferencePartMatch(guessedCell, correctCell) ? 'yellow' : 'gray';
+      return { color: this.hasReferencePartMatch(guessedCell, correctCell) ? 'yellow' : 'gray' };
     }
-    if (this.hasTextTokenMatch(guessedCell, correctCell)) return 'yellow';
-    return 'gray';
+    if (this.hasTextTokenMatch(guessedCell, correctCell)) return { color: 'yellow' };
+    return { color: 'gray' };
   }
 
   // For number-type cells: check if the 'value' part matches exactly (after confirming both are numbers).
@@ -947,6 +1107,108 @@ export class PromptleComponent implements OnInit, OnDestroy {
     return typeof guessedValue === 'number'
       && Number.isFinite(guessedValue)
       && guessedValue === correctValue;
+  }
+
+  private hasMatchingReferenceValue(guessedCell?: GameCell, correctCell?: GameCell): boolean {
+    if (guessedCell?.kind !== 'reference' || correctCell?.kind !== 'reference') return false;
+
+    const guessedLabel = this.normalizeDisplay(String(guessedCell.parts?.label ?? ''));
+    const correctLabel = this.normalizeDisplay(String(correctCell.parts?.label ?? ''));
+    const guessedNumber = String(guessedCell.parts?.number ?? '').trim().toLowerCase();
+    const correctNumber = String(correctCell.parts?.number ?? '').trim().toLowerCase();
+
+    return !!guessedLabel
+      && guessedLabel === correctLabel
+      && !!guessedNumber
+      && guessedNumber === correctNumber;
+  }
+
+  // Number cells use the range-based yellow threshold; matching-label references are always yellow and only use the number for arrow direction.
+  private getQuantitativeCellFeedback(
+    guessedCell?: GameCell,
+    correctCell?: GameCell,
+    columnIndex: number = -1
+  ): GuessCellFeedback | null {
+    if (!guessedCell || !correctCell || columnIndex < 0) return null;
+
+    if (guessedCell.kind === 'number' && correctCell.kind === 'number') {
+      const guessedValue = this.getNumericCellValue(guessedCell);
+      const correctValue = this.getNumericCellValue(correctCell);
+      if (guessedValue === null || correctValue === null || guessedValue === correctValue) return null;
+
+      return {
+        color: this.isQuantitativelyClose(
+          guessedValue,
+          correctValue,
+          this.getColumnNumericValues(columnIndex)
+        ) ? 'yellow' : 'gray',
+        direction: correctValue > guessedValue ? 'up' : 'down',
+      };
+    }
+
+    if (
+      guessedCell.kind === 'reference'
+      && correctCell.kind === 'reference'
+      && this.hasReferencePartMatch(guessedCell, correctCell)
+    ) {
+      const guessedNumber = this.getReferenceOrdinalValue(guessedCell);
+      const correctNumber = this.getReferenceOrdinalValue(correctCell);
+      if (guessedNumber === null || correctNumber === null || guessedNumber === correctNumber) {
+        return { color: 'yellow' };
+      }
+
+      return {
+        color: 'yellow',
+        direction: correctNumber > guessedNumber ? 'up' : 'down',
+      };
+    }
+
+    return null;
+  }
+
+  // Reference numbers are stored as strings, so parse both number cells and reference ordinals through one helper.
+  private parseComparableNumber(value: unknown): number | null {
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+
+    const trimmed = String(value ?? '').trim();
+    if (!trimmed || !/^-?\d+(?:\.\d+)?$/.test(trimmed)) return null;
+
+    const parsed = Number(trimmed);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  private getNumericCellValue(cell?: GameCell): number | null {
+    if (cell?.kind !== 'number') return null;
+    return this.parseComparableNumber(cell.parts?.value);
+  }
+
+  private getReferenceOrdinalValue(cell?: GameCell): number | null {
+    if (cell?.kind !== 'reference') return null;
+    return this.parseComparableNumber(cell.parts?.number);
+  }
+
+  // Number columns use the full column range as the basis for "close" yellow feedback.
+  private getColumnNumericValues(columnIndex: number): number[] {
+    return this.answers
+      .map((answer) => this.getNumericCellValue(answer.cells[columnIndex]))
+      .filter((value): value is number => value !== null);
+  }
+
+  private isQuantitativelyClose(
+    guessedValue: number,
+    correctValue: number,
+    comparisonValues: number[]
+  ): boolean {
+    const difference = Math.abs(correctValue - guessedValue);
+    if (comparisonValues.length < 2) return false;
+
+    const minValue = Math.min(...comparisonValues);
+    const maxValue = Math.max(...comparisonValues);
+    const range = maxValue - minValue;
+    if (!Number.isFinite(range) || range <= 0) return false;
+
+    // Yellow means the guess falls within a configurable percentage of that column's observed range.
+    return difference <= range * QUANTITATIVE_CLOSE_RATIO;
   }
 
   // For list-type cells: check if there's at least one overlapping item after normalization.
@@ -1178,7 +1440,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
     const correct = this.answers.find(a => a.name === this.correctAnswer.name);
     if (!guessed || !correct) return;
 
-    const colors = this.evaluateGuessColors(guessed.cells, correct.cells);
+    const feedback = this.evaluateGuessFeedback(guessed.cells, correct.cells);
+    const colors = feedback.map(({ color }) => color);
 
     const isCorrect = this.selectedGuess === this.correctAnswer.name;
     const finishMs  = isCorrect ? this.stopwatchMs : undefined;
@@ -1190,7 +1453,12 @@ export class PromptleComponent implements OnInit, OnDestroy {
     if (this.isOneVsOne) {
       // Add to submittedGuesses immediately so the dropdown filter removes this answer right away.
       // on1v1GuessMade will handle adding to oneVsOneGuesses (the shared grid) once server confirms.
-      this.submittedGuesses.push({ name: guessed.name, values: [...guessed.values], colors });
+      this.submittedGuesses.push({
+        name: guessed.name,
+        values: [...guessed.values],
+        colors,
+        feedback,
+      });
       this.filterAnswers(this.guessQuery);
       this.multiplayerService.emit1v1Guess(
         this.currentRoom, this.myUsername, guessed.values, colors, isCorrect, finishMs
@@ -1200,7 +1468,12 @@ export class PromptleComponent implements OnInit, OnDestroy {
     }
 
     // Standard (non-1v1) flow
-    this.submittedGuesses.push({ name: guessed.name, values: [...guessed.values], colors });
+    this.submittedGuesses.push({
+      name: guessed.name,
+      values: [...guessed.values],
+      colors,
+      feedback,
+    });
     this.filterAnswers(this.guessQuery);
 
     if (this.isMultiplayer && this.currentRoom) {
@@ -1213,6 +1486,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
         playerName: this.myUsername,
         values: [...guessed.values],
         colors,
+        feedback,
         isMe: true
       });
       this.multiplayerService.emitGuess(this.currentRoom, this.myUsername, colors, isCorrect, finishMs, [...guessed.values]);

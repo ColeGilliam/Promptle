@@ -301,7 +301,17 @@
                 [@cardEnter]
                 [style.background-color]="guess.colors[i]"
               >
-                {{ guess.values[i] }}
+                <div class="guess-cell-content">
+                  <span class="guess-cell-value">{{ guess.values[i] }}</span>
+                  <span
+                    *ngIf="guess.feedback[i]?.direction"
+                    class="guess-cell-arrow"
+                    [title]="guess.feedback[i].direction === 'up' ? 'Correct answer is higher' : 'Correct answer is lower'"
+                    aria-hidden="true"
+                  >
+                    {{ guess.feedback[i].direction === 'up' ? '↑' : '↓' }}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -345,7 +355,17 @@
                 [@cardEnter]
                 [style.background-color]="guess.colors[i]"
               >
-                {{ guess.values[i] }}
+                <div class="guess-cell-content">
+                  <span class="guess-cell-value">{{ guess.values[i] }}</span>
+                  <span
+                    *ngIf="guess.feedback[i]?.direction"
+                    class="guess-cell-arrow"
+                    [title]="guess.feedback[i].direction === 'up' ? 'Correct answer is higher' : 'Correct answer is lower'"
+                    aria-hidden="true"
+                  >
+                    {{ guess.feedback[i].direction === 'up' ? '↑' : '↓' }}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -373,7 +393,17 @@
                 [@cardEnter]
                 [style.background-color]="guess.colors[i]"
               >
-                {{ guess.values[i] }}
+                <div class="guess-cell-content">
+                  <span class="guess-cell-value">{{ guess.values[i] }}</span>
+                  <span
+                    *ngIf="guess.feedback[i]?.direction"
+                    class="guess-cell-arrow"
+                    [title]="guess.feedback[i].direction === 'up' ? 'Correct answer is higher' : 'Correct answer is lower'"
+                    aria-hidden="true"
+                  >
+                    {{ guess.feedback[i].direction === 'up' ? '↑' : '↓' }}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
