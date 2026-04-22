@@ -203,8 +203,8 @@ export const createMultiplayerGame = async (req, res) => {
         id: req.id,
         body: {
           topic: normalizedTopic,
-          minCategories: 6,
-          maxCategories: 8,
+          minCategories: 5,
+          maxCategories: 6,
           auth0Id,
         }
       };
