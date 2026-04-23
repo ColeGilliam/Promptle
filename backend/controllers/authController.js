@@ -89,14 +89,29 @@ export async function deleteUserAccount(req, res) {
 
 export async function incrementWin(req, res) {
   const usersCollection = getCachedUsersCollection();
-  const { auth0Id } = req.body;
+  const { auth0Id, guessCount, finishMs } = req.body;
 
   if (!auth0Id) return res.status(400).json({ error: 'Missing auth0Id' });
 
   try {
-    const result = await usersCollection.updateOne(
+    const user = await usersCollection.findOne(
       { auth0Id },
-      { $inc: { wins: 1 } } // Increment field by 1
+      { projection: { winStreak: 1, bestStreak: 1 } }
+    );
+    const currentStreak = user?.winStreak ?? 0;
+    const newStreak = currentStreak + 1;
+    const newBest = Math.max(newStreak, user?.bestStreak ?? 0);
+
+    const inc = { wins: 1 };
+    if (typeof guessCount === 'number' && guessCount > 0) inc.totalGuesses = guessCount;
+    if (typeof finishMs === 'number' && finishMs > 0) {
+      inc.totalFinishMs = finishMs;
+      inc.timedWins = 1;
+    }
+
+    await usersCollection.updateOne(
+      { auth0Id },
+      { $inc: inc, $set: { winStreak: newStreak, bestStreak: newBest } }
     );
     res.json({ success: true, message: 'Win counted' });
   } catch (err) {

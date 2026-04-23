@@ -38,10 +38,29 @@ export class ProfileComponent implements OnInit {
   selectedImageBase64: string = '';
   loading: boolean = true;
   winCount = 0;
+  totalGuesses = 0;
+  timedWins = 0;
+  totalFinishMs = 0;
+  winStreak = 0;
+  bestStreak = 0;
   saveError = '';
   usernameError = '';
   profilePicError = '';
   private readonly themeStorageKey = 'promptle-theme';
+
+  get avgGuesses(): string {
+    if (!this.winCount) return '—';
+    return (this.totalGuesses / this.winCount).toFixed(1);
+  }
+
+  get avgFinishTime(): string {
+    if (!this.timedWins) return '—';
+    const avgMs = this.totalFinishMs / this.timedWins;
+    const totalSec = Math.floor(avgMs / 1000);
+    const min = Math.floor(totalSec / 60);
+    const sec = totalSec % 60;
+    return `${min}:${String(sec).padStart(2, '0')}`;
+  }
 
   constructor(private http: HttpClient, private auth: AuthenticationService, private profile: ProfileService) {}
 
@@ -55,9 +74,14 @@ export class ProfileComponent implements OnInit {
         this.registerUser(user);
       }
       if (!user?.sub) {
-        this.dbUsername = '';
-        this.dbProfilePic = '';
-        this.winCount = 0;
+        this.dbUsername    = '';
+        this.dbProfilePic  = '';
+        this.winCount      = 0;
+        this.totalGuesses  = 0;
+        this.timedWins     = 0;
+        this.totalFinishMs = 0;
+        this.winStreak     = 0;
+        this.bestStreak    = 0;
         return;
       }
 
@@ -156,9 +180,14 @@ export class ProfileComponent implements OnInit {
       .subscribe({
         next: (mongoUser: any) => {
           if (mongoUser) {
-            this.dbUsername = mongoUser.username || '';
-            this.dbProfilePic = mongoUser.profilePic || '';
-            this.winCount = mongoUser.wins || 0;
+            this.dbUsername    = mongoUser.username    || '';
+            this.dbProfilePic  = mongoUser.profilePic  || '';
+            this.winCount      = mongoUser.wins         || 0;
+            this.totalGuesses  = mongoUser.totalGuesses  || 0;
+            this.timedWins     = mongoUser.timedWins     || 0;
+            this.totalFinishMs = mongoUser.totalFinishMs || 0;
+            this.winStreak     = mongoUser.winStreak     || 0;
+            this.bestStreak    = mongoUser.bestStreak    || 0;
           }
         },
         error: (err: any) => {

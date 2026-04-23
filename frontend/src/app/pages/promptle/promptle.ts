@@ -1388,8 +1388,11 @@ export class PromptleComponent implements OnInit, OnDestroy {
     if (this.isMultiplayer) return;
     this.auth.user$.pipe(take(1)).subscribe(user => {
       if (user?.sub) {
-        this.http.post('/api/increment-win', { auth0Id: user.sub })
-          .subscribe({ error: (e) => console.error('Failed to update stats', e) });
+        this.http.post('/api/increment-win', {
+          auth0Id: user.sub,
+          guessCount: this.submittedGuesses.length,
+          finishMs: this.myFinishTimeMs ?? undefined
+        }).subscribe({ error: (e) => console.error('Failed to update stats', e) });
       }
     });
   }

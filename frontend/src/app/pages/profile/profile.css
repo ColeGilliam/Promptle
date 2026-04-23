@@ -210,7 +210,7 @@
 }
 
 .stats-card {
-  flex: 0 0 260px;
+  flex: 0 0 290px;
 }
 
 /* ── Card inner ── */
@@ -299,39 +299,6 @@
   border-color: rgba(252, 165, 165, 0.35) !important;
 }
 
-/* ── Big stat ── */
-.stat-big {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 20px 0 18px;
-}
-
-.stat-big-icon {
-  font-size: 2.4rem;
-  line-height: 1;
-}
-
-.stat-big-value {
-  font-size: 3rem;
-  font-weight: 900;
-  background: linear-gradient(135deg, #f59e0b, #f97316);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  line-height: 1;
-  padding: 2px 0;
-}
-
-.stat-big-label {
-  font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #94a3b8;
-}
-
 .stat-divider {
   height: 1px;
   background: rgba(0, 0, 0, 0.06);
@@ -348,12 +315,6 @@
   align-items: center;
   gap: 10px;
   padding: 8px 0;
-}
-
-.stat-row-icon {
-  font-size: 1.1rem;
-  line-height: 1;
-  flex-shrink: 0;
 }
 
 .stat-row-label {
@@ -374,6 +335,77 @@
 
 :host-context(.dark) .stat-row-value {
   color: #e2e8f0;
+}
+
+/* ── Stats top grid (2-col highlight) ── */
+.stats-top-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.stat-mini {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 8px 12px;
+  border-radius: 14px;
+  background: rgba(99, 102, 241, 0.05);
+  border: 1px solid rgba(99, 102, 241, 0.14);
+  text-align: center;
+}
+
+:host-context(.dark) .stat-mini {
+  background: rgba(129, 140, 248, 0.08);
+  border-color: rgba(129, 140, 248, 0.2);
+}
+
+.stat-mini-icon {
+  font-size: 1.5rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  line-height: 1;
+}
+
+.trophy-icon { color: #f59e0b; }
+.streak-icon { color: #ef4444; }
+
+:host-context(.dark) .trophy-icon { color: #fbbf24; }
+:host-context(.dark) .streak-icon { color: #f87171; }
+
+.stat-mini-value {
+  font-size: 2rem;
+  font-weight: 900;
+  line-height: 1;
+  color: #1e293b;
+}
+
+:host-context(.dark) .stat-mini-value {
+  color: #e2e8f0;
+}
+
+.stat-mini-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+/* ── Stat row icon (mat-icon inside row) ── */
+.stat-row-icon {
+  font-size: 1.1rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  line-height: 1;
+  flex-shrink: 0;
+  color: #6366f1;
+}
+
+:host-context(.dark) .stat-row-icon {
+  color: #818cf8;
 }
 
 /* ── Not logged in ── */
