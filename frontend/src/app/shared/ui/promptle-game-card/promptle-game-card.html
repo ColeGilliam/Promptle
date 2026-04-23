@@ -53,7 +53,8 @@
           </div>
           <span class="player-name">
             {{ player.name }}{{ player.isMe ? ' (Me)' : '' }}
-            <span *ngIf="player.won" class="player-won-badge"><mat-icon>emoji_events</mat-icon> Won!</span>
+            <span *ngIf="player.won && player.id === leaderId" class="player-leader-badge"><mat-icon>emoji_events</mat-icon> Leading!</span>
+            <span *ngIf="player.won && player.id !== leaderId" class="player-won-badge"><mat-icon>check_circle</mat-icon> Done</span>
           </span>
           <div class="player-colors" *ngIf="player.colors?.length">
             <span
@@ -62,8 +63,9 @@
               [style.background-color]="color"
             ></span>
           </div>
-          <div class="player-stats" *ngIf="player.guesses || player.finishTime">
+          <div class="player-stats" *ngIf="player.guesses || player.finishTime || player.score">
             <span class="guess-count" *ngIf="player.guesses">{{ player.guesses }} guess{{ player.guesses === 1 ? '' : 'es' }}</span>
+            <span class="player-score" *ngIf="player.score != null">{{ player.score }} pts</span>
             <span class="finish-time" *ngIf="player.finishTime">⏱ {{ player.finishTime }}</span>
           </div>
           <div class="player-colors" *ngIf="!player.colors?.length">

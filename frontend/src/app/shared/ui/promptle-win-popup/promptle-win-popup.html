@@ -33,6 +33,24 @@
       </div>
     </div>
 
+    <!-- Multiplayer scoreboard -->
+    <div class="win-scoreboard" *ngIf="isMultiplayer && playerRankings.length > 0">
+      <h3 class="win-scoreboard-title">Scoreboard</h3>
+      <div
+        class="win-scoreboard-row"
+        *ngFor="let p of playerRankings; let i = index"
+        [class.win-scoreboard-row--me]="p.isMe"
+      >
+        <span class="win-scoreboard-rank">
+          <mat-icon *ngIf="i === 0">emoji_events</mat-icon>
+          <span *ngIf="i > 0">{{ i + 1 }}</span>
+        </span>
+        <span class="win-scoreboard-name">{{ p.name }}{{ p.isMe ? ' (Me)' : '' }}</span>
+        <span class="win-scoreboard-guesses">{{ p.guesses }} guess{{ p.guesses === 1 ? '' : 'es' }}</span>
+        <span class="win-scoreboard-score">{{ p.score }} pts</span>
+      </div>
+    </div>
+
     <app-game-feedback-card
       *ngIf="showFeedback"
       class="win-feedback-card"

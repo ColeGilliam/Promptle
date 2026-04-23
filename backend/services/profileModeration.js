@@ -217,16 +217,6 @@ export function validateProfileUsernameRules(username) {
     );
   }
 
-  // Block direct references to the app before checking more general reserved terms.
-  const compactLower = normalizedUsername.toLowerCase().replace(/[\s'-]+/g, '');
-  if (compactLower.includes('promptle')) {
-    return createValidationFailure(
-      'username_impersonation',
-      'Usernames cannot reference Promptle or look official.',
-      normalizedUsername
-    );
-  }
-
   if (hasWebsitePattern(normalizedUsername)) {
     return createValidationFailure(
       'username_website',

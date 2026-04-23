@@ -238,6 +238,13 @@ export class PromptleComponent implements OnInit, OnDestroy {
     return `${window.location.origin}/share?${p.toString()}`;
   }
 
+  get rankedPlayers(): { id: string; name: string; score: number; guesses: number; finishTimeMs?: number; isMe?: boolean }[] {
+    return this.players
+      .filter(p => p.won && p.score != null && p.guesses != null)
+      .map(p => ({ id: p.id, name: p.name, score: p.score!, guesses: p.guesses!, finishTimeMs: p.finishTimeMs, isMe: p.isMe }))
+      .sort((a, b) => b.score - a.score || (a.finishTimeMs ?? Infinity) - (b.finishTimeMs ?? Infinity));
+  }
+
   //─────────────────────────────────────
   // === Multiplayer ===
   //─────────────────────────────────────
@@ -254,11 +261,12 @@ export class PromptleComponent implements OnInit, OnDestroy {
     isMe?: boolean;
     guesses?: number;
     finishTime?: string;
+    finishTimeMs?: number;
+    score?: number;
   }[] = [];
 
   private myUsername = '';
   private mySocketId = '';
-  isDevAccount = false;
   showPromptleAnswerAtTop = false;
   private myAuth0Id = '';
 
@@ -347,11 +355,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
 
     this.auth.user$.pipe(take(1)).subscribe(user => {
       if (user) {
-        this.isDevAccount = user.email === 'promptle99@gmail.com';
         this.myAuth0Id = user.sub ?? '';
-        if (this.isDevAccount) {
-          this.loadDevSettings();
-        }
+        this.loadDevSettings();
       }
     });
 
@@ -777,7 +782,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
       const formattedTime = finishSecs != null ? `${finishSecs} second${finishSecs === 1 ? '' : 's'}` : undefined;
       this.players = this.players.map(p =>
         p.id === data.playerId
-          ? { ...p, won: true, guesses: data.guesses, finishTime: formattedTime }
+          ? { ...p, won: true, guesses: data.guesses, finishTime: formattedTime, finishTimeMs: data.finishTime, score: data.score }
           : p
       );
       this.cdr.detectChanges();
@@ -1579,8 +1584,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
   }
 
   get showDevAnswerPreview(): boolean {
-    return this.isDevAccount
-      && this.showPromptleAnswerAtTop
+    return this.showPromptleAnswerAtTop
       && !this.gameLoading
       && !this.gameError
       && !!this.correctAnswer?.values?.length;
@@ -1603,7 +1607,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
   }
 
   deleteCurrentRoom() {
-    if (!this.isDevAccount || !this.currentRoom) return;
+    if (!this.currentRoom) return;
     if (!confirm(`Delete room ${this.currentRoom}? All players will be removed.`)) return;
     this.http.delete(`/api/game/rooms/${this.currentRoom}`, { body: { auth0Id: this.myAuth0Id } }).subscribe({
       next: () => {

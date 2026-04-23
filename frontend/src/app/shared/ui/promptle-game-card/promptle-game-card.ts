@@ -43,7 +43,16 @@ export class PromptleGameCard {
     won?: boolean;
     isMe?: boolean;
     finishTime?: string;
+    finishTimeMs?: number;
+    score?: number;
   }[] = [];
+
+  get leaderId(): string | undefined {
+    const winners = this.players
+      .filter(p => p.won && p.score != null)
+      .sort((a, b) => (b.score! - a.score!) || ((a.finishTimeMs ?? Infinity) - (b.finishTimeMs ?? Infinity)));
+    return winners[0]?.id;
+  }
 
   get playerNamesText(): string {
     if (!this.players.length) return 'Waiting for players...';

@@ -23,6 +23,7 @@ export class PromptleWinPopup {
   @Input() feedbackChoice: boolean | null = null;
   @Input() feedbackSubmitting = false;
   @Input() feedbackError = '';
+  @Input() playerRankings: { name: string; score: number; guesses: number; finishTimeMs?: number; isMe?: boolean }[] = [];
 
   @Output() returnHome = new EventEmitter<void>();
   @Output() playAgain  = new EventEmitter<void>();
