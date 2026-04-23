@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { DailyGameMeta } from './setup-game';
 
 export type ConnectionsDifficulty = 'yellow' | 'green' | 'blue' | 'purple';
 
@@ -15,6 +16,7 @@ export interface ConnectionsGroup {
 export interface ConnectionsGameData {
   topic: string;
   groups: ConnectionsGroup[];
+  dailyGame?: DailyGameMeta;
 }
 
 @Injectable({
@@ -29,5 +31,9 @@ export class ConnectionsGameService {
       topic,
       auth0Id,
     });
+  }
+
+  fetchDailyGame(): Observable<ConnectionsGameData> {
+    return this.http.get<ConnectionsGameData>('/api/daily-games/connections');
   }
 }

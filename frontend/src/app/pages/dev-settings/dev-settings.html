@@ -10,7 +10,7 @@
       </div>
       <h1 class="dev-settings-title">Dev Settings</h1>
       <p class="dev-settings-subtitle">
-        Control access permissions for all users. Changes take effect immediately.
+        Changes take effect immediately.
       </p>
     </div>
 
@@ -45,6 +45,100 @@
               [(ngModel)]="allowGuestsCreateRooms"
               color="primary"
             ></mat-slide-toggle>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-divider"></div>
+
+      <div class="settings-section">
+        <h2 class="section-title">
+          <mat-icon>today</mat-icon>
+          Daily AI Games
+        </h2>
+
+        <p class="setting-desc">
+          Add topics, drag them into order, and keep the current game at the top. Saving activates the top topic immediately, and the queue advances automatically at midnight.
+        </p>
+
+        <div class="daily-game-grid">
+          <div class="daily-game-card" *ngFor="let mode of dailyGameModes">
+            <div class="daily-game-card__header">
+              <div>
+                <h3>{{ mode.label }}</h3>
+                <p>Today: {{ getCurrentScheduleLabel(mode.key) }}</p>
+              </div>
+              <mat-icon>{{ mode.icon }}</mat-icon>
+            </div>
+
+            <div class="daily-game-card__meta">
+              <span class="status-pill" [class.status-on]="dailyGameAdmin[mode.key]?.hasGeneratedGame" [class.status-off]="!dailyGameAdmin[mode.key]?.hasGeneratedGame">
+                {{ dailyGameAdmin[mode.key]?.hasGeneratedGame ? 'Ready' : 'Pending' }}
+              </span>
+              <span class="setting-desc">{{ getGenerationStatusLabel(mode.key) }}</span>
+            </div>
+
+            <div
+              class="daily-topic-list"
+              cdkDropList
+              [cdkDropListData]="dailyGameQueues[mode.key]"
+              (cdkDropListDropped)="reorderTopics(mode.key, $event)"
+            >
+              <div class="daily-topic-empty" *ngIf="!(dailyGameQueues[mode.key]?.length)">
+                There are no queued topics yet.
+              </div>
+
+              <div
+                class="daily-topic-item"
+                *ngFor="let topic of dailyGameQueues[mode.key]; let i = index; trackBy: trackTopic"
+                cdkDrag
+              >
+                <div class="daily-topic-item__header">
+                  <span class="daily-topic-item__label">{{ getTopicLabel(i) }}</span>
+
+                  <div class="daily-topic-item__actions">
+                    <button
+                      mat-icon-button
+                      type="button"
+                      class="daily-topic-item__action"
+                      cdkDragHandle
+                      aria-label="Reorder topic"
+                    >
+                      <mat-icon>drag_indicator</mat-icon>
+                    </button>
+
+                    <button
+                      mat-icon-button
+                      type="button"
+                      class="daily-topic-item__action"
+                      (click)="removeTopic(mode.key, i)"
+                      aria-label="Delete topic"
+                    >
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </div>
+
+                <mat-form-field appearance="fill" class="daily-queue-field">
+                  <mat-label>{{ mode.label }} topic</mat-label>
+                  <input
+                    matInput
+                    [(ngModel)]="dailyGameQueues[mode.key][i]"
+                    [placeholder]="mode.placeholder"
+                  >
+                </mat-form-field>
+              </div>
+            </div>
+
+            <button
+              matButton="outlined"
+              type="button"
+              class="rect-btn daily-topic-add-btn"
+              (click)="addTopic(mode.key)"
+            >
+              <mat-icon>add</mat-icon>
+              Add Topic
+            </button>
           </div>
         </div>
       </div>

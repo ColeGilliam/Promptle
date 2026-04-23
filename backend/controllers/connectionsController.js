@@ -1,7 +1,6 @@
-import OpenAI from 'openai';
 import { OPENAI_API_KEY } from '../config/config.js';
 import { getUsersCollection } from '../config/db.js';
-import { fetchDevSettings } from './devSettingsController.js';
+import { fetchDevSettings } from '../services/devSettings.js';
 import {
   logRejectedTopicAttempt,
   moderateTopicInput,
@@ -9,6 +8,11 @@ import {
   TOPIC_NOT_ALLOWED_ERROR,
 } from '../services/topicModeration.js';
 import { normalizeConnectionsGamePayload } from '../services/connectionsGame.js';
+import {
+  generationOpenAiClient,
+  getTokenUsageLabel,
+  requireOpenAi,
+} from '../services/gameGenerationShared.js';
 import { appLogger } from '../lib/logger.js';
 
 const DEV_EMAIL = 'promptle99@gmail.com';
@@ -25,11 +29,127 @@ async function isDevAccount(auth0Id) {
   }
 }
 
-// Default OpenAI client for live requests; tests can supply a fake replacement through the factory.
-const openai = OPENAI_API_KEY ? new OpenAI({ apiKey: OPENAI_API_KEY }) : null;
+const CONNECTIONS_GENERATION_MODEL = 'gpt-4o-mini';
+
+export function buildConnectionsGenerationMessages({ topic } = {}) {
+  return [
+    {
+      role: 'system',
+      content: `
+          You generate original Connections-style word grouping puzzles.
+          Return ONLY a single JSON object with this exact shape:
+          {
+            "topic": string,
+            "groups": [
+              {
+                "category": string,
+                "difficulty": "yellow" | "green" | "blue" | "purple",
+                "words": [string, string, string, string],
+                "explanation": string
+              }
+            ]
+          }
+
+          Hard requirements:
+          (1) Return exactly 4 groups and exactly 4 words per group.
+          (2) All 16 words must be globally unique. No duplicates, no singular/plural duplicates, no repeated phrases with punctuation changes.
+          (3) Order groups from easiest to hardest: yellow, green, blue, purple.
+          (4) Words should be concise, display-friendly entries, usually 1-2 words.
+          (5) Categories must be precise and defensible.
+          (6) Build in misdirection: several words should look like they could fit other groups at first glance, but the intended solution must still be uniquely solvable.
+          (7) Avoid using the category name as one of the words.
+          (8) Avoid overly obscure trivia unless the topic clearly calls for it.
+          (9) explanation must be one short sentence explaining the actual connection.
+        `,
+    },
+    {
+      role: 'user',
+      content: `
+          Topic: "${topic}"
+
+          Make a Connections puzzle inspired by this topic. Keep it clever, slightly deceptive, and fair.
+          Lean toward cross-category red herrings so multiple words appear to belong together before the real categories become clear.
+        `,
+    },
+  ];
+}
+
+export async function generateConnectionsGameForTopic({
+  topic,
+  model = CONNECTIONS_GENERATION_MODEL,
+  openaiClient = generationOpenAiClient,
+  apiKey = OPENAI_API_KEY,
+  logger = connectionsLogger,
+  requestId = null,
+  auth0Id = null,
+} = {}) {
+  const normalizedTopic = typeof topic === 'string' ? topic.trim() : '';
+  if (!normalizedTopic) {
+    throw new Error('Please provide a topic in the request body.');
+  }
+
+  requireOpenAi(openaiClient, apiKey, 'OpenAI API key is missing. Set OPENAI_API_KEY in your environment.');
+
+  const completion = await openaiClient.chat.completions.create({
+    model,
+    temperature: 0.9,
+    response_format: { type: 'json_object' },
+    messages: buildConnectionsGenerationMessages({ topic: normalizedTopic }),
+  });
+
+  const raw = completion.choices[0]?.message?.content || '{}';
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (error) {
+    logger.error('connections_generation_invalid_json', {
+      requestId,
+      auth0Id,
+      topic: normalizedTopic,
+      raw,
+      error,
+    });
+    throw new Error('AI response was not valid JSON.');
+  }
+
+  let payload;
+  try {
+    payload = normalizeConnectionsGamePayload(parsed, normalizedTopic);
+  } catch (error) {
+    logger.error('connections_generation_validation_failed', {
+      requestId,
+      auth0Id,
+      topic: normalizedTopic,
+      parsed,
+      error,
+    });
+    throw new Error(error.message || 'AI response was not a valid Connections puzzle.');
+  }
+
+  const successLogPayload = {
+    requestId,
+    auth0Id,
+    topic: payload.topic,
+    groups: payload.groups.map((group) => ({
+      category: group.category,
+      difficulty: group.difficulty,
+      words: group.words,
+    })),
+    model,
+    tokenUsage: getTokenUsageLabel(completion),
+  };
+
+  if (typeof logger.debug === 'function') {
+    logger.debug('connections_generation_succeeded', successLogPayload);
+  } else if (typeof logger.info === 'function') {
+    logger.info('connections_generation_succeeded', successLogPayload);
+  }
+
+  return payload;
+}
 
 export function createGenerateConnectionsHandler({
-  openaiClient = openai,
+  openaiClient = generationOpenAiClient,
   apiKey = OPENAI_API_KEY,
   logger = connectionsLogger,
   isDevAccountFn = isDevAccount,
@@ -118,100 +238,14 @@ export function createGenerateConnectionsHandler({
     }
 
     try {
-      const completion = await openaiClient.chat.completions.create({
-        model: 'gpt-4o-mini',
-        temperature: 0.9,
-        // Ask for JSON up front, then still validate the result because model output is untrusted input.
-        response_format: { type: 'json_object' },
-        messages: [
-          {
-            role: 'system',
-            content: `
-            You generate original Connections-style word grouping puzzles.
-            Return ONLY a single JSON object with this exact shape:
-            {
-              "topic": string,
-              "groups": [
-                {
-                  "category": string,
-                  "difficulty": "yellow" | "green" | "blue" | "purple",
-                  "words": [string, string, string, string],
-                  "explanation": string
-                }
-              ]
-            }
-
-            Hard requirements:
-            (1) Return exactly 4 groups and exactly 4 words per group.
-            (2) All 16 words must be globally unique. No duplicates, no singular/plural duplicates, no repeated phrases with punctuation changes.
-            (3) Order groups from easiest to hardest: yellow, green, blue, purple.
-            (4) Words should be concise, display-friendly entries, usually 1-2 words.
-            (5) Categories must be precise and defensible.
-            (6) Build in misdirection: several words should look like they could fit other groups at first glance, but the intended solution must still be uniquely solvable.
-            (7) Avoid using the category name as one of the words.
-            (8) Avoid overly obscure trivia unless the topic clearly calls for it.
-            (9) explanation must be one short sentence explaining the actual connection.
-          `,
-          },
-          {
-            role: 'user',
-            content: `
-            Topic: "${normalizedTopic}"
-
-            Make a Connections puzzle inspired by this topic. Keep it clever, slightly deceptive, and fair.
-            Lean toward cross-category red herrings so multiple words appear to belong together before the real categories become clear.
-          `,
-          },
-        ],
-      });
-
-      const raw = completion.choices[0]?.message?.content || '{}';
-      let parsed;
-      try {
-        parsed = JSON.parse(raw);
-      } catch (error) {
-        logger.error('connections_generation_invalid_json', {
-          requestId: req.id || null,
-          auth0Id: auth0Id || null,
-          topic: normalizedTopic,
-          raw,
-          error,
-        });
-        return res.status(500).json({ error: 'AI response was not valid JSON.' });
-      }
-
-      let payload;
-      try {
-        // Accept small model drift in field names/order, but enforce a strict 4x4 game contract.
-        payload = normalizeConnectionsGamePayload(parsed, normalizedTopic);
-      } catch (error) {
-        logger.error('connections_generation_validation_failed', {
-          requestId: req.id || null,
-          auth0Id: auth0Id || null,
-          topic: normalizedTopic,
-          parsed,
-          error,
-        });
-        return res.status(500).json({ error: error.message || 'AI response was not a valid Connections puzzle.' });
-      }
-
-      const successLogPayload = {
+      const payload = await generateConnectionsGameForTopic({
+        topic: normalizedTopic,
+        openaiClient,
+        apiKey,
+        logger,
         requestId: req.id || null,
         auth0Id: auth0Id || null,
-        topic: payload.topic,
-        groups: payload.groups.map((group) => ({
-          category: group.category,
-          difficulty: group.difficulty,
-          words: group.words,
-        })),
-        tokenUsage: completion.usage || 'No usage data',
-      };
-      if (typeof logger.debug === 'function') {
-        logger.debug('connections_generation_succeeded', successLogPayload);
-      } else if (typeof logger.info === 'function') {
-        logger.info('connections_generation_succeeded', successLogPayload);
-      }
-
+      });
       res.json(payload);
     } catch (error) {
       logger.error('connections_generation_failed', {
@@ -220,8 +254,9 @@ export function createGenerateConnectionsHandler({
         topic: normalizedTopic,
         error,
       });
-      // Keep the client response generic rather than exposing raw SDK or model details.
-      res.status(500).json({ error: 'Failed to generate Connections puzzle.' });
+      res.status(500).json({
+        error: error instanceof Error && error.message ? error.message : 'Failed to generate Connections puzzle.',
+      });
     }
   };
 }

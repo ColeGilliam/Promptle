@@ -10,6 +10,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
 import { take } from 'rxjs';
 import { AuthenticationService } from '../../services/authentication.service';
+import { DailyGameMeta } from '../../services/setup-game';
 import {
   createCrosswordPuzzleFromGame,
   createEmptyCrosswordGuesses,
@@ -25,6 +26,7 @@ import { LoadSavedGameCard } from '../../shared/ui/load-saved-game-card/load-sav
 import { GameFeedbackService } from '../../services/game-feedback';
 import { CustomGameSessionService } from '../../services/custom-game-session';
 import { GameEndPopup, GameEndPopupStat } from '../../shared/ui/game-end-popup/game-end-popup';
+import { DailyGameCtaComponent } from '../../shared/ui/daily-game-cta/daily-game-cta';
 
 type FeedbackTone = 'neutral' | 'success' | 'danger';
 const CROSSWORD_GENERATION_ERROR = 'Sorry! The puzzle failed to generate. Please try again.';
@@ -78,6 +80,7 @@ interface ClueCheckSummary {
     NavbarComponent,
     LoadSavedGameCard,
     GameEndPopup,
+    DailyGameCtaComponent,
   ],
   templateUrl: './crossword.html',
   styleUrls: ['./crossword.css'],
@@ -91,6 +94,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
   showTopicPrompt = true;
   isDevAccount = false;
   allowAllAIGeneration = false;
+  dailyGameSummary: { topic?: string; date?: string; available?: boolean } | null = null;
 
   activePuzzle: CrosswordPuzzle | null = null;
   activeGame: CrosswordGameData | null = null;
@@ -120,6 +124,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
   private hasShownIncorrectCompletionPopup = false;
   private auth0Id = '';
   private currentPlayId = '';
+  private currentDailyGame: DailyGameMeta | null = null;
   private sessionInteracted = false;
   private sessionFinalized = false;
 
@@ -303,6 +308,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
             this.loading = false;
           } catch {
             this.loading = false;
+            this.currentDailyGame = null;
             this.error = CROSSWORD_GENERATION_ERROR;
             this.feedback = 'Try a different topic or try again.';
             this.feedbackTone = 'danger';
@@ -311,6 +317,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           this.loading = false;
+          this.currentDailyGame = null;
           this.error = err?.error?.code === 'topic_not_allowed'
             ? (err?.error?.error ?? 'This topic is not allowed.')
             : CROSSWORD_GENERATION_ERROR;
@@ -319,6 +326,43 @@ export class CrosswordComponent implements OnInit, OnDestroy {
           this.showTopicPrompt = true;
         },
       });
+    });
+  }
+
+  playDailyGame(): void {
+    if (this.loading || (!this.dailyGameSummary?.available && !this.currentDailyGame)) return;
+
+    this.loading = true;
+    this.error = '';
+    this.feedback = 'Loading today\'s crossword...';
+    this.feedbackTone = 'neutral';
+    this.showTopicPrompt = false;
+    this.clearActivePuzzleState();
+
+    this.crosswordGameService.fetchDailyGame().subscribe({
+      next: (game) => {
+        try {
+          this.activateGame(game);
+          this.feedback = `Daily crossword ready: ${game.topic}`;
+          this.feedbackTone = 'success';
+          this.loading = false;
+        } catch {
+          this.loading = false;
+          this.currentDailyGame = null;
+          this.error = CROSSWORD_GENERATION_ERROR;
+          this.feedback = 'Try again later or generate a different topic.';
+          this.feedbackTone = 'danger';
+          this.showTopicPrompt = true;
+        }
+      },
+      error: (err) => {
+        this.loading = false;
+        this.currentDailyGame = null;
+        this.error = err?.error?.error ?? 'Today\'s crossword is not available yet.';
+        this.feedback = 'Try again later or generate a different topic.';
+        this.feedbackTone = 'danger';
+        this.showTopicPrompt = true;
+      },
     });
   }
 
@@ -831,13 +875,16 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     return clue.id;
   }
 
+  // Use the same daily summary shown elsewhere so the crossword CTA and generation gate stay aligned.
   private loadDevSettings(): void {
-    this.http.get<{ allowAllAIGeneration?: boolean }>('/api/dev-settings').subscribe({
+    this.http.get<{ allowAllAIGeneration?: boolean; dailyGames?: { crossword?: { topic?: string; date?: string; available?: boolean } } }>('/api/dev-settings').subscribe({
       next: (data) => {
         this.allowAllAIGeneration = data.allowAllAIGeneration ?? false;
+        this.dailyGameSummary = data.dailyGames?.crossword ?? null;
       },
       error: () => {
         this.allowAllAIGeneration = false;
+        this.dailyGameSummary = null;
       },
     });
   }
@@ -889,6 +936,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
 
     // Rehydrate all runtime-only structures from the saved snapshot plus the rebuilt puzzle model.
     this.activeGame = game;
+    this.currentDailyGame = game.dailyGame ?? null;
     this.activePuzzle = puzzle;
     this.topic = game.topic;
     this.guesses = guesses;
@@ -944,6 +992,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     this.stopTimer();
     this.activePuzzle = null;
     this.activeGame = null;
+    this.currentDailyGame = null;
     this.guesses = [];
     this.activeDirection = 'across';
     this.activeCell = null;
@@ -1012,6 +1061,11 @@ export class CrosswordComponent implements OnInit, OnDestroy {
 
     this.viewingEndedPuzzle = false;
     this.topic = replayTopic;
+    if (this.currentDailyGame) {
+      this.playDailyGame();
+      return;
+    }
+
     this.generateGame();
   }
 
@@ -1272,6 +1326,10 @@ export class CrosswordComponent implements OnInit, OnDestroy {
 
   // Start one trackable custom-game session so later interaction/finalization calls all refer back to the same play attempt.
   private startSession(topic: string): void {
+    if (this.currentDailyGame) {
+      this.resetSessionState();
+      return;
+    }
 
     const auth0Id = this.auth0Id.trim();
     if (!auth0Id) {

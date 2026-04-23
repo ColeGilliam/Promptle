@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { DailyGameMeta } from './setup-game';
 
 export type CrosswordDirection = 'across' | 'down';
 
@@ -21,6 +22,7 @@ export interface CrosswordGameData {
   topic: string;
   size: number;
   entries: CrosswordEntryDefinition[];
+  dailyGame?: DailyGameMeta;
 }
 
 export interface CrosswordPuzzleDefinition extends CrosswordGameData {
@@ -391,5 +393,9 @@ export class CrosswordGameService {
       topic,
       auth0Id,
     });
+  }
+
+  fetchDailyGame(): Observable<CrosswordGameData> {
+    return this.http.get<CrosswordGameData>('/api/daily-games/crossword');
   }
 }
