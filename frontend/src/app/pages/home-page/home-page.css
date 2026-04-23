@@ -514,7 +514,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 24px;
-  align-items: start;
+  align-items: stretch;
 }
 
 /* Play cards */
@@ -523,6 +523,8 @@
   border: 1px solid rgba(255, 255, 255, 0.55) !important;
   box-shadow: 0 4px 28px rgba(60, 145, 241, 0.14), 0 1px 4px rgba(0, 0, 0, 0.04) !important;
   transition: transform 0.25s ease, box-shadow 0.25s ease !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
 .play-card:hover {
@@ -534,6 +536,7 @@
   padding: 28px 24px !important;
   display: flex;
   flex-direction: column;
+  flex: 1;
   gap: 14px;
   box-sizing: border-box;
 }
@@ -1015,91 +1018,6 @@
   color: #fca5a5;
 }
 
-.topic-chips-wrap {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  max-height: 148px;
-  overflow-y: auto;
-  padding: 4px 2px;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(99, 102, 241, 0.3) transparent;
-}
-
-.topic-chips-wrap::-webkit-scrollbar {
-  width: 4px;
-}
-
-.topic-chips-wrap::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.topic-chips-wrap::-webkit-scrollbar-thumb {
-  background: rgba(99, 102, 241, 0.3);
-  border-radius: 2px;
-}
-
-.topic-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 6px 14px;
-  border-radius: 999px;
-  border: 1.5px solid rgba(99, 102, 241, 0.35);
-  background: rgba(99, 102, 241, 0.06);
-  color: #4f46e5;
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease, color 0.15s ease;
-  white-space: nowrap;
-  line-height: 1;
-  letter-spacing: 0.01em;
-}
-
-.topic-chip:hover {
-  background: rgba(99, 102, 241, 0.12);
-  border-color: rgba(99, 102, 241, 0.55);
-  transform: translateY(-1px);
-}
-
-.topic-chip--selected {
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  border-color: transparent;
-  color: #fff;
-  box-shadow: 0 3px 12px rgba(99, 102, 241, 0.4);
-}
-
-.topic-chip--selected:hover {
-  background: linear-gradient(135deg, #4f46e5, #7c3aed);
-  transform: translateY(-1px);
-}
-
-:host-context(.dark) .topic-chip {
-  border-color: rgba(129, 140, 248, 0.35);
-  background: rgba(129, 140, 248, 0.08);
-  color: #a5b4fc;
-}
-
-:host-context(.dark) .topic-chip:hover {
-  background: rgba(129, 140, 248, 0.16);
-  border-color: rgba(129, 140, 248, 0.55);
-}
-
-:host-context(.dark) .topic-chip--selected {
-  background: linear-gradient(135deg, #6366f1, #7c3aed);
-  border-color: transparent;
-  color: #fff;
-  box-shadow: 0 3px 12px rgba(99, 102, 241, 0.5);
-}
-
-.no-topics-msg {
-  margin: 0;
-  font-size: 0.85rem;
-  color: #94a3b8;
-  font-style: italic;
-  width: 100%;
-}
-
 .game-cards-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1394,10 +1312,6 @@
 
   .game-card-banner {
     height: 110px;
-  }
-
-  .topic-chips-wrap {
-    max-height: 120px;
   }
 }
 

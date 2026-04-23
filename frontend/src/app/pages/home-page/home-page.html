@@ -180,29 +180,22 @@
           <p class="play-card-desc">Pick from curated topics pulled straight from the database — no wait time.</p>
 
           <div class="play-card-form">
-            <mat-form-field appearance="fill" class="topic-field topic-search-field" subscriptSizing="dynamic">
-              <mat-label>Search topics</mat-label>
-              <mat-icon matPrefix class="topic-search-icon">search</mat-icon>
+            <mat-form-field appearance="fill" class="topic-field" subscriptSizing="dynamic">
+              <mat-label>Select a Topic</mat-label>
               <input
                 type="text"
                 matInput
+                [matAutocomplete]="topicAuto"
                 [(ngModel)]="selectedTopicQuery"
                 (ngModelChange)="onTopicQueryChange($event)"
-                placeholder="Filter topics…"
+                placeholder="Search topics…"
               >
+              <mat-autocomplete #topicAuto (optionSelected)="onTopicOptionSelected($event.option.value)">
+                <mat-option *ngFor="let topic of filteredTopics" [value]="topic.topicName">
+                  {{ topic.topicName }}
+                </mat-option>
+              </mat-autocomplete>
             </mat-form-field>
-
-            <div class="topic-chips-wrap">
-              <button
-                *ngFor="let topic of filteredTopics"
-                class="topic-chip"
-                [class.topic-chip--selected]="selectedTopic?.topicId === topic.topicId"
-                (click)="onTopicChipClick(topic)"
-                type="button"
-              >{{ topic.topicName }}</button>
-              <p *ngIf="filteredTopics.length === 0 && selectedTopicQuery" class="no-topics-msg">No topics match "{{ selectedTopicQuery }}"</p>
-              <p *ngIf="filteredTopics.length === 0 && !selectedTopicQuery" class="no-topics-msg">Loading topics…</p>
-            </div>
 
             <button
               matButton="filled"

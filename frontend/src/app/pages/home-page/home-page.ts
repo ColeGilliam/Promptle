@@ -464,10 +464,6 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  onTopicChipClick(topic: TopicInfo) {
-    this.selectedTopic = this.selectedTopic?.topicId === topic.topicId ? null : topic;
-  }
-
   onTopicOptionSelected(topicName: string) {
     this.selectedTopic =
       this.allTopics.find(topic => topic.topicName === topicName) ?? null;
