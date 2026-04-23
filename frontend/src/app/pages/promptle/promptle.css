@@ -10,7 +10,6 @@
   position: relative;
 }
 
-/* ── Background glow ── */
 .page-glow {
   position: absolute;
   inset: 0;
@@ -27,7 +26,6 @@
     radial-gradient(ellipse 40% 30% at 80% 70%, rgba(139, 92, 246, 0.1) 0%, transparent 55%);
 }
 
-/* ── Floating letters background ── */
 .letters-bg {
   position: absolute;
   inset: 0;
@@ -78,7 +76,6 @@
   to   { transform: translate( 70px,  30px) rotate( 23deg) scale(1.14); }
 }
 
-/* ── Game animation toggle ── */
 :host-context(.no-game-anims) .pregame-icon-wrap--waiting mat-icon,
 :host-context(.no-game-anims) .powerup-hint-toast,
 :host-context(.no-game-anims) .chaos-effect-banner,
@@ -538,7 +535,6 @@
   --mat-select-focused-arrow-color: var(--guess-focus-color);
 }
 
-/* ── Error banner ── */
 .error-state {
   display: flex;
   flex-direction: column;
@@ -594,7 +590,6 @@
   background: rgba(30, 41, 59, 0.9);
 }
 
-/* ── Multiplayer pre-game panel ── */
 .mp-pregame-card {
   width: 100%;
   margin-bottom: 10px;
@@ -744,7 +739,6 @@
 :host-context(.dark) .mp-host-panel p,
 :host-context(.dark) .mp-waiting-panel p { color: #94a3b8; }
 
-/* ── Stopwatch bar ── */
 .stopwatch-bar {
   display: flex;
   align-items: center;
@@ -893,7 +887,6 @@
 :host-context(.dark) .peek-btn     { border-color: rgba(234, 179, 8, 0.45);  color: #fde68a; }
 :host-context(.dark) .freeze-btn   { border-color: rgba(6, 182, 212, 0.45);  color: #67e8f9; }
 
-/* ── 1v1 Skip-Turn power-up bar ────────────────────── */
 .skip-turn-bar {
   width: 100%;
   max-width: 900px;
@@ -1094,7 +1087,6 @@
   font-style: italic;
 }
 
-/* ── Turn indicator (1v1) ──────────────────────────── */
 .turn-indicator-bar {
   width: 100%;
   max-width: 900px;
@@ -1136,7 +1128,6 @@
   border-color: #fbbf24;
 }
 
-/* ── 1v1 shared grid: player-label column ──────────── */
 .player-label-column {
   flex: 0 0 90px !important;
   width: 90px !important;
@@ -1160,7 +1151,6 @@
   color: #cbd5e1;
 }
 
-/* ── Mode badge in pre-game card ───────────────────── */
 .mode-badge {
   display: inline-block;
   padding: 4px 14px;
@@ -1176,7 +1166,6 @@
   background: linear-gradient(135deg, #f97316, #ef4444);
 }
 
-/* ── Loss overlay ──────────────────────────────────── */
 .loss-overlay {
   position: fixed;
   inset: 0;
@@ -1297,7 +1286,6 @@
   color: #f87171;
 }
 
-/* ── Spectate banner ──────────────────────────────── */
 .spectate-banner {
   display: flex;
   align-items: center;
@@ -1332,32 +1320,24 @@
    ══════════════════════════════════════════════════════ */
 @media (max-width: 600px) {
 
-  /* ── Hide / shrink the decorative floating letters so they
-        don't push the page wider than the viewport ── */
   .fl-1, .fl-2, .fl-3, .fl-4, .fl-5,
   .fl-6, .fl-7, .fl-8, .fl-9 { display: none; }
 
-  /* ── Tighten overall container padding ── */
   .promptle-container {
     padding: 0.5rem 0.6rem;
   }
 
-  /* ── Guess-input row: let items wrap so the dropdown
-        sits on its own line and buttons flow below ── */
   .guess-input {
     flex-wrap: wrap;
     gap: 8px;
   }
 
-  /* Full-width dropdown on its own line */
   .guess-select-field {
     min-width: 0;
     width: 100%;
     flex: 1 1 100%;
   }
 
-  /* Smaller buttons so SUBMIT / HINT / SAVE / RESTART
-     all fit comfortably on one or two rows ── */
   .guess-input button {
     min-height: 40px;
     padding: 0 12px;
@@ -1365,13 +1345,11 @@
     flex: 1 1 auto;
   }
 
-  /* Saved-status text should wrap normally */
   .saved-status-inline {
     white-space: normal;
     font-size: 0.78rem;
   }
 
-  /* Tighter cards */
   .guess-actions-card {
     padding: 10px 12px;
   }
@@ -1384,20 +1362,17 @@
     padding: 12px 12px;
   }
 
-  /* Narrower columns so more fit without excessive scroll */
   .game-grid .column {
     flex: 0 0 130px;
     width: 130px;
   }
 
-  /* Shorter cells — saves vertical space */
   .guess-cell {
     min-height: 56px;
     padding: 6px;
     font-size: 0.85rem;
   }
 
-  /* Stopwatch: smaller font */
   .stopwatch-value {
     font-size: 1.15rem;
   }

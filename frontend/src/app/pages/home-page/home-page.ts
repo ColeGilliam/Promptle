@@ -458,15 +458,14 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
   onTopicQueryChange(query: string) {
     this.selectedTopicQuery = query;
     this.filterTopics(query);
-
-    const normalized = query.trim().toLowerCase();
-    if (!normalized) {
+    // Deselect if the selected topic no longer appears in filtered results
+    if (this.selectedTopic && !this.selectedTopic.topicName.toLowerCase().includes(query.trim().toLowerCase())) {
       this.selectedTopic = null;
-      return;
     }
+  }
 
-    this.selectedTopic =
-      this.allTopics.find(topic => topic.topicName.toLowerCase() === normalized) ?? null;
+  onTopicChipClick(topic: TopicInfo) {
+    this.selectedTopic = this.selectedTopic?.topicId === topic.topicId ? null : topic;
   }
 
   onTopicOptionSelected(topicName: string) {

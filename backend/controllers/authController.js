@@ -1,4 +1,3 @@
-// controllers/authController.js
 import { getUsersCollection } from '../config/db.js';
 import { ManagementClient } from 'auth0';
 import { appLogger } from '../lib/logger.js';
@@ -10,7 +9,6 @@ const auth0Manager = new ManagementClient({
 });
 const authLogger = appLogger.child({ component: 'auth' });
 
-// Module-level cache (initialized on first use)
 let cachedUsersCollection = null;
 
 function getCachedUsersCollection() {

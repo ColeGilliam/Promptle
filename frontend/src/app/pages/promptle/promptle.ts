@@ -1,4 +1,3 @@
-// promptle.component.ts
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -36,7 +35,6 @@ type GuessColor = 'green' | 'yellow' | 'gray';
 type QuantitativeDirection = 'up' | 'down';
 const QUANTITATIVE_CLOSE_RATIO = 0.25; // Number clues turn yellow when the guess is within this percent of the value range.
 
-// Each rendered guess cell keeps both the legacy color and any directional hint.
 interface GuessCellFeedback {
   color: GuessColor;
   direction?: QuantitativeDirection;
@@ -123,9 +121,6 @@ interface DevSettingsResponse {
   styleUrls: ['./promptle.css']
 })
 export class PromptleComponent implements OnInit, OnDestroy {
-  //─────────────────────────────────────
-  // === Game state ===
-  //─────────────────────────────────────
   topic = '';
   headers: string[] = [];
   answers: HydratedGameAnswer[] = [];
@@ -153,9 +148,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
     try { return !!localStorage.getItem('promptle_saved_game'); } catch { return false; }
   }
 
-  //─────────────────────────────────────
-  // === Share ===
-  //─────────────────────────────────────
   private shareIdParam = '';
   private shareTopicParam = '';
   private currentSinglePlayerSource: 'custom' | 'popular' | 'daily' | '' = '';
@@ -225,7 +217,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Socket guesses wait in memory until the answer payload is ready, then flush once with complete feedback.
   private flushPendingMultiplayerGuesses(): void {
     this.pendingSpectateGuesses.forEach((guess) => this.addSpectateGuess(guess));
     this.pendingOneVsOneGuesses.forEach((guess) => this.addOneVsOneGuess(guess));
@@ -253,9 +244,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
       .sort((a, b) => b.score - a.score || (a.finishTimeMs ?? Infinity) - (b.finishTimeMs ?? Infinity));
   }
 
-  //─────────────────────────────────────
-  // === Multiplayer ===
-  //─────────────────────────────────────
   currentRoom = '';
   isMultiplayer = false;
   isHost = false;
@@ -278,12 +266,10 @@ export class PromptleComponent implements OnInit, OnDestroy {
   showPromptleAnswerAtTop = false;
   private myAuth0Id = '';
 
-  // Stopwatch
   stopwatchMs = 0;
   myFinishTimeMs: number | null = null;
   private stopwatchInterval: ReturnType<typeof setInterval> | null = null;
 
-  // Power-ups
   powerupsUsed = { blackout: false, peek: false, freeze: false };
   activePowerupEffect: { type: string; fromPlayerName: string; secondsLeft: number } | null = null;
   powerupHint: { column: string; value: string } | null = null;
@@ -292,24 +278,16 @@ export class PromptleComponent implements OnInit, OnDestroy {
   private blackoutInterval: ReturnType<typeof setInterval> | null = null;
   private powerupHintTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  // Chaos incoming effects (shown to the victim)
   isFrozen = false;
   freezeSecondsLeft = 0;
   private freezeInterval: ReturnType<typeof setInterval> | null = null;
 
-  isChaos = false;  // true when mode === 'chaos' (has power-ups)
+  isChaos = false;
 
-  //─────────────────────────────────────
-  // === Spectate state ===
-  //─────────────────────────────────────
   isSpectating = false;
   spectateGuesses: SpectateGuess[] = [];
-  // Spectator rows are withheld until the current game payload is ready to compute full feedback.
   private pendingSpectateGuesses: PendingSpectateGuess[] = [];
 
-  //─────────────────────────────────────
-  // === 1v1 turn-based state ===
-  //─────────────────────────────────────
   isOneVsOne = false;
   isMyTurn = false;
   turnTimeLeft = 30;
@@ -322,7 +300,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
   private pendingOneVsOneGuesses: PendingOneVsOneGuess[] = [];
   private turnCountdownInterval: ReturnType<typeof setInterval> | null = null;
   private oneVsOneSubs: Subscription[] = [];
-  // Rows only render after answers/correctAnswer are hydrated.
   private gameDataReady = false;
 
   private roomStateSub?:    Subscription;
@@ -419,7 +396,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
         return;
       }
 
-      // ── Single-player ──
       console.log('[Promptle] Single-player mode');
       this.isMultiplayer = false;
       this.gameStarted   = true;   // SP starts immediately
@@ -444,8 +420,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
         this.currentDailyGame = null;
         this.resetCustomGameFeedback();
         this.resetCustomGameSession();
-        // Touch dev settings first so a fresh-day rollover can kick off today's pre-generation
-        // before the Promptle daily endpoint is requested.
         this.http.get('/api/dev-settings').subscribe({
           next: () => {
             this.loadGame({ dailyMode: 'promptle' });
@@ -486,7 +460,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ─── Game-flow subscriptions (host status + game started) ───────────────
   private subscribeToGameFlow() {
     this.hostStatusSub = this.multiplayerService.onHostStatus().subscribe(data => {
       this.isHost = data.isHost;
@@ -511,7 +484,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ─── 1v1 subscriptions ────────────────────────────────────────────────
   private subscribeToOneVsOne() {
     const sub1 = this.multiplayerService.on1v1Started().subscribe(data => {
       console.log('[Promptle] 1v1 started! First turn:', data.currentTurnPlayerName);
@@ -585,14 +557,12 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.oneVsOneSubs = [sub1, sub2, sub3, sub4, sub5];
   }
 
-  // ─── Host action: start game ──────────────────────────────────────────
   hostStartGame() {
     if (!this.isHost || !this.currentRoom) return;
     const mode = this.isOneVsOne ? '1v1' : 'standard';
     this.multiplayerService.startGame(this.currentRoom, mode);
   }
 
-  // ─── 1v1 skip-turn power-up ───────────────────────────────────────────
   useSkipTurn() {
     if (this.skipTurnUsed || !this.isOneVsOne || this.isMyTurn || !this.gameStarted || this.isGameOver) return;
     this.skipTurnUsed = true;
@@ -724,7 +694,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
     }, 1000);
   }
 
-  // ─── Stopwatch helpers ────────────────────────────────────────────────
   private startStopwatch(fromMs = 0) {
     this.stopwatchMs = fromMs;
     this.stopwatchInterval = setInterval(() => {
@@ -748,7 +717,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
     return `${min}:${String(sec).padStart(2, '0')}.${tenths}`;
   }
 
-  // ─── Turn countdown helpers (1v1) ─────────────────────────────────────
   private startTurnCountdown() {
     this.turnTimeLeft = 30;
     this.turnCountdownInterval = setInterval(() => {
@@ -765,7 +733,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ─── Opponent events ─────────────────────────────────────────────────
   private subscribeToOpponentEvents() {
     this.opponentGuessSub = this.multiplayerService.onOpponentGuess().subscribe(data => {
       console.log('[Promptle] opponent-guess received:', data);
@@ -825,7 +792,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ─── Save / load ─────────────────────────────────────────────────────
   saveGame() {
     if (this.isMultiplayer) return;
     if (!this.topic || !this.headers.length) return;
@@ -1015,7 +981,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
   private loadGame(params: { topic?: string; topicId?: number; room?: string; answer?: string; auth0Id?: string; dailyMode?: 'promptle' | 'connections' | 'crossword' }) {
     this.gameLoading = true;
     this.gameError   = '';
-    // Every new room/topic load closes the gate again so any incoming rows wait for the matching payload.
     this.gameDataReady = false;
     this.pendingSpectateGuesses = [];
     this.pendingOneVsOneGuesses = [];
@@ -1075,7 +1040,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
     if (this.isMultiplayer) this.cdr.detectChanges();
   }
 
-  // ─── Guess logic ─────────────────────────────────────────────────────
   onGuessQueryChange(query: string) {
     this.guessQuery = query;
     this.filterAnswers(query);
@@ -1104,7 +1068,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
     return color === 'green' || color === 'yellow' ? color : 'gray';
   }
 
-  // Match a persisted/networked guess back to a hydrated answer so we can rebuild richer feedback when possible.
   private findAnswerByGuess(name?: string, values: string[] = []): HydratedGameAnswer | undefined {
     const normalizedName = name?.trim().toLowerCase();
     if (normalizedName) {
@@ -1119,7 +1082,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
     );
   }
 
-  // Create a guess from persisted/network data so we can display it in the UI with proper feedback.
   private createGuessEntry(payload: {
     name?: string;
     values?: string[];
@@ -1164,17 +1126,14 @@ export class PromptleComponent implements OnInit, OnDestroy {
     return this.getGuessedNamesLowercase().has(name.trim().toLowerCase());
   }
 
-  // Evaluate cell feedback based on the guessed cells and the correct answer's cells.
   private evaluateGuessFeedback(guessedCells: GameCell[], correctCells: GameCell[]): GuessCellFeedback[] {
     return guessedCells.map((cell, index) => this.getCellFeedback(cell, correctCells[index], index));
   }
 
-  // Evaluate guess colors based on the guessed cells and the correct answer's cells.
   private evaluateGuessColors(guessedCells: GameCell[], correctCells: GameCell[]): GuessColor[] {
     return this.evaluateGuessFeedback(guessedCells, correctCells).map(({ color }) => color);
   }
 
-  // Determine the feedback of a cell based on its value and the correct answer's cell.
   private getCellFeedback(
     guessedCell?: GameCell,
     correctCell?: GameCell,
@@ -1199,7 +1158,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
     return { color: 'gray' };
   }
 
-  // For number-type cells: check if the 'value' part matches exactly (after confirming both are numbers).
   private hasMatchingNumberValue(guessedCell?: GameCell, correctCell?: GameCell): boolean {
     if (guessedCell?.kind !== 'number' || correctCell?.kind !== 'number') return false;
 
@@ -1224,7 +1182,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
       && guessedNumber === correctNumber;
   }
 
-  // Number cells use the range-based yellow threshold; matching-label references are always yellow and only use the number for arrow direction.
   private getQuantitativeCellFeedback(
     guessedCell?: GameCell,
     correctCell?: GameCell,
@@ -1267,7 +1224,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
     return null;
   }
 
-  // Reference numbers are stored as strings, so parse both number cells and reference ordinals through one helper.
   private parseComparableNumber(value: unknown): number | null {
     if (typeof value === 'number' && Number.isFinite(value)) return value;
 
@@ -1288,7 +1244,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
     return this.parseComparableNumber(cell.parts?.number);
   }
 
-  // Number columns use the full column range as the basis for "close" yellow feedback.
   private getColumnNumericValues(columnIndex: number): number[] {
     return this.answers
       .map((answer) => this.getNumericCellValue(answer.cells[columnIndex]))
@@ -1308,11 +1263,9 @@ export class PromptleComponent implements OnInit, OnDestroy {
     const range = maxValue - minValue;
     if (!Number.isFinite(range) || range <= 0) return false;
 
-    // Yellow means the guess falls within a configurable percentage of that column's observed range.
     return difference <= range * QUANTITATIVE_CLOSE_RATIO;
   }
 
-  // For list-type cells: check if there's at least one overlapping item after normalization.
   private hasListItemMatch(guessedCell?: GameCell, correctCell?: GameCell): boolean {
     const guessedItems = this.getComparableItems(guessedCell);
     const correctItems = this.getComparableItems(correctCell);
@@ -1321,7 +1274,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
     return this.countOverlap(guessedItems, correctItems) >= 1;
   }
 
-  // For reference-type cells: check if the 'label' part matches after normalization.
   private hasReferencePartMatch(guessedCell?: GameCell, correctCell?: GameCell): boolean {
     const guessedIsReference = guessedCell?.kind === 'reference';
     const correctIsReference = correctCell?.kind === 'reference';
@@ -1332,7 +1284,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
     return !!guessedLabel && guessedLabel === correctLabel;
   }
 
-  // For text-type cells: check if there's significant token overlap (at least 2 shared tokens) after normalization.
   private hasTextTokenMatch(guessedCell?: GameCell, correctCell?: GameCell): boolean {
     if (!guessedCell || !correctCell) return false;
     if (guessedCell.kind === 'number' || correctCell.kind === 'number') return false;
@@ -1342,7 +1293,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
     return this.countOverlap(guessedTokens, correctTokens) >= 2;
   }
 
-  // For list-type cells: extract and normalize the list items for comparison.
   private getComparableItems(cell?: GameCell): string[] {
     if (!cell) return [];
     const items = Array.isArray(cell.items) ? cell.items : [];
@@ -1369,7 +1319,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
     return value.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
   }
 
-  // Count the number of overlapping items between two arrays of strings.
   private countOverlap(left: string[], right: string[]): number {
     if (!left.length || !right.length) return 0;
     const rightSet = new Set(right);
@@ -1555,8 +1504,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.guessQuery    = '';
 
     if (this.isOneVsOne) {
-      // Add to submittedGuesses immediately so the dropdown filter removes this answer right away.
-      // on1v1GuessMade will handle adding to oneVsOneGuesses (the shared grid) once server confirms.
       this.submittedGuesses.push({
         name: guessed.name,
         values: [...guessed.values],
@@ -1571,7 +1518,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Standard (non-1v1) flow
     this.submittedGuesses.push({
       name: guessed.name,
       values: [...guessed.values],
