@@ -56,7 +56,15 @@ app-navbar {
   border-radius: var(--rect-btn-radius);
 }
 
-/* ── Global animated autocomplete / select dropdowns ── */
+/* Prevent iOS Safari from auto-zooming when any input is focused.
+   iOS zooms when input font-size < 16px; this overrides globally on mobile. */
+@media (max-width: 768px) {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+}
+
+/* Global animated autocomplete / select dropdowns */
 @keyframes panel-reveal {
   from {
     opacity: 0;

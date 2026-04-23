@@ -229,11 +229,12 @@
             <mat-label>Select a Guess</mat-label>
             <input
               type="text"
+              inputmode="none"
               matInput
               [matAutocomplete]="guessAuto"
               [(ngModel)]="guessQuery"
               (ngModelChange)="onGuessQueryChange($event)"
-              placeholder="Start typing a guess"
+              placeholder="Tap to pick a guess"
               [disabled]="(isOneVsOne && !isMyTurn) || isFrozen"
             >
             <mat-autocomplete
