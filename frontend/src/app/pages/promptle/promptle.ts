@@ -144,6 +144,14 @@ export class PromptleComponent implements OnInit, OnDestroy {
   gameLoading = false;
   gameError = '';
   savedTimestamp: string | null = null;
+  private serverSaveExists = false;
+
+  get hasSavedGame(): boolean {
+    if (this.isMultiplayer) return false;
+    if (this.savedTimestamp) return true;
+    if (this.serverSaveExists) return true;
+    try { return !!localStorage.getItem('promptle_saved_game'); } catch { return false; }
+  }
 
   //─────────────────────────────────────
   // === Share ===
@@ -357,6 +365,12 @@ export class PromptleComponent implements OnInit, OnDestroy {
       if (user) {
         this.myAuth0Id = user.sub ?? '';
         this.loadDevSettings();
+        if (user.sub) {
+          this.http.get<any>(`/api/load-game/${encodeURIComponent(user.sub)}`).subscribe({
+            next:  (payload) => { if (payload?.topic) this.serverSaveExists = true; },
+            error: () => {}
+          });
+        }
       }
     });
 
@@ -816,6 +830,13 @@ export class PromptleComponent implements OnInit, OnDestroy {
     if (this.isMultiplayer) return;
     if (!this.topic || !this.headers.length) return;
 
+    if (this.hasSavedGame) {
+      const confirmed = window.confirm(
+        'You already have a saved game. Saving this game will replace it. Continue?'
+      );
+      if (!confirmed) return;
+    }
+
     const payload = {
       savedAt: Date.now(),
       topic: this.topic,
@@ -834,7 +855,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
       const savedAtStr = new Date(payload.savedAt).toLocaleString();
       if (user && user.sub) {
         this.http.post('/api/save-game', { auth0Id: user.sub, game: payload }).subscribe({
-          next:  () => { this.savedTimestamp = savedAtStr; },
+          next:  () => { this.savedTimestamp = savedAtStr; this.serverSaveExists = true; },
           error: () => {
             try { localStorage.setItem('promptle_saved_game', JSON.stringify(payload)); this.savedTimestamp = savedAtStr; }
             catch (e) { this.gameError = 'Failed to save game'; }

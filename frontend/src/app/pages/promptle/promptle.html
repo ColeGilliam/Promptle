@@ -272,6 +272,10 @@
             <span *ngIf="savedTimestamp" class="saved-status-inline">Saved: {{ savedTimestamp }}</span>
           </ng-container>
         </div>
+        <div class="save-slot-notice" *ngIf="!isMultiplayer && answers.length">
+          <mat-icon class="save-slot-notice-icon">info</mat-icon>
+          <span>Only one game can be saved at a time{{ hasSavedGame ? ' — saving will replace your current save' : '' }}.</span>
+        </div>
       </div>
 
       <div class="powerup-hint-toast singleplayer-hint-toast" *ngIf="!isMultiplayer && singlePlayerHint">
