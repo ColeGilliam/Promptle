@@ -31,7 +31,7 @@ async function isDevAccount(auth0Id) {
   }
 }
 
-const CROSSWORD_GENERATION_MODEL = 'gpt-4o-mini';
+const CROSSWORD_GENERATION_MODEL = 'gpt-5.4-mini';
 const CROSSWORD_GENERATION_ATTEMPTS = 3;
 
 export function buildCrosswordGenerationMessages({ topic } = {}) {

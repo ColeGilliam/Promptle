@@ -313,10 +313,10 @@
       <a class="game-card game-card--connections reveal" routerLink="/connections">
         <div class="game-card-banner">
           <div class="conn-preview" aria-hidden="true">
-            <div class="conn-preview-row conn-row-yellow">Yellow Group</div>
-            <div class="conn-preview-row conn-row-green">Green Group</div>
-            <div class="conn-preview-row conn-row-blue">Blue Group</div>
-            <div class="conn-preview-row conn-row-purple">Purple Group</div>
+            <div class="conn-preview-row conn-row-yellow"></div>
+            <div class="conn-preview-row conn-row-green"></div>
+            <div class="conn-preview-row conn-row-blue"></div>
+            <div class="conn-preview-row conn-row-purple"></div>
           </div>
         </div>
         <div class="game-card-body">
@@ -324,13 +324,9 @@
             <div class="game-card-icon-badge game-icon-connections">
               <mat-icon>grid_view</mat-icon>
             </div>
-            <div class="game-card-tags">
-              <span class="game-tag game-tag--connections">Groups of 4</span>
-              <span class="game-tag game-tag--connections">4 mistakes</span>
-            </div>
           </div>
           <h3 class="game-card-title">Connections</h3>
-          <p class="game-card-desc">Find four overlapping groups before your mistakes run out.</p>
+          <p class="game-card-desc">Find four overlapping groups before your lives run out.</p>
           <div class="game-card-cta">
             Play Connections <mat-icon>arrow_forward</mat-icon>
           </div>
@@ -340,26 +336,27 @@
       <!-- Crossword card -->
       <a class="game-card game-card--crossword reveal" style="--delay: 90ms" routerLink="/crossword">
         <div class="game-card-banner game-card-banner--crossword">
-          <div class="cw-preview" aria-hidden="true">
-            <span class="cw-cell"></span>
-            <span class="cw-cell"></span>
-            <span class="cw-cell cw-cell--blocked"></span>
-            <span class="cw-cell"></span>
-            <span class="cw-cell cw-cell--blocked"></span>
-            <span class="cw-cell"></span>
-            <span class="cw-cell cw-cell--blocked"></span>
-            <span class="cw-cell"></span>
-            <span class="cw-cell"></span>
-          </div>
+          <img
+            class="crossword-preview-image"
+            src="crossword-card-preview.svg"
+            alt=""
+            aria-hidden="true"
+          >
         </div>
         <div class="game-card-body">
           <div class="game-card-icon-row">
             <div class="game-card-icon-badge game-icon-crossword">
-              <mat-icon>apps</mat-icon>
-            </div>
-            <div class="game-card-tags">
-              <span class="game-tag game-tag--crossword">AI-generated</span>
-              <span class="game-tag game-tag--crossword">Custom topics</span>
+              <span class="crossword-nav-icon" aria-hidden="true">
+                <span class="crossword-nav-cell"></span>
+                <span class="crossword-nav-cell"></span>
+                <span class="crossword-nav-cell crossword-nav-cell--blocked"></span>
+                <span class="crossword-nav-cell"></span>
+                <span class="crossword-nav-cell crossword-nav-cell--blocked"></span>
+                <span class="crossword-nav-cell"></span>
+                <span class="crossword-nav-cell crossword-nav-cell--blocked"></span>
+                <span class="crossword-nav-cell"></span>
+                <span class="crossword-nav-cell"></span>
+              </span>
             </div>
           </div>
           <h3 class="game-card-title">Crossword</h3>
