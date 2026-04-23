@@ -203,16 +203,21 @@
   gap: 18px;
 }
 
+.panel-card--controls {
+  display: grid;
+  gap: 14px;
+}
+
 .panel-card {
   padding: 24px;
 }
 
 .panel-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .panel-header h2 {
@@ -244,7 +249,6 @@
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-  margin-top: 2px;
 }
 
 .generate-btn,
@@ -260,7 +264,7 @@
 }
 
 .control-error {
-  margin: 14px 0 0;
+  margin: 0;
   font-size: 0.84rem;
   font-weight: 700;
   color: #dc2626;
