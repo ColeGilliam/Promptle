@@ -94,6 +94,7 @@
               START GAME
             </button>
             <button
+              *ngIf="isDevAccount"
               matButton
               class="rect-btn delete-room-btn"
               (click)="deleteCurrentRoom()"
@@ -118,8 +119,8 @@
         </div>
       </div>
 
-      <!-- ══ Delete room (in-game) ══ -->
-      <div class="dev-delete-bar" *ngIf="isMultiplayer && gameStarted">
+      <!-- Delete room (dev only, in-game) -->
+      <div class="dev-delete-bar" *ngIf="isDevAccount && isMultiplayer && gameStarted">
         <button matButton class="rect-btn delete-room-btn" (click)="deleteCurrentRoom()">
           <mat-icon>delete</mat-icon>
           DELETE ROOM

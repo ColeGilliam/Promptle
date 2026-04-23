@@ -264,6 +264,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
   private myUsername = '';
   private mySocketId = '';
   showPromptleAnswerAtTop = false;
+  isDevAccount = false;
   private myAuth0Id = '';
 
   stopwatchMs = 0;
@@ -341,6 +342,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.auth.user$.pipe(take(1)).subscribe(user => {
       if (user) {
         this.myAuth0Id = user.sub ?? '';
+        this.isDevAccount = user.email === 'promptle99@gmail.com';
         this.loadDevSettings();
         if (user.sub) {
           this.http.get<any>(`/api/load-game/${encodeURIComponent(user.sub)}`).subscribe({
