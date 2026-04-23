@@ -135,7 +135,7 @@ test('generateSubjects rejects blocked topics and logs the attempt for signed-in
   });
 });
 
-test('generateSubjects uses a single gpt-4.1-mini request with reusable-category instructions', async () => {
+test('generateSubjects uses a single gpt-5.4-mini request with reusable-category instructions', async () => {
   let requestBody = null;
   let callCount = 0;
   const payload = createPayload({
@@ -202,7 +202,7 @@ test('generateSubjects uses a single gpt-4.1-mini request with reusable-category
 
   assert.equal(res.statusCode, 200);
   assert.equal(callCount, 1);
-  assert.equal(requestBody.model, 'gpt-4.1-mini');
+  assert.equal(requestBody.model, 'gpt-5.4-mini');
   assert.equal(requestBody.temperature, 0.2);
   assert.match(requestBody.messages[0].content, /The best output is the one where many different subjects share the same category values/i);
   assert.match(requestBody.messages[0].content, /Prefer fewer, stronger categories/i);

@@ -13,9 +13,9 @@ const generationLogger = appLogger.child({ component: 'daily-game-generation' })
 
 // Keep daily model selection here so daily generation can be made stronger later without moving
 // or duplicating the actual prompt text from the controller files.
-const DAILY_PROMPTLE_MODEL = 'gpt-4.1-mini';
-const DAILY_CONNECTIONS_MODEL = 'gpt-4o-mini';
-const DAILY_CROSSWORD_MODEL = 'gpt-4o-mini';
+const DAILY_PROMPTLE_MODEL = 'gpt-5.4-mini';
+const DAILY_CONNECTIONS_MODEL = 'gpt-5.4-mini';
+const DAILY_CROSSWORD_MODEL = 'gpt-5.4-mini';
 
 export async function generatePromptleGameForTopic(options = {}) {
   return generatePromptleGameForTopicBase({

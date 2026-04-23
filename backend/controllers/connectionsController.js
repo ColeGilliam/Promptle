@@ -29,7 +29,7 @@ async function isDevAccount(auth0Id) {
   }
 }
 
-const CONNECTIONS_GENERATION_MODEL = 'gpt-4o-mini';
+const CONNECTIONS_GENERATION_MODEL = 'gpt-5.4-mini';
 
 export function buildConnectionsGenerationMessages({ topic } = {}) {
   return [

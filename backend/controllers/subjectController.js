@@ -21,7 +21,7 @@ import { appLogger } from '../lib/logger.js';
 
 const DEV_EMAIL = 'promptle99@gmail.com';
 const subjectLogger = appLogger.child({ component: 'subjects' });
-const SUBJECT_GENERATION_MODEL = 'gpt-4.1-mini';
+
 const SUBJECT_MIN_COUNT = 12;
 const SUBJECT_MAX_COUNT = 100;
 const SUBJECT_TARGET_DEFAULT = 20;
@@ -37,6 +37,8 @@ async function isDevAccount(auth0Id) {
   }
 }
 
+const SUBJECT_GENERATION_MODEL = 'gpt-5.4-mini';
+
 export function buildPromptleGenerationMessages({
   topic,
   minCategories,
@@ -46,7 +48,7 @@ export function buildPromptleGenerationMessages({
     {
       role: 'system',
       content: `
-          You generate structured game data for Promptle, a subject guessing game where clues only work when categories and values overlap across many subjects.
+          You generate structured game data for Promptle, a subject guessing game where players identify the correct subject by combining several category clues.
           Return ONLY a single JSON object with this exact shape:
           {
             "topic": string,
@@ -77,35 +79,30 @@ export function buildPromptleGenerationMessages({
             ]
           }
 
-          Hard requirements:
-          (1) Subject count must be 12-80. Aim for at least 25 subjects if the topic can support it. Prefer 25-40 subjects for most viable topics. If the topic has a very large roster, you may return up to 80 diverse subjects. If the topic is a small finite roster below 25, return the full roster as long as it has at least 12 valid subjects.
+          Requirements:
+          (1) Subject count must be 12-100.
           (2) Total number of columns, including "Subject", must be between the provided min and max.
-          (3) The best output is the one where many different subjects share the same category values, making deduction work well.
-          (4) Prefer fewer, stronger categories. Do not add filler columns just to hit the maximum. If the topic is already well-described with a smaller set of strong categories, stop there.
-          (5) Most non-Subject categories should be specific to the topic's domain rather than generic metadata, as long as they still overlap across many subjects.
-          (6) If a category naturally supports multiple reusable traits, memberships, attributes, abilities, themes, or affiliations, use kind "set" instead of forcing one single text value.
-          (7) Do not use headers that imply only one dominant value when several reusable values are natural. Avoid words like main, primary, signature, exact, specific, dominant, or unique in headers.
-          (8) The first column must be { "header": "Subject", "kind": "text" }. The first cell for each answer must equal the subject name.
-          (9) All answers must share the exact same column order and semantic meaning.
-          (10) Keep display values concise. Use "parts.tokens" for important words when needed.
-          (11) Use "set" for reusable multi-item tags. Every set cell must include "items".
-          (12) Use "reference" only for true title-or-index references such as issue numbers. Every reference cell must include parts.label and parts.number.
-          (13) Use "number" for numeric values or measurements. Every number cell must include parts.value and include parts.unit when shown.
-          (14) Use "text" for ordinary single values and include parts.tokens.
-
-          Category design rules:
-          (15) Every non-Subject header must be reusable across the roster. Do not use headers where most rows would be unique.
-          (16) Avoid identity-only or trivia-style headers such as real name, full name, civilian name, alter ego, exact birthplace, signature move, alias meaning, or other one-off facts.
-          (17) Prefer broad recurring taxonomies such as affiliation, faction, role, class, archetype, region, origin, element, family, type, status, group, era, genre, or trait cluster.
-          (18) Prefer headers that represent reusable category families rather than single standout facts. Plural or family-style headers are often better than singular "main" or "primary" headers when overlap matters.
-          (19) Standardize values into a canonical shared vocabulary. Use one broad label instead of near-duplicates like "Super strength" and "God-like strength". If both describe the same bucket, output one shared value such as "Strength".
-          (20) If a fact is too specific, generalize it up one or two levels until it becomes reusable across multiple subjects.
-          (21) Prefer broad shared labels over narrow manifestations. For example, if a raw value is only one expression of a broader reusable trait, output the broader trait.
-          (22) For set columns, reuse a small fixed vocabulary across the whole roster. Prefer shared tags over bespoke descriptions.
-          (23) Before answering, self-check every non-Subject column: multiple different subjects should share values in that column, text columns should not behave like near-unique identifiers, and the category set should feel compact, topic-aware, and high quality rather than exhaustive.
-
-          Examples:
-          Bad headers: Real Name, Main Trait, Primary Ability, Signature Move, Exact Homeplace, Significant Other, or anything else that would be unique to just one subject or not reusable across multiple subjects.
+          (3) The first column must be { "header": "Subject", "kind": "text" } and the first cell for each answer must equal the subject name.
+          (4) All answers must share the exact same column order and meaning.
+          (5) Keep the category set compact and high quality. Prefer fewer strong categories over filler.
+          (6) Non-Subject categories should be specific to the topic.
+          (7) Choose subjects that create meaningful overlap across the roster. Do not maximize variety in a way that makes the categories less useful.
+          (8) Values should be broad enough to apply to many subjects in the topic and create real overlap across the roster.
+          (9) Each category should have a healthy variety of answers, but not so much uniqueness that it stops being useful for deduction.
+          (10) Any one category answer should usually narrow the pool, but should not identify the correct subject by itself.
+          (11) The categories should work together so the answer is found by combining several clues rather than one highly specific clue.
+          (12) Some categories can be more specific if they still make sense for many subjects in the topic, even if not every possible value appears in the chosen answer set.
+          (13) A category may be specific as a dimension without requiring overly specific text values. For "text" and "set" categories, avoid leaf-level labels or one-off proper-noun classifications that act like unique identifiers. When that happens, generalize upward to a broader shared bucket or choose a different category.
+          (14) Avoid choosing subjects that create a one-off outlier value inside an otherwise shared category.
+          (15) Try not to let the same subgroup stand out in multiple categories unless the second category adds clearly different information.
+          (16) Exact or more specific values are more acceptable for "number" and "reference" categories than for ordinary "text" or "set" categories.
+          (17) If a category naturally supports multiple reusable traits, tags, roles, affiliations, attributes, or multiple valid answers for the same subject, use kind "set" and include "items".
+          (18) Do not pack multiple answers into one "text" value using separators like "/", commas, or "and". If there is more than one real answer, it must be a "set".
+          (19) Use "reference" only for true label-plus-number style references and include parts.label and parts.number.
+          (20) Use "number" for numeric values or measurements and include parts.value plus parts.unit when shown.
+          (21) For number cells, make "display" read naturally for the category. Use label-first phrasing when that is the natural format, and suffix formatting when that reads better.
+          (22) Use "text" for ordinary single values and include parts.tokens.
+          (23) Keep labels concise and standardize values when small wording differences describe the same underlying bucket.
         `,
     },
     {
@@ -114,8 +111,13 @@ export function buildPromptleGenerationMessages({
           Topic: "${topic}"
 
           Generate distinct subjects and structured categories for this topic.
-          Subject count policy: generate at least 12 subjects; aim for at least 25 if viable; usually stay in the 25-40 range; if this topic has a very large roster, you may generate up to 80 diverse subjects.
-          Category policy: use fewer, higher-quality categories; favor topic-specific categories; avoid generic filler; most non-Subject categories should feel native to this topic; prefer reusable set-style categories when multiple shared traits are natural; prefer broad shared labels over narrow one-off facts.
+          Aim for at least 50 subjects if the topic supports it, otherwise return the strongest roster you can within the allowed range.
+          Choose a roster of subjects that supports overlap. Prefer clusters of subjects that make shared categories useful over maximum variety for its own sake.
+          Choose categories that feel native to this topic, produce overlap across many subjects, and become useful when combined together.
+          A single clue should usually narrow the field without solving the puzzle on its own.
+          Avoid subjects that only work by creating a one-off outlier in an otherwise shared category.
+          Try not to let the same subgroup stand out in multiple categories unless that adds clearly different information.
+          Leave some wiggle room: a category can be somewhat specific if it still applies naturally across the topic. Examples include first appearance or physical measurements in domains where those are broadly meaningful, but do not limit yourself to only those ideas.
           Min categories: ${minCategories}
           Max categories: ${maxCategories}
         `,
