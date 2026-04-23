@@ -725,8 +725,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
   }
 
   // ─── Stopwatch helpers ────────────────────────────────────────────────
-  private startStopwatch() {
-    this.stopwatchMs = 0;
+  private startStopwatch(fromMs = 0) {
+    this.stopwatchMs = fromMs;
     this.stopwatchInterval = setInterval(() => {
       this.stopwatchMs += 100;
       this.cdr.detectChanges();
@@ -848,7 +848,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
       source: this.currentSinglePlayerSource || undefined,
       dailyGame: this.currentDailyGame || undefined,
       singlePlayerHint: this.singlePlayerHint,
-      singlePlayerHintUsed: this.singlePlayerHintUsed
+      singlePlayerHintUsed: this.singlePlayerHintUsed,
+      elapsedMs: this.stopwatchMs
     };
 
     this.auth.user$.pipe(take(1)).subscribe(user => {
@@ -963,7 +964,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
 
     if (!this.isMultiplayer && !this.isGameOver) {
       this.stopStopwatch();
-      this.startStopwatch();
+      const resumeMs = clearProgress ? 0 : (typeof payload?.elapsedMs === 'number' ? payload.elapsedMs : 0);
+      this.startStopwatch(resumeMs);
     }
   }
 

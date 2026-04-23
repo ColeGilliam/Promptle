@@ -1326,3 +1326,119 @@
 :host-context(.dark) .spectate-banner mat-icon {
   color: #a78bfa;
 }
+
+/* ══════════════════════════════════════════════════════
+   MOBILE  (≤ 600px)
+   ══════════════════════════════════════════════════════ */
+@media (max-width: 600px) {
+
+  /* ── Hide / shrink the decorative floating letters so they
+        don't push the page wider than the viewport ── */
+  .fl-1, .fl-2, .fl-3, .fl-4, .fl-5,
+  .fl-6, .fl-7, .fl-8, .fl-9 { display: none; }
+
+  /* ── Tighten overall container padding ── */
+  .promptle-container {
+    padding: 0.5rem 0.6rem;
+  }
+
+  /* ── Guess-input row: let items wrap so the dropdown
+        sits on its own line and buttons flow below ── */
+  .guess-input {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Full-width dropdown on its own line */
+  .guess-select-field {
+    min-width: 0;
+    width: 100%;
+    flex: 1 1 100%;
+  }
+
+  /* Smaller buttons so SUBMIT / HINT / SAVE / RESTART
+     all fit comfortably on one or two rows ── */
+  .guess-input button {
+    min-height: 40px;
+    padding: 0 12px;
+    font-size: 0.8rem;
+    flex: 1 1 auto;
+  }
+
+  /* Saved-status text should wrap normally */
+  .saved-status-inline {
+    white-space: normal;
+    font-size: 0.78rem;
+  }
+
+  /* Tighter cards */
+  .guess-actions-card {
+    padding: 10px 12px;
+  }
+
+  .game-grid-card {
+    padding: 10px 10px;
+  }
+
+  .dev-answer-preview-card {
+    padding: 12px 12px;
+  }
+
+  /* Narrower columns so more fit without excessive scroll */
+  .game-grid .column {
+    flex: 0 0 130px;
+    width: 130px;
+  }
+
+  /* Shorter cells — saves vertical space */
+  .guess-cell {
+    min-height: 56px;
+    padding: 6px;
+    font-size: 0.85rem;
+  }
+
+  /* Stopwatch: smaller font */
+  .stopwatch-value {
+    font-size: 1.15rem;
+  }
+
+  .stopwatch-bar {
+    padding: 8px 14px;
+  }
+
+  /* Power-up bar: tighter */
+  .powerup-bar {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .powerup-btn {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+
+  /* Pre-game panels */
+  .mp-host-panel,
+  .mp-waiting-panel {
+    padding: 20px 14px;
+    gap: 8px;
+  }
+
+  /* Save-slot notice: wrap text, smaller font */
+  .save-slot-notice {
+    font-size: 0.75rem;
+    padding: 7px 10px;
+  }
+
+  /* Loss / win cards: remove side margin pressure */
+  .loss-card {
+    padding: 28px 18px 22px;
+  }
+
+  /* Hint & effect toasts */
+  .powerup-hint-toast,
+  .chaos-effect-banner {
+    padding: 10px 12px;
+    font-size: 0.85rem;
+  }
+}
