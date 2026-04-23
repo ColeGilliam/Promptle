@@ -208,7 +208,9 @@
 /* Action buttons row */
 .hero-actions {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: center;
   gap: 14px;
   width: 100%;
@@ -1047,6 +1049,10 @@
   .hero-action-btn {
     min-width: 180px;
     width: 100%;
+  }
+
+  .hero-actions {
+    flex-direction: column;
   }
 }
 

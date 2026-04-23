@@ -1,0 +1,10 @@
+<button
+  type="button"
+  class="daily-game-cta"
+  [class.daily-game-cta--disabled]="!available"
+  [disabled]="!available || loading"
+  (click)="onActivate()"
+>
+  <span class="daily-game-cta__label">{{ buttonLabel }}</span>
+  <mat-icon class="daily-game-cta__icon">arrow_forward</mat-icon>
+</button>

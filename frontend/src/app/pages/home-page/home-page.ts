@@ -24,6 +24,7 @@ import { NavbarComponent } from '../../shared/components/navbar/navbar';
 import { MiniFooterComponent } from '../../shared/ui/minifooter/minifooter';
 import { SwitchMode } from '../../shared/ui/switch-mode/switch-mode';
 import { LoadSavedGameCard } from '../../shared/ui/load-saved-game-card/load-saved-game-card';
+import { DailyGameCtaComponent } from '../../shared/ui/daily-game-cta/daily-game-cta';
 
 @Component({
   selector: 'app-home-page',
@@ -46,6 +47,7 @@ import { LoadSavedGameCard } from '../../shared/ui/load-saved-game-card/load-sav
     MatAutocompleteModule,
     SwitchMode,
     LoadSavedGameCard,
+    DailyGameCtaComponent,
   ],
   templateUrl: './home-page.html',
   styleUrls: ['./home-page.css'],
@@ -88,6 +90,7 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
   // Dev settings (fetched from backend)
   allowGuestsCreateRooms = false;
   allowAllAIGeneration = false;
+  dailyGames: Record<string, { topic?: string; date?: string; available?: boolean }> = {};
 
   get canCreateRooms(): boolean {
     return this.isDevAccount || this.allowGuestsCreateRooms;
@@ -95,6 +98,10 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
 
   get canUseAI(): boolean {
     return this.isDevAccount || this.allowAllAIGeneration;
+  }
+
+  get promptleDailyGame(): { topic?: string; date?: string; available?: boolean } | null {
+    return this.dailyGames['promptle'] || null;
   }
 
   get resolvedCustomTopicMatch(): TopicInfo | null {
@@ -187,6 +194,7 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
       next: (data) => {
         this.allowGuestsCreateRooms = data.allowGuestsCreateRooms ?? false;
         this.allowAllAIGeneration = data.allowAllAIGeneration ?? false;
+        this.dailyGames = data.dailyGames ?? {};
         // Re-run observer so AI card (now in DOM) gets picked up
         setTimeout(() => this.setupRevealObserver(), 50);
       },
@@ -251,6 +259,12 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
 
   startRecommendedCustomTopic(item: RecommendationItem) {
     this.startGameFromPayload({ topic: item.topic });
+  }
+
+  startDailyPromptle() {
+    // Clear any in-progress single-player state before jumping into the shared daily puzzle.
+    this.newGame();
+    this.router.navigate(['/game'], { queryParams: { daily: 'true' } });
   }
 
   onCustomTopicFocus() {

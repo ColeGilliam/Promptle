@@ -58,6 +58,13 @@
           </div>
           <mat-icon class="action-card-arrow">arrow_forward</mat-icon>
         </div>
+
+        <app-daily-game-cta
+          gameLabel="Promptle"
+          [topic]="promptleDailyGame?.topic || ''"
+          [available]="!!promptleDailyGame?.available"
+          (activated)="startDailyPromptle()"
+        ></app-daily-game-cta>
       </div>
 
       <!-- Multiplayer CTA -->

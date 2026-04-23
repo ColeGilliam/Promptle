@@ -55,12 +55,20 @@
 
     <section class="panel-grid" *ngIf="showTopicPrompt">
       <section class="panel-card panel-card--controls">
-        <div class="panel-header" *ngIf="canUseAI; else crosswordDisabled">
+        <div class="panel-header">
           <div>
             <span class="eyebrow">Generate</span>
             <h2>Topic Prompt</h2>
           </div>
         </div>
+
+        <app-daily-game-cta
+          gameLabel="Crossword"
+          [topic]="dailyGameSummary?.topic || ''"
+          [available]="!!dailyGameSummary?.available"
+          [loading]="loading"
+          (activated)="playDailyGame()"
+        ></app-daily-game-cta>
 
         <ng-container *ngIf="canUseAI">
           <app-load-saved-game-card
@@ -99,7 +107,7 @@
           <p class="control-error" *ngIf="error">{{ error }}</p>
         </ng-container>
 
-        <ng-template #crosswordDisabled>
+        <ng-container *ngIf="!canUseAI">
           <div class="crossword-disabled">
             <div class="crossword-disabled__icon">
               <mat-icon>block</mat-icon>
@@ -109,7 +117,7 @@
               <h2>Sorry! Crossword generation is currently disabled, please try again later.</h2>
             </div>
           </div>
-        </ng-template>
+        </ng-container>
       </section>
     </section>
 

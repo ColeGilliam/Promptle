@@ -10,6 +10,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
 import { take } from 'rxjs';
 import { AuthenticationService } from '../../services/authentication.service';
+import { DailyGameMeta } from '../../services/setup-game';
 import {
   ConnectionsGameData,
   ConnectionsGameService,
@@ -19,6 +20,7 @@ import { NavbarComponent } from '../../shared/components/navbar/navbar';
 import { GameFeedbackService } from '../../services/game-feedback';
 import { CustomGameSessionService } from '../../services/custom-game-session';
 import { GameEndPopup, GameEndPopupRecapRow, GameEndPopupStat } from '../../shared/ui/game-end-popup/game-end-popup';
+import { DailyGameCtaComponent } from '../../shared/ui/daily-game-cta/daily-game-cta';
 
 interface BoardWord {
   // Stable keys let the board keep selection/shake state even as tiles are shuffled or removed.
@@ -48,6 +50,7 @@ interface ConnectionsGroupState extends ConnectionsGroup {
     MatProgressSpinnerModule,
     NavbarComponent,
     GameEndPopup,
+    DailyGameCtaComponent,
   ],
   templateUrl: './connections.html',
   styleUrls: ['./connections.css'],
@@ -69,6 +72,7 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
   showTopicPrompt = true;
   isDevAccount = false;
   allowAllAIGeneration = false;
+  dailyGameSummary: { topic?: string; date?: string; available?: boolean } | null = null;
 
   // Live board state for the current puzzle.
   selectedWordKeys: string[] = [];
@@ -86,6 +90,7 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
   guessRecapRows: GameEndPopupRecapRow[] = [];
   private auth0Id = '';
   private currentPlayId = '';
+  private currentDailyGame: DailyGameMeta | null = null;
   private sessionInteracted = false;
   private sessionFinalized = false;
 
@@ -249,6 +254,7 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
         error: (err) => {
           // On failure, fall back to the prompt form so the player can retry immediately.
           this.loading = false;
+          this.currentDailyGame = null;
           this.error = err?.error?.error ?? 'Failed to generate a Connections puzzle.';
           this.activeTopic = '';
           this.showTopicPrompt = true;
@@ -256,6 +262,35 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
           this.feedbackTone = 'danger';
         },
       });
+    });
+  }
+
+  playDailyGame(): void {
+    if (this.loading || (!this.dailyGameSummary?.available && !this.currentDailyGame)) return;
+
+    this.loading = true;
+    this.clearPendingShake();
+    this.resetBoardState();
+    this.activeTopic = this.currentDailyGame?.topic || this.dailyGameSummary?.topic || 'Daily Connections';
+    this.showTopicPrompt = false;
+    this.error = '';
+    this.feedback = 'Loading today\'s board...';
+    this.feedbackTone = 'neutral';
+
+    this.connectionsGameService.fetchDailyGame().subscribe({
+      next: (game) => {
+        this.applyGame(game);
+        this.loading = false;
+      },
+      error: (err) => {
+        this.loading = false;
+        this.currentDailyGame = null;
+        this.error = err?.error?.error ?? 'Today\'s Connections board is not available yet.';
+        this.activeTopic = '';
+        this.showTopicPrompt = true;
+        this.feedback = 'Try again later or generate a custom board.';
+        this.feedbackTone = 'danger';
+      },
     });
   }
 
@@ -317,20 +352,22 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Read the same global setting the home page uses so the Connections page can hide its own prompt.
   private loadDevSettings(): void {
-    // Read the same global setting the home page uses so the Connections page can hide its own prompt.
-    this.http.get<{ allowAllAIGeneration?: boolean }>('/api/dev-settings').subscribe({
+    this.http.get<{ allowAllAIGeneration?: boolean; dailyGames?: { connections?: { topic?: string; date?: string; available?: boolean } } }>('/api/dev-settings').subscribe({
       next: (data) => {
         this.allowAllAIGeneration = data.allowAllAIGeneration ?? false;
+        this.dailyGameSummary = data.dailyGames?.connections ?? null;
       },
       error: () => {
         this.allowAllAIGeneration = false;
+        this.dailyGameSummary = null;
       },
     });
   }
 
+  // Shuffle only affects unsolved tiles; solved rows stay locked in difficulty order.
   shuffleBoard(): void {
-    // Shuffle only affects unsolved tiles; solved rows stay locked in difficulty order.
     if (!this.canShuffleBoard) return;
     this.boardWords = this.shuffleArray([...this.boardWords]);
   }
@@ -408,6 +445,12 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
   }
 
   playAgain(): void {
+    if (this.currentDailyGame) {
+      this.viewingEndedBoard = false;
+      this.playDailyGame();
+      return;
+    }
+
     const replayTopic = this.activeTopic.trim();
     if (!replayTopic) return;
 
@@ -445,6 +488,7 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
 
   private applyGame(game: ConnectionsGameData): void {
     this.clearPendingShake();
+    this.currentDailyGame = game.dailyGame ?? null;
     this.activeTopic = game.topic;
     this.showTopicPrompt = false;
     this.error = '';
@@ -522,20 +566,21 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
     return [...groups].sort((left, right) => left.index - right.index);
   }
 
+  // Prevent old timers from mutating state after a reset, regeneration, or solved board transition.
   private clearPendingShake(): void {
-    // Prevent old timers from mutating state after a reset, regeneration, or solved board transition.
     if (!this.shakeTimeout) return;
     clearTimeout(this.shakeTimeout);
     this.shakeTimeout = null;
   }
 
+  // Central reset used by new-topic flow and by the transition into loading a fresh AI board.
   private resetBoardState(): void {
-    // Central reset used by new-topic flow and by the transition into loading a fresh AI board.
     this.clearPendingShake();
     this.activeTopic = '';
     this.error = '';
     this.feedback = 'Enter a topic and generate a Connections board.';
     this.feedbackTone = 'neutral';
+    this.currentDailyGame = null;
     this.mistakesLeft = this.maxMistakes;
     this.gameOver = false;
     this.gameWon = false;
@@ -606,6 +651,11 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
 
   // Start one trackable custom-game session so later interaction/finalization calls all refer back to the same play attempt.
   private startSession(topic: string): void {
+    if (this.currentDailyGame) {
+      this.resetSessionState();
+      return;
+    }
+
     const auth0Id = this.auth0Id.trim();
     if (!auth0Id) {
       this.resetSessionState();
@@ -670,8 +720,8 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Fisher-Yates shuffle for client-side tile order randomization.
   private shuffleArray<T>(items: T[]): T[] {
-    // Standard Fisher-Yates shuffle for client-side tile order randomization.
     const next = [...items];
     for (let index = next.length - 1; index > 0; index -= 1) {
       const swapIndex = Math.floor(Math.random() * (index + 1));

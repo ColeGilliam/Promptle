@@ -11,6 +11,7 @@ import { saveGame, loadGame, deleteSavedGame } from '../controllers/saveControll
 import { getDevSettings, updateDevSettings } from '../controllers/devSettingsController.js';
 import { getDevAuthSession } from '../controllers/devAuthController.js';
 import { saveGameFeedback } from '../controllers/gameFeedbackController.js';
+import { getDailyGame } from '../controllers/dailyGameController.js';
 import {
   finalizeCustomGameSession,
   markCustomGameSessionInteracted,
@@ -28,6 +29,7 @@ router.get('/api/dev-auth/session', getDevAuthSession);
 router.post('/api/subjects', generateSubjects);
 router.post('/api/connections', generateConnectionsGame);
 router.post('/api/crossword', generateCrosswordGame);
+router.get('/api/daily-games/:mode', getDailyGame);
 router.get('/api/topics/:topicId/headers', getHeaders);
 router.get('/api/popularTopics/list', getPopularTopics);
 router.get('/api/game/start', startGame);

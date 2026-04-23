@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import {
+  DailyGameMeta,
   DbGameService,
   GameCell,
   GameData,
@@ -78,6 +79,13 @@ interface PendingOneVsOneGuess {
 
 interface DevSettingsResponse {
   showPromptleAnswerAtTop?: boolean;
+  dailyGames?: {
+    promptle?: {
+      topic?: string;
+      date?: string;
+      available?: boolean;
+    };
+  };
 }
 
 @Component({
@@ -142,7 +150,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
   //─────────────────────────────────────
   private shareIdParam = '';
   private shareTopicParam = '';
-  private currentSinglePlayerSource: 'custom' | 'popular' | '' = '';
+  private currentSinglePlayerSource: 'custom' | 'popular' | 'daily' | '' = '';
+  private currentDailyGame: DailyGameMeta | null = null;
   feedbackChoice: boolean | null = null;
   feedbackSubmitting = false;
   feedbackError = '';
@@ -349,6 +358,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.route.queryParamMap.subscribe(params => {
       const loadSaved    = params.get('loadSaved');
       const restartSaved = params.get('restartSaved');
+      const dailyGame    = params.get('daily');
       const aiTopic      = params.get('topic');
       const topicIdParam = params.get('id');
       const topicId      = topicIdParam ? Number(topicIdParam) : NaN;
@@ -408,10 +418,31 @@ export class PromptleComponent implements OnInit, OnDestroy {
         return;
       }
 
+      if (dailyGame === 'true' || dailyGame === '1') {
+        this.shareIdParam = '';
+        this.shareTopicParam = '';
+        this.currentSinglePlayerSource = 'daily';
+        this.currentDailyGame = null;
+        this.resetCustomGameFeedback();
+        this.resetCustomGameSession();
+        // Touch dev settings first so a fresh-day rollover can kick off today's pre-generation
+        // before the Promptle daily endpoint is requested.
+        this.http.get('/api/dev-settings').subscribe({
+          next: () => {
+            this.loadGame({ dailyMode: 'promptle' });
+          },
+          error: () => {
+            this.gameError = 'Daily game is still loading. Reload the app in a moment.';
+          },
+        });
+        return;
+      }
+
       if (aiTopic && aiTopic.trim()) {
         this.shareTopicParam = aiTopic.trim();
         this.shareIdParam = '';
         this.currentSinglePlayerSource = 'custom';
+        this.currentDailyGame = null;
         this.resetCustomGameFeedback();
         this.resetCustomGameSession();
         this.auth.user$.pipe(take(1)).subscribe(user => {
@@ -423,12 +454,14 @@ export class PromptleComponent implements OnInit, OnDestroy {
         this.shareIdParam = String(topicId);
         this.shareTopicParam = '';
         this.currentSinglePlayerSource = 'popular';
+        this.currentDailyGame = null;
         this.resetCustomGameFeedback();
         this.resetCustomGameSession();
         this.loadGame({ topicId, answer: answerSeed }); return;
       }
 
       this.currentSinglePlayerSource = '';
+      this.currentDailyGame = null;
       this.resetCustomGameSession();
       this.gameError = 'No valid topic or game ID provided.';
     });
@@ -787,6 +820,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
       submittedGuesses: this.submittedGuesses,
       isGameOver: this.isGameOver,
       source: this.currentSinglePlayerSource || undefined,
+      dailyGame: this.currentDailyGame || undefined,
       singlePlayerHint: this.singlePlayerHint,
       singlePlayerHintUsed: this.singlePlayerHintUsed
     };
@@ -853,7 +887,17 @@ export class PromptleComponent implements OnInit, OnDestroy {
       ? 'custom'
       : payload?.source === 'popular'
         ? 'popular'
+        : payload?.source === 'daily'
+          ? 'daily'
         : '';
+    this.currentDailyGame = payload?.dailyGame
+      ? {
+          mode: typeof payload.dailyGame.mode === 'string' ? payload.dailyGame.mode : 'promptle',
+          topic: typeof payload.dailyGame.topic === 'string' ? payload.dailyGame.topic : hydrated.topic,
+          date: typeof payload.dailyGame.date === 'string' ? payload.dailyGame.date : '',
+          generatedAt: typeof payload.dailyGame.generatedAt === 'string' ? payload.dailyGame.generatedAt : undefined,
+        }
+      : null;
     this.headers = hydrated.headers;
     this.answers = hydrated.answers;
     this.correctAnswer  = hydrated.correctAnswer;
@@ -901,6 +945,23 @@ export class PromptleComponent implements OnInit, OnDestroy {
     if (this.isMultiplayer) return;
     if (!this.answers?.length) return;
 
+    if (this.currentSinglePlayerSource === 'daily') {
+      this.submittedGuesses = [];
+      this.selectedGuess = '';
+      this.guessQuery = '';
+      this.filterAnswers(this.guessQuery);
+      this.isGameOver = false;
+      this.isViewingCompletedGame = false;
+      this.gameError = '';
+      this.myFinishTimeMs = null;
+      this.resetCustomGameFeedback();
+      this.singlePlayerHint = null;
+      this.singlePlayerHintUsed = false;
+      this.stopStopwatch();
+      this.startStopwatch();
+      return;
+    }
+
     const candidates = this.answers.filter(a => a.name !== this.correctAnswer.name);
     const pool = candidates.length ? candidates : this.answers;
     const pick = pool[Math.floor(Math.random() * pool.length)];
@@ -923,7 +984,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.startStopwatch();
   }
 
-  private loadGame(params: { topic?: string; topicId?: number; room?: string; answer?: string; auth0Id?: string }) {
+  private loadGame(params: { topic?: string; topicId?: number; room?: string; answer?: string; auth0Id?: string; dailyMode?: 'promptle' | 'connections' | 'crossword' }) {
     this.gameLoading = true;
     this.gameError   = '';
     // Every new room/topic load closes the gate again so any incoming rows wait for the matching payload.
@@ -948,6 +1009,10 @@ export class PromptleComponent implements OnInit, OnDestroy {
     const hydrated = hydrateGameData(data);
 
     this.topic   = hydrated.topic;
+    this.currentDailyGame = hydrated.dailyGame || null;
+    if (!this.isMultiplayer && this.currentDailyGame?.mode === 'promptle') {
+      this.currentSinglePlayerSource = 'daily';
+    }
     this.headers = hydrated.headers;
     this.answers = hydrated.answers;
     this.filterAnswers(this.guessQuery);
