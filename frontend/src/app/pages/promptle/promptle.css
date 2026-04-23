@@ -1300,6 +1300,27 @@
   font-size: 0.9rem;
 }
 
+.spectate-back-btn {
+  margin-left: auto;
+  color: #7c3aed !important;
+  border-color: rgba(124, 58, 237, 0.4) !important;
+  font-size: 0.82rem !important;
+  flex-shrink: 0;
+}
+
+.spectate-back-btn:hover {
+  background: rgba(124, 58, 237, 0.1) !important;
+}
+
+:host-context(.dark) .spectate-back-btn {
+  color: #a78bfa !important;
+  border-color: rgba(167, 139, 250, 0.4) !important;
+}
+
+:host-context(.dark) .spectate-back-btn:hover {
+  background: rgba(139, 92, 246, 0.15) !important;
+}
+
 .spectate-banner mat-icon {
   color: #7c3aed;
   flex-shrink: 0;

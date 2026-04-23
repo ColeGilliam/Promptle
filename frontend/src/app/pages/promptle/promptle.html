@@ -344,6 +344,15 @@
         <div class="spectate-banner">
           <mat-icon>visibility</mat-icon>
           <span>You are spectating — watching other players' guesses live</span>
+          <button
+            *ngIf="isGameOver"
+            matButton="outlined"
+            class="rect-btn spectate-back-btn"
+            (click)="stopSpectating()"
+          >
+            <mat-icon>emoji_events</mat-icon>
+            Back to Results
+          </button>
         </div>
 
         <div class="game-grid-meta">

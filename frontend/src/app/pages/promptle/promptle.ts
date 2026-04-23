@@ -1597,6 +1597,11 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
+  stopSpectating() {
+    this.isSpectating = false;
+    this.cdr.detectChanges();
+  }
+
   private loadDevSettings() {
     this.http.get<DevSettingsResponse>('/api/dev-settings').subscribe({
       next: (settings) => {
