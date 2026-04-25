@@ -277,7 +277,7 @@ export function createGenerateSubjectsHandler({
   logRejectedTopicAttemptFn = logRejectedTopicAttempt,
 } = {}) {
   return async function generateSubjects(req, res) {
-    const { topic, minCategories = 5, maxCategories = 6, auth0Id } = req.body || {};
+    const { topic, auth0Id } = req.body || {};
     const normalizedTopic = typeof topic === 'string' ? topic.trim() : '';
 
     // Input validation for topic
@@ -360,8 +360,6 @@ export function createGenerateSubjectsHandler({
     try {
       const payload = await generatePromptleGameForTopic({
         topic: normalizedTopic,
-        minCategories,
-        maxCategories,
         openaiClient,
         apiKey,
         logger,

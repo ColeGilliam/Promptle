@@ -195,7 +195,7 @@ test('generateSubjects uses a single gpt-5.4-mini request with reusable-category
     }),
   });
 
-  const req = { body: { topic: 'Comic characters', minCategories: 5, maxCategories: 6 } };
+  const req = { body: { topic: 'Comic characters', minCategories: 999, maxCategories: -5 } };
   const res = createMockRes();
 
   await handler(req, res);
@@ -204,17 +204,13 @@ test('generateSubjects uses a single gpt-5.4-mini request with reusable-category
   assert.equal(callCount, 1);
   assert.equal(requestBody.model, 'gpt-5.4-mini');
   assert.equal(requestBody.temperature, 0.2);
-  assert.match(requestBody.messages[0].content, /The best output is the one where many different subjects share the same category values/i);
-  assert.match(requestBody.messages[0].content, /Prefer fewer, stronger categories/i);
+  assert.match(requestBody.messages[0].content, /Keep the category set compact and high quality/i);
+  assert.match(requestBody.messages[0].content, /Prefer fewer strong categories over filler/i);
   assert.match(requestBody.messages[0].content, /If a category naturally supports multiple reusable traits.*use kind "set"/i);
-  assert.match(requestBody.messages[0].content, /Avoid words like main, primary, signature, exact, specific, dominant, or unique in headers/i);
-  assert.match(requestBody.messages[0].content, /Avoid identity-only or trivia-style headers such as real name/i);
-  assert.match(requestBody.messages[0].content, /Prefer broad shared labels over narrow manifestations/i);
-  assert.match(requestBody.messages[0].content, /Standardize values into a canonical shared vocabulary/i);
-  assert.match(requestBody.messages[0].content, /Subject count must be 12-80/i);
-  assert.match(requestBody.messages[1].content, /generate at least 12 subjects; aim for at least 25 if viable/i);
-  assert.match(requestBody.messages[1].content, /prefer reusable set-style categories when multiple shared traits are natural/i);
-  assert.match(requestBody.messages[0].content, /Bad headers: Real Name, Main Trait, Primary Ability, Signature Move/i);
+  assert.match(requestBody.messages[0].content, /Subject count must be 12-100/i);
+  assert.match(requestBody.messages[1].content, /Aim for at least 50 subjects if the topic supports it/i);
+  assert.match(requestBody.messages[1].content, /Min categories: 5/i);
+  assert.match(requestBody.messages[1].content, /Max categories: 6/i);
 });
 
 test('generateSubjects returns structurally valid model output without backend header filtering', async () => {
@@ -275,7 +271,7 @@ test('generateSubjects returns structurally valid model output without backend h
     }),
   });
 
-  const req = { body: { topic: 'Comic characters', minCategories: 5, maxCategories: 6 } };
+  const req = { body: { topic: 'Comic characters' } };
   const res = createMockRes();
 
   await handler(req, res);
@@ -344,7 +340,7 @@ test('generateSubjects logs suspicious headers without rejecting the payload', a
     }),
   });
 
-  const req = { body: { topic: 'Comic characters', minCategories: 5, maxCategories: 6 } };
+  const req = { body: { topic: 'Comic characters' } };
   const res = createMockRes();
 
   await handler(req, res);
