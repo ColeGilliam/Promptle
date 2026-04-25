@@ -776,29 +776,35 @@ export class PromptleComponent implements OnInit, OnDestroy {
 
   restartGame() {
     if (this.isMultiplayer) return;
-    if (!this.answers?.length) return;
 
-    const candidates = this.answers.filter(a => a.name !== this.correctAnswer.name);
-    const pool = candidates.length ? candidates : this.answers;
-    const pick = pool[Math.floor(Math.random() * pool.length)];
-
-    this.correctAnswer    = { name: pick.name, cells: [...pick.cells], values: [...pick.values] };
-    this.backendHeaders   = [...this.headers];
-    this.backendRow       = [...pick.values];
-    this.submittedGuesses = [];
-    this.selectedGuess    = '';
-    this.guessQuery       = '';
-    this.filterAnswers(this.guessQuery);
-    this.isGameOver       = false;
+    this.isGameOver             = false;
     this.isViewingCompletedGame = false;
-    this.gameError        = '';
-    this.myFinishTimeMs   = null;
-    this.singlePlayerHint = null;
-    this.singlePlayerHintUsed = false;
+    this.submittedGuesses       = [];
+    this.selectedGuess          = '';
+    this.guessQuery             = '';
+    this.myFinishTimeMs         = null;
+    this.gameError              = '';
+    this.singlePlayerHint       = null;
+    this.singlePlayerHintUsed   = false;
+    this.showSkipTurnHint       = true;
+    this.showPowerupHint        = true;
     this.stopStopwatch();
-    this.startStopwatch();
-    this.showSkipTurnHint  = true;
-    this.showPowerupHint   = true;
+
+    if (this.shareIdParam) {
+      this.loadGame({ topicId: Number(this.shareIdParam) });
+    } else if (this.shareTopicParam) {
+      this.loadGame({ topic: this.shareTopicParam, auth0Id: this.myAuth0Id });
+    } else if (this.answers?.length) {
+      const candidates = this.answers.filter(a => a.name !== this.correctAnswer.name);
+      const pool = candidates.length ? candidates : this.answers;
+      const pick = pool[Math.floor(Math.random() * pool.length)];
+      this.correctAnswer  = { name: pick.name, cells: [...pick.cells], values: [...pick.values] };
+      this.headers        = [...this.headers];
+      this.backendHeaders = [...this.headers];
+      this.backendRow     = [...pick.values];
+      this.filterAnswers(this.guessQuery);
+      this.startStopwatch();
+    }
   }
 
   private loadGame(params: { topic?: string; topicId?: number; room?: string; answer?: string; auth0Id?: string }) {
