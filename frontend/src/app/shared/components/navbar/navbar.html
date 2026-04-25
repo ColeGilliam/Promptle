@@ -13,7 +13,7 @@
     </a>
 
     <a
-      class="game-brand"
+      class="game-brand game-brand--connections"
       [class.game-brand--active]="isConnectionsRoute"
       routerLink="/connections"
       aria-label="Open Connections"
@@ -23,6 +23,29 @@
         <mat-icon>grid_view</mat-icon>
       </span>
       <span class="game-brand-name">Connections</span>
+    </a>
+
+    <a
+      class="game-brand game-brand--crossword"
+      [class.game-brand--active]="isCrosswordRoute"
+      routerLink="/crossword"
+      aria-label="Open Crossword"
+      [attr.aria-current]="isCrosswordRoute ? 'page' : null"
+    >
+      <span class="game-brand-icon">
+        <span class="crossword-nav-icon" aria-hidden="true">
+          <span class="crossword-nav-cell"></span>
+          <span class="crossword-nav-cell"></span>
+          <span class="crossword-nav-cell crossword-nav-cell--blocked"></span>
+          <span class="crossword-nav-cell"></span>
+          <span class="crossword-nav-cell crossword-nav-cell--blocked"></span>
+          <span class="crossword-nav-cell"></span>
+          <span class="crossword-nav-cell crossword-nav-cell--blocked"></span>
+          <span class="crossword-nav-cell"></span>
+          <span class="crossword-nav-cell"></span>
+        </span>
+      </span>
+      <span class="game-brand-name">Crossword</span>
     </a>
   </div>
 

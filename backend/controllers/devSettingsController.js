@@ -1,7 +1,9 @@
 // controllers/devSettingsController.js
 import { getDevSettingsCollection, getUsersCollection } from '../config/db.js';
+import { appLogger } from '../lib/logger.js';
 const DEV_EMAIL = 'promptle99@gmail.com';
 const SETTINGS_ID = 'global';
+const devSettingsLogger = appLogger.child({ component: 'dev-settings' });
 
 const DEFAULT_SETTINGS = {
   allowGuestsCreateRooms: false,
@@ -36,7 +38,10 @@ export async function getDevSettings(req, res) {
       allowAllAIGeneration: settings.allowAllAIGeneration,
     });
   } catch (err) {
-    console.error('getDevSettings error:', err);
+    devSettingsLogger.error('dev_settings_load_failed', {
+      requestId: req.id || null,
+      error: err,
+    });
     res.status(500).json({ error: 'Failed to load settings.' });
   }
 }
@@ -58,7 +63,11 @@ export async function updateDevSettings(req, res) {
 
     res.json({ success: true, allowGuestsCreateRooms: !!allowGuestsCreateRooms, allowAllAIGeneration: !!allowAllAIGeneration });
   } catch (err) {
-    console.error('updateDevSettings error:', err);
+    devSettingsLogger.error('dev_settings_update_failed', {
+      requestId: req.id || null,
+      auth0Id: req.body?.auth0Id || null,
+      error: err,
+    });
     res.status(500).json({ error: 'Failed to update settings.' });
   }
 }

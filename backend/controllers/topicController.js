@@ -1,8 +1,10 @@
 // controllers/topicController.js
 import { getTopicCollection } from '../config/db.js';
+import { appLogger } from '../lib/logger.js';
 
 // Single module-level variable (will be initialized on first use)
 let cachedTopicCollection = null;
+const topicLogger = appLogger.child({ component: 'topics' });
 
 function getCachedTopicCollection() {
   if (!cachedTopicCollection) {
@@ -28,7 +30,11 @@ export async function getHeaders(req, res) {
 
     res.json({ headers: topic.headers });
   } catch (err) {
-    console.error('Error fetching headers:', err);
+    topicLogger.error('topic_headers_fetch_failed', {
+      requestId: req.id || null,
+      topicId: req.params.topicId,
+      error: err,
+    });
     res.status(500).json({ error: 'Server error' });
   }
 }
@@ -50,7 +56,10 @@ export async function getPopularTopics(req, res) {
 
     res.json(result);
   } catch (err) {
-    console.error('Error fetching popular topics:', err);
+    topicLogger.error('popular_topics_fetch_failed', {
+      requestId: req.id || null,
+      error: err,
+    });
     res.status(500).json({ error: 'Server error' });
   }
 }

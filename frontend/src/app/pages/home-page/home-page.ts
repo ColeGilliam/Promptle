@@ -2,7 +2,7 @@ import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TopicsListService, TopicInfo } from '../../services/topics-list';
 import { findBestTopicMatch } from '../../services/topic-match';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AuthenticationService } from '../../services/authentication.service';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { take } from 'rxjs';
@@ -39,6 +39,7 @@ import { LoadSavedGameCard } from '../../shared/ui/load-saved-game-card/load-sav
     MatButtonModule,
     MatProgressSpinnerModule,
     MatIconModule,
+    RouterModule,
     NavbarComponent,
     MiniFooterComponent,
     MatAutocompleteModule,
@@ -293,6 +294,11 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
   continueSaved() {
     this.showLoadConfirm = false;
     this.router.navigate(['/game'], { queryParams: { loadSaved: 'true' } });
+  }
+
+  restartSaved() {
+    this.showLoadConfirm = false;
+    this.router.navigate(['/game'], { queryParams: { restartSaved: 'true' } });
   }
 
   /** Ask user to confirm deletion, then delete saved game */

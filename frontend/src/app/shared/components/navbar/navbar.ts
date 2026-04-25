@@ -17,7 +17,7 @@ import { ProfileService } from '../../../services/profile.service';
 import { take } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { HowToPlayDialogComponent } from './how-to-play-dialog';
+import { HowToPlayDialogComponent, HowToPlayMode } from './how-to-play-dialog';
 import { SettingsDialogComponent } from './settings-dialog';
 import { SettingsService } from '../../../services/settings.service';
 
@@ -73,15 +73,20 @@ export class NavbarComponent implements OnInit {
     return this.router.url.startsWith('/connections');
   }
 
+  get isCrosswordRoute(): boolean {
+    return this.router.url.startsWith('/crossword');
+  }
+
   get isPromptleRoute(): boolean {
-    return !this.isConnectionsRoute;
+    return !this.isConnectionsRoute && !this.isCrosswordRoute;
   }
 
   openHowToPlay(): void {
     this.dialog?.open(HowToPlayDialogComponent, {
       width: '420px',
       maxWidth: '92vw',
-      panelClass: 'htp-dialog-panel'
+      panelClass: 'htp-dialog-panel',
+      data: { mode: this.resolveHowToPlayMode() }
     });
   }
 
@@ -145,5 +150,11 @@ export class NavbarComponent implements OnInit {
         },
         error: (err) => console.error("Navbar fetch error:", err)
       });
+  }
+
+  private resolveHowToPlayMode(): HowToPlayMode {
+    if (this.isConnectionsRoute) return 'connections';
+    if (this.isCrosswordRoute) return 'crossword';
+    return 'promptle';
   }
 }

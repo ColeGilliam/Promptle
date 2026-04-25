@@ -277,11 +277,25 @@
           </button>
 
           <ng-container *ngIf="!isMultiplayer">
+            <button
+              matButton="filled"
+              class="rect-btn promp2-btn hint-btn"
+              (click)="useSinglePlayerHint()"
+              [disabled]="!canUseSinglePlayerHint()"
+              title="Reveal one unrevealed category value from the answer"
+            >
+              {{ singlePlayerHintUsed ? 'HINT USED' : 'HINT' }}
+            </button>
             <button matButton="filled" class="rect-btn promp2-btn" (click)="saveGame()" [disabled]="!answers.length">SAVE</button>
             <button matButton="filled" class="rect-btn promp2-btn" (click)="restartGame()" [disabled]="!answers.length">RESTART</button>
             <span *ngIf="savedTimestamp" class="saved-status-inline">Saved: {{ savedTimestamp }}</span>
           </ng-container>
         </div>
+      </div>
+
+      <div class="powerup-hint-toast singleplayer-hint-toast" *ngIf="!isMultiplayer && singlePlayerHint">
+        <mat-icon class="hint-icon">lightbulb</mat-icon>
+        <span><strong>Hint</strong> · <strong>{{ singlePlayerHint.column }}</strong> = <strong>{{ singlePlayerHint.value }}</strong></span>
       </div>
 
       <!-- ══ 1v1 SHARED GUESS GRID ══ -->

@@ -172,6 +172,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
   powerupsUsed = { blackout: false, peek: false, freeze: false };
   activePowerupEffect: { type: string; fromPlayerName: string; secondsLeft: number } | null = null;
   powerupHint: { column: string; value: string } | null = null;
+  singlePlayerHint: { column: string; value: string } | null = null;
+  singlePlayerHintUsed = false;
   private blackoutInterval: ReturnType<typeof setInterval> | null = null;
   private powerupHintTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -252,6 +254,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
 
     this.route.queryParamMap.subscribe(params => {
       const loadSaved    = params.get('loadSaved');
+      const restartSaved = params.get('restartSaved');
       const aiTopic      = params.get('topic');
       const topicIdParam = params.get('id');
       const topicId      = topicIdParam ? Number(topicIdParam) : NaN;
@@ -296,18 +299,15 @@ export class PromptleComponent implements OnInit, OnDestroy {
       this.gameStarted   = true;   // SP starts immediately
       this.multiplayerService.leaveRoom();
 
+      if (restartSaved === 'true') {
+        this.gameError = '';
+        this.restoreSavedGame(true);
+        return;
+      }
+
       if (loadSaved === 'true') {
         this.gameError = '';
-        this.auth.user$.pipe(take(1)).subscribe(user => {
-          if (user && user.sub) {
-            this.http.get<any>(`/api/load-game/${encodeURIComponent(user.sub)}`).subscribe({
-              next:  (payload) => payload?.topic ? this.applySavedPayload(payload) : (this.gameError = 'No saved game found.'),
-              error: ()        => (this.gameError = 'No saved game found.')
-            });
-          } else {
-            if (!this.loadFromLocalStorage()) this.gameError = 'No saved game found.';
-          }
-        });
+        this.restoreSavedGame(false);
         return;
       }
 
@@ -447,27 +447,87 @@ export class PromptleComponent implements OnInit, OnDestroy {
     } else if (type === 'freeze') {
       this.multiplayerService.emitPowerup(this.currentRoom, 'freeze', this.myUsername);
     } else {
-      // peek — local only
-      const hint = this.getRevealHint();
-      if (hint) {
-        this.powerupHint = hint;
-        this.powerupHintTimeout = setTimeout(() => {
-          this.powerupHint = null;
-          this.cdr.detectChanges();
-        }, 9000);
-      }
+      this.useRevealHint('peek');
     }
     this.cdr.detectChanges();
   }
 
-  private getRevealHint(): { column: string; value: string } | null {
+  useSinglePlayerHint() {
+    if (this.isMultiplayer || this.singlePlayerHintUsed || this.isGameOver) return;
+    this.useRevealHint('singleplayer');
+  }
+
+  canUseSinglePlayerHint(): boolean {
+    return !this.isMultiplayer && !this.isGameOver && !this.singlePlayerHintUsed && this.getRevealHintCandidateIndexes('singleplayer').length > 0;
+  }
+
+  private useRevealHint(mode: 'peek' | 'singleplayer') {
+    const hint = this.getRevealHint(mode);
+    if (!hint) return;
+
+    if (mode === 'singleplayer') {
+      this.singlePlayerHint = hint;
+      this.singlePlayerHintUsed = true;
+      return;
+    }
+
+    this.powerupHint = hint;
+    if (this.powerupHintTimeout) clearTimeout(this.powerupHintTimeout);
+    this.powerupHintTimeout = setTimeout(() => {
+      this.powerupHint = null;
+      this.cdr.detectChanges();
+    }, 9000);
+  }
+
+  private getRevealHint(mode: 'peek' | 'singleplayer'): { column: string; value: string } | null {
     if (!this.correctAnswer?.values?.length || !this.headers?.length) return null;
-    const greenCols = new Set<number>();
-    this.submittedGuesses.forEach(g => g.colors.forEach((c, i) => { if (c === 'green') greenCols.add(i); }));
-    const candidates = this.headers.map((_, i) => i).filter(i => !greenCols.has(i));
+    const candidates = this.getRevealHintCandidateIndexes(mode);
     if (!candidates.length) return null;
     const idx = candidates[Math.floor(Math.random() * candidates.length)];
     return { column: this.headers[idx], value: this.correctAnswer.values[idx] };
+  }
+
+  private getRevealHintCandidateIndexes(mode: 'peek' | 'singleplayer'): number[] {
+    const columnStates = this.getBestKnownColumnStates();
+    const excludedColumns = new Set<number>([0]);
+    const grayCandidates: number[] = [];
+    const yellowCandidates: number[] = [];
+
+    if (mode === 'singleplayer' && this.singlePlayerHint) {
+      const hintedIndex = this.headers.indexOf(this.singlePlayerHint.column);
+      if (hintedIndex >= 0) excludedColumns.add(hintedIndex);
+    }
+
+    columnStates.forEach((state, index) => {
+      if (excludedColumns.has(index)) return;
+      if (state === 'green') {
+        excludedColumns.add(index);
+        return;
+      }
+      if (state === 'gray') {
+        grayCandidates.push(index);
+        return;
+      }
+      if (state === 'yellow') yellowCandidates.push(index);
+    });
+
+    return grayCandidates.length ? grayCandidates : yellowCandidates;
+  }
+
+  private getBestKnownColumnStates(): string[] {
+    const bestStates = this.headers.map(() => 'gray');
+    const colorPriority: Record<string, number> = { gray: 0, yellow: 1, green: 2 };
+
+    this.submittedGuesses.forEach(guess =>
+      guess.colors.forEach((color, index) => {
+        const normalizedColor = color === 'green' || color === 'yellow' ? color : 'gray';
+        if ((colorPriority[normalizedColor] ?? 0) > (colorPriority[bestStates[index]] ?? 0)) {
+          bestStates[index] = normalizedColor;
+        }
+      })
+    );
+
+    return bestStates;
   }
 
   private startBlackout(fromPlayerName: string) {
@@ -610,7 +670,9 @@ export class PromptleComponent implements OnInit, OnDestroy {
       answers: this.answers,
       correctAnswer: this.correctAnswer,
       submittedGuesses: this.submittedGuesses,
-      isGameOver: this.isGameOver
+      isGameOver: this.isGameOver,
+      singlePlayerHint: this.singlePlayerHint,
+      singlePlayerHintUsed: this.singlePlayerHintUsed
     };
 
     this.auth.user$.pipe(take(1)).subscribe(user => {
@@ -635,18 +697,33 @@ export class PromptleComponent implements OnInit, OnDestroy {
     return this.loadFromLocalStorage();
   }
 
-  private loadFromLocalStorage(): boolean {
+  private restoreSavedGame(clearProgress: boolean): void {
+    this.auth.user$.pipe(take(1)).subscribe(user => {
+      if (user && user.sub) {
+        this.http.get<any>(`/api/load-game/${encodeURIComponent(user.sub)}`).subscribe({
+          next:  (payload) => payload?.topic ? this.applySavedPayload(payload, { clearProgress }) : (this.gameError = 'No saved game found.'),
+          error: ()        => (this.gameError = 'No saved game found.')
+        });
+        return;
+      }
+
+      if (!this.loadFromLocalStorage(clearProgress)) this.gameError = 'No saved game found.';
+    });
+  }
+
+  private loadFromLocalStorage(clearProgress: boolean = false): boolean {
     try {
       const raw = localStorage.getItem('promptle_saved_game');
       if (!raw) return false;
       const payload = JSON.parse(raw);
       if (!payload?.topic) return false;
-      this.applySavedPayload(payload);
+      this.applySavedPayload(payload, { clearProgress });
       return true;
     } catch (e) { return false; }
   }
 
-  private applySavedPayload(payload: any) {
+  private applySavedPayload(payload: any, options: { clearProgress?: boolean } = {}) {
+    const clearProgress = !!options.clearProgress;
     const hydrated = hydrateGameData({
       topic: payload?.topic,
       headers: payload?.headers,
@@ -658,7 +735,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.topic   = hydrated.topic;
     this.headers = hydrated.headers;
     this.answers = hydrated.answers;
-    this.submittedGuesses = Array.isArray(payload.submittedGuesses)
+    this.submittedGuesses = clearProgress ? [] : Array.isArray(payload.submittedGuesses)
       ? payload.submittedGuesses.map((g: any) => ({
           name:   typeof g?.name === 'string' ? g.name : undefined,
           values: Array.isArray(g?.values) ? g.values : [],
@@ -669,9 +746,18 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.guessQuery     = '';
     this.filterAnswers(this.guessQuery);
     this.correctAnswer  = hydrated.correctAnswer;
-    this.isGameOver     = !!payload.isGameOver;
+    this.isGameOver     = clearProgress ? false : !!payload.isGameOver;
     this.isViewingCompletedGame = false;
-    this.savedTimestamp = payload.savedAt ? new Date(payload.savedAt).toLocaleString() : null;
+    this.savedTimestamp = clearProgress ? null : payload.savedAt ? new Date(payload.savedAt).toLocaleString() : null;
+    this.gameError      = '';
+    this.myFinishTimeMs = null;
+    this.singlePlayerHint = clearProgress || !payload?.singlePlayerHint
+      ? null
+      : {
+          column: typeof payload.singlePlayerHint.column === 'string' ? payload.singlePlayerHint.column : '',
+          value: typeof payload.singlePlayerHint.value === 'string' ? payload.singlePlayerHint.value : ''
+        };
+    this.singlePlayerHintUsed = clearProgress ? false : !!payload?.singlePlayerHintUsed;
 
     const correct = this.answers.find(a => a.name === this.correctAnswer.name);
     if (correct) {
@@ -680,6 +766,11 @@ export class PromptleComponent implements OnInit, OnDestroy {
     } else {
       this.backendHeaders = [];
       this.backendRow     = [];
+    }
+
+    if (!this.isMultiplayer && !this.isGameOver) {
+      this.stopStopwatch();
+      this.startStopwatch();
     }
   }
 
@@ -702,6 +793,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.isViewingCompletedGame = false;
     this.gameError        = '';
     this.myFinishTimeMs   = null;
+    this.singlePlayerHint = null;
+    this.singlePlayerHintUsed = false;
     this.stopStopwatch();
     this.startStopwatch();
     this.showSkipTurnHint  = true;
@@ -746,6 +839,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.guessQuery       = '';
     this.isGameOver       = false;
     this.isViewingCompletedGame = false;
+    this.singlePlayerHint = null;
+    this.singlePlayerHintUsed = false;
     this.filterAnswers(this.guessQuery);
     if (!this.isMultiplayer) {
       this.stopStopwatch();

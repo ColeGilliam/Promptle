@@ -2,6 +2,9 @@ import { Server } from "socket.io";
 import { setIo } from "./socketState.js";
 import { markRoomStarted, getRoomMode } from "../controllers/gameController.js";
 import { validateProfileUsernameRules } from "../services/profileModeration.js";
+import { appLogger } from "../lib/logger.js";
+
+const socketLogger = appLogger.child({ component: 'socket' });
 
 export function setupSocket(server) {
   const io = new Server(server, {
@@ -65,10 +68,17 @@ export function setupSocket(server) {
 
   // ─── Connection handler ────────────────────────────────────────────────
   io.on('connection', (socket) => {
-    console.log('[BACKEND] Player connected:', socket.id);
+    socketLogger.debug('socket_connected', {
+      socketId: socket.id,
+    });
 
     socket.on('join-room', async ({ roomId, playerName, deviceId }) => {
       if (!roomId || typeof roomId !== 'string' || roomId.trim() === '') {
+        socketLogger.warn('socket_join_invalid_room', {
+          socketId: socket.id,
+          roomId: roomId || null,
+          deviceId: deviceId || null,
+        });
         socket.emit('error', 'Invalid room ID');
         return;
       }
@@ -77,6 +87,11 @@ export function setupSocket(server) {
 
       // Reject if game has already started
       if (startedRooms.has(cleanRoom)) {
+        socketLogger.warn('socket_join_started_room_rejected', {
+          socketId: socket.id,
+          roomId: cleanRoom,
+          deviceId: deviceId || null,
+        });
         socket.emit('join-error', { message: 'This game has already started. Please join another room.' });
         return;
       }
@@ -85,6 +100,12 @@ export function setupSocket(server) {
       if (deviceId) {
         const deviceMap = roomDeviceIds.get(cleanRoom);
         if (deviceMap && deviceMap.has(deviceId)) {
+          socketLogger.warn('socket_join_duplicate_device', {
+            socketId: socket.id,
+            roomId: cleanRoom,
+            deviceId,
+            existingSocketId: deviceMap.get(deviceId),
+          });
           socket.emit('join-error', { message: 'You are already in this room from another tab.' });
           return;
         }
@@ -95,6 +116,12 @@ export function setupSocket(server) {
       if (roomMode === '1v1') {
         const existingSockets = io.sockets.adapter.rooms.get(cleanRoom) || new Set();
         if (existingSockets.size >= 2) {
+          socketLogger.warn('socket_join_room_full', {
+            socketId: socket.id,
+            roomId: cleanRoom,
+            mode: roomMode,
+            playerCount: existingSockets.size,
+          });
           socket.emit('join-error', { message: 'This 1v1 room is full (max 2 players)' });
           return;
         }
@@ -106,6 +133,12 @@ export function setupSocket(server) {
           : 'Guest';
       const usernameValidation = validateProfileUsernameRules(requestedName);
       if (!usernameValidation.isValid) {
+        socketLogger.warn('socket_join_invalid_username', {
+          socketId: socket.id,
+          roomId: cleanRoom,
+          requestedName,
+          reason: usernameValidation.error,
+        });
         socket.emit('join-error', { message: usernameValidation.error });
         return;
       }
@@ -121,11 +154,21 @@ export function setupSocket(server) {
         if (!roomDeviceIds.has(cleanRoom)) roomDeviceIds.set(cleanRoom, new Map());
         roomDeviceIds.get(cleanRoom).set(deviceId, socket.id);
       }
-      console.log(`[BACKEND] ${approvedName} joined room ${cleanRoom} (socket ${socket.id})`);
+      socketLogger.debug('socket_joined_room', {
+        socketId: socket.id,
+        roomId: cleanRoom,
+        playerName: approvedName,
+        deviceId: deviceId || null,
+        mode: roomMode,
+      });
 
       if (!roomHosts.has(cleanRoom)) {
         roomHosts.set(cleanRoom, socket.id);
-        console.log(`[BACKEND] Host of ${cleanRoom} is ${socket.id}`);
+        socketLogger.debug('socket_room_host_assigned', {
+          roomId: cleanRoom,
+          socketId: socket.id,
+          playerName: approvedName,
+        });
       }
 
       const isHost = roomHosts.get(cleanRoom) === socket.id;
@@ -137,14 +180,22 @@ export function setupSocket(server) {
         name: playerNames.get(clientId) || 'Guest'
       }));
 
-      console.log(`[BACKEND] Current players in ${cleanRoom}:`, players);
+      socketLogger.debug('socket_room_players_updated', {
+        roomId: cleanRoom,
+        players,
+      });
       io.to(cleanRoom).emit('players-updated', { roomId: cleanRoom, players });
       socket.emit('joined-room', { roomId: cleanRoom, message: `Joined ${cleanRoom}` });
     });
 
     socket.on('start-game', ({ roomId, mode }) => {
       if (roomHosts.get(roomId) !== socket.id) return;
-      console.log(`[BACKEND] Game started in ${roomId} by host ${socket.id}, mode: ${mode}`);
+      socketLogger.debug('socket_game_started', {
+        roomId,
+        socketId: socket.id,
+        playerName: playerNames.get(socket.id) || 'Guest',
+        mode,
+      });
       markRoomStarted(roomId);
       startedRooms.add(roomId);
 
@@ -234,7 +285,12 @@ export function setupSocket(server) {
 
     socket.on('use-powerup', ({ roomId, type }) => {
       const approvedName = playerNames.get(socket.id) || 'Guest';
-      console.log(`[BACKEND] ${approvedName} used powerup "${type}" in ${roomId}`);
+      socketLogger.debug('socket_powerup_used', {
+        roomId,
+        socketId: socket.id,
+        playerName: approvedName,
+        type,
+      });
       socket.to(roomId).emit('powerup-effect', { type, fromPlayerName: approvedName });
     });
 
@@ -274,7 +330,11 @@ export function setupSocket(server) {
         message = data.text.trim();
       }
       if (!message) return;
-      console.log(`[BACKEND] Message in room "${room}": ${message} (from ${socket.id})`);
+      socketLogger.debug('socket_chat_message', {
+        roomId: room,
+        socketId: socket.id,
+        message,
+      });
       io.to(room).emit('chat message', message);
     });
 
@@ -310,7 +370,10 @@ export function setupSocket(server) {
 
     socket.on('delete-room', ({ roomId }) => {
       if (!roomId) return;
-      console.log(`[BACKEND] Room ${roomId} deleted by ${socket.id}`);
+      socketLogger.debug('socket_room_deleted', {
+        roomId,
+        socketId: socket.id,
+      });
       startedRooms.delete(roomId);
       roomDeviceIds.delete(roomId);
       io.to(roomId).emit('room-deleted');
@@ -380,14 +443,21 @@ export function setupSocket(server) {
 
     // 'disconnect' fires after rooms are cleared — use only for map cleanup
     socket.on('disconnect', () => {
-      console.log('[BACKEND] Player disconnected:', socket.id);
+      socketLogger.debug('socket_disconnected', {
+        socketId: socket.id,
+      });
       playerNames.delete(socket.id);
       playerGuesses.delete(socket.id);
     });
   });
 
   io.engine.on("connection_error", (err) => {
-    console.log("[BACKEND] Engine connection error:", err.req?.url, err.code, err.message);
+    socketLogger.warn('socket_engine_connection_error', {
+      url: err.req?.url || null,
+      code: err.code || null,
+      message: err.message || null,
+      context: err.context || null,
+    });
   });
 
   return io;

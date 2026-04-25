@@ -28,18 +28,20 @@
 
     <button
       matButton="outlined"
-      class="rect-btn promp3-btn saved-btn saved-btn--new"
-      (click)="onStartNewClicked()"
+      class="rect-btn promp3-btn saved-btn saved-btn--secondary"
+      (click)="onRestartClicked()"
     >
-      <mat-icon>add</mat-icon>
-      New Game
+      <mat-icon>replay</mat-icon>
+      {{ secondaryActionLabel }}
     </button>
 
     <button
+      *ngIf="showCancel"
       matButton="outlined"
-      class="rect-btn promp3-btn saved-btn saved-btn--cancel"
+      class="rect-btn promp3-btn saved-btn saved-btn--secondary"
       (click)="onCancelClicked()"
     >
+      <mat-icon>close</mat-icon>
       Cancel
     </button>
 
@@ -49,7 +51,7 @@
       (click)="onDeleteClicked()"
     >
       <mat-icon>delete_outline</mat-icon>
-      Delete Save
+      Delete Game
     </button>
   </div>
 
