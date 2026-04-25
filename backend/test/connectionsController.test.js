@@ -71,7 +71,7 @@ test('generateConnectionsGame normalizes a valid puzzle response', async () => {
           choices: [{
             message: {
               content: JSON.stringify({
-                topic: 'Ocean Life',
+                topic: 'Wrong Topic', // The controller should ignore this and use the original topic from the request.
                 groups: [
                   {
                     category: 'Kinds of sharks',

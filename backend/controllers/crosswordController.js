@@ -15,6 +15,7 @@ import {
   getTokenUsageLabel,
   requireOpenAi,
 } from '../services/gameGenerationShared.js';
+import { validateTopicInput } from '../services/topicInputValidation.js';
 import { appLogger } from '../lib/logger.js';
 
 const DEV_EMAIL = 'promptle99@gmail.com';
@@ -85,10 +86,11 @@ export async function generateCrosswordGameForTopic({
   requestId = null,
   auth0Id = null,
 } = {}) {
-  const normalizedTopic = typeof topic === 'string' ? topic.trim() : '';
-  if (!normalizedTopic) {
-    throw new Error('Please provide a topic in the request body.');
+  const topicValidation = validateTopicInput(topic);
+  if (!topicValidation.valid) {
+    throw new Error(topicValidation.error);
   }
+  const normalizedTopic = topicValidation.topic;
 
   requireOpenAi(openaiClient, apiKey, 'Sorry! The puzzle failed to generate. Please try again.');
 
@@ -119,7 +121,10 @@ export async function generateCrosswordGameForTopic({
 
       let candidatePool;
       try {
-        candidatePool = normalizeCrosswordCandidatePool(parsed, normalizedTopic);
+        candidatePool = normalizeCrosswordCandidatePool({
+          ...parsed,
+          topic: normalizedTopic,
+        }, normalizedTopic);
       } catch (error) {
         logger.error('crossword_candidate_pool_validation_failed', {
           requestId,
@@ -200,11 +205,15 @@ export function createGenerateCrosswordHandler({
 } = {}) {
   return async function generateCrosswordGame(req, res) {
     const { topic, auth0Id } = req.body || {};
-    const normalizedTopic = typeof topic === 'string' ? topic.trim() : '';
+    const topicValidation = validateTopicInput(topic);
 
-    if (!normalizedTopic) {
-      return res.status(400).json({ error: 'Please provide a topic in the request body.' });
+    if (!topicValidation.valid) {
+      return res.status(400).json({
+        error: topicValidation.error,
+        code: topicValidation.code,
+      });
     }
+    const normalizedTopic = topicValidation.topic;
 
     const isDevUser = await isDevAccountFn(auth0Id);
     if (!isDevUser) {

@@ -13,6 +13,7 @@ import {
   getTokenUsageLabel,
   requireOpenAi,
 } from '../services/gameGenerationShared.js';
+import { validateTopicInput } from '../services/topicInputValidation.js';
 import { appLogger } from '../lib/logger.js';
 
 const DEV_EMAIL = 'promptle99@gmail.com';
@@ -83,10 +84,11 @@ export async function generateConnectionsGameForTopic({
   requestId = null,
   auth0Id = null,
 } = {}) {
-  const normalizedTopic = typeof topic === 'string' ? topic.trim() : '';
-  if (!normalizedTopic) {
-    throw new Error('Please provide a topic in the request body.');
+  const topicValidation = validateTopicInput(topic);
+  if (!topicValidation.valid) {
+    throw new Error(topicValidation.error);
   }
+  const normalizedTopic = topicValidation.topic;
 
   requireOpenAi(openaiClient, apiKey, 'OpenAI API key is missing. Set OPENAI_API_KEY in your environment.');
 
@@ -114,7 +116,10 @@ export async function generateConnectionsGameForTopic({
 
   let payload;
   try {
-    payload = normalizeConnectionsGamePayload(parsed, normalizedTopic);
+    payload = normalizeConnectionsGamePayload({
+      ...parsed,
+      topic: normalizedTopic,
+    }, normalizedTopic);
   } catch (error) {
     logger.error('connections_generation_validation_failed', {
       requestId,
@@ -160,11 +165,15 @@ export function createGenerateConnectionsHandler({
   // The factory keeps the controller easy to test by letting callers replace network/db dependencies.
   return async function generateConnectionsGame(req, res) {
     const { topic, auth0Id } = req.body || {};
-    const normalizedTopic = typeof topic === 'string' ? topic.trim() : '';
+    const topicValidation = validateTopicInput(topic);
 
-    if (!normalizedTopic) {
-      return res.status(400).json({ error: 'Please provide a topic in the request body.' });
+    if (!topicValidation.valid) {
+      return res.status(400).json({
+        error: topicValidation.error,
+        code: topicValidation.code,
+      });
     }
+    const normalizedTopic = topicValidation.topic;
 
     const isDevUser = await isDevAccountFn(auth0Id);
     if (!isDevUser) {

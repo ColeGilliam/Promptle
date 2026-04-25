@@ -118,7 +118,10 @@ test('generateCrosswordGame builds a valid crossword from a candidate pool', asy
         create: async () => ({
           choices: [{
             message: {
-              content: JSON.stringify(buildValidCandidatePool()),
+              content: JSON.stringify({
+                ...buildValidCandidatePool(),
+                topic: 'Wrong Topic', // The controller should ignore this and use the original topic from the request.
+              }),
             },
           }],
           usage: { total_tokens: 42 },
