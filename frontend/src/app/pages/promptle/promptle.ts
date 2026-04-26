@@ -1042,8 +1042,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
 
     if (this.shareIdParam) {
       this.loadGame({ topicId: Number(this.shareIdParam) });
-    } else if (this.shareTopicParam) {
-      this.loadGame({ topic: this.shareTopicParam, auth0Id: this.myAuth0Id });
     } else if (this.answers?.length) {
       const candidates = this.answers.filter(a => a.name !== this.correctAnswer.name);
       const pool = candidates.length ? candidates : this.answers;
@@ -1052,6 +1050,9 @@ export class PromptleComponent implements OnInit, OnDestroy {
       this.headers        = [...this.headers];
       this.backendHeaders = [...this.headers];
       this.backendRow     = [...pick.values];
+      if (this.sharePayload) {
+        this.sharePayload = { ...this.sharePayload, correctAnswer: { ...pick } };
+      }
       this.filterAnswers(this.guessQuery);
       this.startStopwatch();
     }
