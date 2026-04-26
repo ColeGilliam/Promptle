@@ -458,8 +458,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
       }
 
       if (sharedGameCode) {
-        this.routeTopicId = '';
-        this.routeTopic = '';
+        this.shareIdParam = '';
+        this.shareTopicParam = '';
         this.currentSinglePlayerSource = 'shared';
         this.currentDailyGame = null;
         this.resetCustomGameFeedback();
@@ -469,8 +469,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
       }
 
       if (dailyGame === 'true' || dailyGame === '1') {
-        this.routeTopicId = '';
-        this.routeTopic = '';
+        this.shareIdParam = '';
+        this.shareTopicParam = '';
         this.currentSinglePlayerSource = 'daily';
         this.currentDailyGame = null;
         this.resetCustomGameFeedback();
@@ -487,8 +487,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
       }
 
       if (aiTopic && aiTopic.trim()) {
-        this.routeTopic = aiTopic.trim();
-        this.routeTopicId = '';
+        this.shareTopicParam = aiTopic.trim();
+        this.shareIdParam = '';
         this.currentSinglePlayerSource = 'custom';
         this.currentDailyGame = null;
         this.resetCustomGameFeedback();
@@ -499,8 +499,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
         return;
       }
       if (!isNaN(topicId)) {
-        this.routeTopicId = String(topicId);
-        this.routeTopic = '';
+        this.shareIdParam = String(topicId);
+        this.shareTopicParam = '';
         this.currentSinglePlayerSource = 'popular';
         this.currentDailyGame = null;
         this.resetCustomGameFeedback();
@@ -1470,7 +1470,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
 
   private createShareLink() {
     if (this.canSharePopularTopic()) {
-      this.shareUrl = `${window.location.origin}/game?id=${encodeURIComponent(this.routeTopicId)}&seed=${encodeURIComponent(this.encodeShareAnswer(this.correctAnswer.name))}`;
+      this.shareUrl = `${window.location.origin}/game?id=${encodeURIComponent(this.shareIdParam)}&seed=${encodeURIComponent(this.encodeShareAnswer(this.correctAnswer.name))}`;
       this.shareExpiresAt = null;
       this.shareLoading = false;
       this.shareCopied = false;
@@ -1529,7 +1529,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
 
   private canSharePopularTopic(): boolean {
     return this.currentSinglePlayerSource === 'popular'
-      && !!this.routeTopicId
+      && !!this.shareIdParam
       && !!this.correctAnswer?.name;
   }
 

@@ -316,3 +316,20 @@
   height: 0.85rem;
   line-height: 1;
 }
+
+@media (max-width: 600px) {
+  /* Stack the two-column layout vertically so the player panel isn't clipped */
+  .split-topic-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .game-topic-right {
+    border-left: none;
+    padding-left: 0;
+    border-top: 1.5px solid var(--game-topic-divider);
+    padding-top: 12px;
+    margin-top: 4px;
+  }
+}
