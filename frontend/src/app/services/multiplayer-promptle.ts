@@ -19,6 +19,7 @@ export class MultiplayerService {
 
   private socket: Socket | null = null;
   private mySocketId = '';
+  private currentRoomId = '';
 
   private roomStateSubject = new BehaviorSubject<RoomState | null>(null);
   public roomState$: Observable<RoomState | null> = this.roomStateSubject.asObservable();
@@ -28,6 +29,7 @@ export class MultiplayerService {
   private gameStartedCallbacks:   ((data: any) => void)[] = [];
   private hostStatusCallbacks:    ((data: any) => void)[] = [];
   private powerupEffectCallbacks: ((data: any) => void)[] = [];
+  private chatMessageCallbacks:   ((data: {senderName: string; text: string}) => void)[] = [];
 
   // 1v1 callbacks
   private oneVsOneStartedCallbacks:      ((data: any) => void)[] = [];
@@ -52,6 +54,7 @@ export class MultiplayerService {
   joinRoom(roomId: string, playerName: string = 'Guest') {
     console.log(`[Service] Attempting to join room ${roomId} as ${playerName}`);
     const deviceId = this.getDeviceId();
+    this.currentRoomId = roomId;
 
     if (this.socket?.connected) {
       console.log('[Service] Socket already connected → emitting join-room');
@@ -131,6 +134,10 @@ export class MultiplayerService {
       this.roomDeletedCallbacks.forEach(cb => cb());
     });
 
+    this.socket.on('chat message', (data: {senderName: string; text: string}) => {
+      this.chatMessageCallbacks.forEach(cb => cb(data));
+    });
+
     // ── Connection lifecycle ────────────────────────────────────────────
     this.socket.on('connect', () => {
       this.mySocketId = this.socket!.id!;
@@ -186,6 +193,8 @@ export class MultiplayerService {
     this.oneVsOneGameOverCallbacks   = [];
     this.oneVsOneDisconnectedCallbacks = [];
     this.joinErrorCallbacks          = [];
+    this.chatMessageCallbacks        = [];
+    this.currentRoomId               = '';
   }
 
   startGame(roomId: string, mode: string = 'standard') {
@@ -315,5 +324,18 @@ export class MultiplayerService {
 
   emitDeleteRoom(roomId: string): void {
     this.socket?.emit('delete-room', { roomId });
+  }
+
+  sendChatMessage(text: string): void {
+    if (!text.trim() || !this.currentRoomId) return;
+    this.socket?.emit('chat message', { room: this.currentRoomId, text: text.trim() });
+  }
+
+  onChatMessage(): Observable<{senderName: string; text: string}> {
+    return new Observable(observer => {
+      const cb = (data: {senderName: string; text: string}) => observer.next(data);
+      this.chatMessageCallbacks.push(cb);
+      return () => { this.chatMessageCallbacks = this.chatMessageCallbacks.filter(c => c !== cb); };
+    });
   }
 }
