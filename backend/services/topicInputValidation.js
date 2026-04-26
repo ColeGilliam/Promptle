@@ -1,4 +1,6 @@
-export const TOPIC_MAX_LENGTH = 60;
+import { OUTPUT_LIMITS } from './gameGenerationConfig.js';
+
+export const TOPIC_MAX_LENGTH = OUTPUT_LIMITS.topic;
 export const TOPIC_REQUIRED_ERROR = 'Please provide a topic in the request body.';
 export const TOPIC_TOO_LONG_ERROR = `Topic must be ${TOPIC_MAX_LENGTH} characters or fewer.`;
 export const TOPIC_INSTRUCTION_ERROR = 'Please enter a topic, not instructions.';

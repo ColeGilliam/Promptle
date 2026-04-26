@@ -15,11 +15,26 @@ import {
   getTokenUsageLabel,
   requireOpenAi,
 } from '../services/gameGenerationShared.js';
+import { CROSSWORD_GENERATION_CONFIG } from '../services/gameGenerationConfig.js';
+import { buildCrosswordResponseFormat } from '../services/gameGenerationSchemas.js';
+import {
+  validateCrosswordCandidatePool,
+  validateCrosswordPuzzle,
+  validateCrosswordRawOutput,
+} from '../services/generatedOutputSecurity.js';
+import {
+  isGeneratedOutputSecurityError,
+  logAiInputSecurityRejected,
+  logAiOutputSecurityRejected,
+  summarizeAiGeneratedPayload,
+  summarizeRawAiOutput,
+} from '../services/aiSecurityLogging.js';
 import { validateTopicInput } from '../services/topicInputValidation.js';
 import { appLogger } from '../lib/logger.js';
 
 const DEV_EMAIL = 'promptle99@gmail.com';
-const CROSSWORD_GENERATION_ERROR = 'Sorry! The puzzle failed to generate. Please try again.';
+const CROSSWORD_GENERATION_ERROR = 'Sorry! The crossword failed to generate. Please try again.';
+const CROSSWORD_TOPIC_GENERATION_ERROR = 'Sorry! The crossword failed to generate. Please try a different topic.';
 const crosswordLogger = appLogger.child({ component: 'crossword' });
 
 async function isDevAccount(auth0Id) {
@@ -33,9 +48,16 @@ async function isDevAccount(auth0Id) {
 }
 
 const CROSSWORD_GENERATION_MODEL = 'gpt-5.4-mini';
-const CROSSWORD_GENERATION_ATTEMPTS = 3;
+const CROSSWORD_GENERATION_ATTEMPTS = CROSSWORD_GENERATION_CONFIG.attempts;
+const CROSSWORD_MAX_COMPLETION_TOKENS = CROSSWORD_GENERATION_CONFIG.maxCompletionTokens;
+const CROSSWORD_MIN_GENERATED_CANDIDATES = CROSSWORD_GENERATION_CONFIG.minGeneratedCandidates;
+const CROSSWORD_MAX_GENERATED_CANDIDATES = CROSSWORD_GENERATION_CONFIG.maxGeneratedCandidates;
 
-export function buildCrosswordGenerationMessages({ topic } = {}) {
+export function buildCrosswordGenerationMessages({
+  topic,
+  minCandidates = CROSSWORD_MIN_GENERATED_CANDIDATES,
+  maxCandidates = CROSSWORD_MAX_GENERATED_CANDIDATES,
+} = {}) {
   return [
     {
       role: 'system',
@@ -54,8 +76,8 @@ export function buildCrosswordGenerationMessages({ topic } = {}) {
             }
 
             Hard requirements:
-            (1) Return 30-48 candidates.
-            (2) Every answer must be 3-15 characters and may use letters and numbers only.
+            (1) Return ${minCandidates}-${maxCandidates} candidates.
+            (2) Every answer must be ${CROSSWORD_GENERATION_CONFIG.minAnswerLength}-${CROSSWORD_GENERATION_CONFIG.maxAnswerLength} characters and may use letters and numbers only.
             (3) Most candidates should be strongly tied to the topic. A smaller number of flexible support-fill answers is allowed when the layout needs it.
             (4) Aim mostly for shorter, cross-friendly answers in the 4-8 character range, but include some longer answers when the topic supports them.
             (5) Favor familiar, cross-friendly words with common letters. Do NOT attempt to place them on a grid.
@@ -92,15 +114,24 @@ export async function generateCrosswordGameForTopic({
   }
   const normalizedTopic = topicValidation.topic;
 
-  requireOpenAi(openaiClient, apiKey, 'Sorry! The puzzle failed to generate. Please try again.');
+  requireOpenAi(openaiClient, apiKey, CROSSWORD_GENERATION_ERROR);
 
+  let topicRelatedGenerationFailure = false;
   for (let attempt = 1; attempt <= CROSSWORD_GENERATION_ATTEMPTS; attempt += 1) {
     try {
       const completion = await openaiClient.chat.completions.create({
         model,
         temperature: 0.8,
-        response_format: { type: 'json_object' },
-        messages: buildCrosswordGenerationMessages({ topic: normalizedTopic }),
+        max_completion_tokens: CROSSWORD_MAX_COMPLETION_TOKENS,
+        response_format: buildCrosswordResponseFormat({
+          minCandidates: CROSSWORD_MIN_GENERATED_CANDIDATES,
+          maxCandidates: CROSSWORD_MAX_GENERATED_CANDIDATES,
+        }),
+        messages: buildCrosswordGenerationMessages({
+          topic: normalizedTopic,
+          minCandidates: CROSSWORD_MIN_GENERATED_CANDIDATES,
+          maxCandidates: CROSSWORD_MAX_GENERATED_CANDIDATES,
+        }),
       });
 
       const raw = completion.choices[0]?.message?.content || '{}';
@@ -113,7 +144,38 @@ export async function generateCrosswordGameForTopic({
           auth0Id,
           topic: normalizedTopic,
           attempt,
-          raw,
+          ...summarizeRawAiOutput(raw),
+          error,
+        });
+        continue;
+      }
+
+      try {
+        validateCrosswordRawOutput(parsed, {
+          maxCandidates: CROSSWORD_MAX_GENERATED_CANDIDATES,
+        });
+      } catch (error) {
+        if (isGeneratedOutputSecurityError(error)) {
+          topicRelatedGenerationFailure = true;
+          logAiOutputSecurityRejected({
+            logger,
+            route: 'crossword',
+            requestId,
+            auth0Id,
+            topic: normalizedTopic,
+            error,
+            stage: 'raw_output',
+            attempt,
+            sourcePayload: parsed,
+          });
+          continue;
+        }
+        logger.error('crossword_raw_output_validation_failed', {
+          requestId,
+          auth0Id,
+          topic: normalizedTopic,
+          attempt,
+          outputSummary: summarizeAiGeneratedPayload(parsed, 'crossword'),
           error,
         });
         continue;
@@ -125,13 +187,31 @@ export async function generateCrosswordGameForTopic({
           ...parsed,
           topic: normalizedTopic,
         }, normalizedTopic);
+        validateCrosswordCandidatePool(candidatePool, {
+          maxCandidates: CROSSWORD_MAX_GENERATED_CANDIDATES,
+        });
       } catch (error) {
+        if (isGeneratedOutputSecurityError(error)) {
+          topicRelatedGenerationFailure = true;
+          logAiOutputSecurityRejected({
+            logger,
+            route: 'crossword',
+            requestId,
+            auth0Id,
+            topic: normalizedTopic,
+            error,
+            stage: 'candidate_pool',
+            attempt,
+            sourcePayload: candidatePool || parsed,
+          });
+          continue;
+        }
         logger.error('crossword_candidate_pool_validation_failed', {
           requestId,
           auth0Id,
           topic: normalizedTopic,
           attempt,
-          parsed,
+          outputSummary: summarizeAiGeneratedPayload(parsed, 'crossword'),
           error,
         });
         continue;
@@ -140,13 +220,29 @@ export async function generateCrosswordGameForTopic({
       let result;
       try {
         result = buildCrosswordGameFromCandidatePool(candidatePool);
+        validateCrosswordPuzzle(result.puzzle);
       } catch (error) {
+        if (isGeneratedOutputSecurityError(error)) {
+          topicRelatedGenerationFailure = true;
+          logAiOutputSecurityRejected({
+            logger,
+            route: 'crossword',
+            requestId,
+            auth0Id,
+            topic: normalizedTopic,
+            error,
+            stage: 'puzzle',
+            attempt,
+            sourcePayload: result?.puzzle || candidatePool,
+          });
+          continue;
+        }
         logger.error('crossword_construction_failed', {
           requestId,
           auth0Id,
           topic: normalizedTopic,
           attempt,
-          candidatePool,
+          outputSummary: summarizeAiGeneratedPayload(candidatePool, 'crossword'),
           error,
         });
         continue;
@@ -190,8 +286,9 @@ export async function generateCrosswordGameForTopic({
     auth0Id,
     topic: normalizedTopic,
     attempts: CROSSWORD_GENERATION_ATTEMPTS,
+    topicRelatedGenerationFailure,
   });
-  throw new Error('Sorry! The puzzle failed to generate. Please try again.');
+  throw new Error(topicRelatedGenerationFailure ? CROSSWORD_TOPIC_GENERATION_ERROR : CROSSWORD_GENERATION_ERROR);
 }
 
 export function createGenerateCrosswordHandler({
@@ -208,6 +305,15 @@ export function createGenerateCrosswordHandler({
     const topicValidation = validateTopicInput(topic);
 
     if (!topicValidation.valid) {
+      logAiInputSecurityRejected({
+        logger,
+        req,
+        route: 'crossword',
+        auth0Id,
+        topic,
+        source: 'topic_validation',
+        reason: topicValidation.code,
+      });
       return res.status(400).json({
         error: topicValidation.error,
         code: topicValidation.code,
@@ -271,6 +377,17 @@ export function createGenerateCrosswordHandler({
         flaggedCategories: moderationResult.flaggedCategories,
         moderationModel: moderationResult.moderationModel,
       };
+      logAiInputSecurityRejected({
+        logger,
+        req,
+        route: 'crossword',
+        auth0Id,
+        topic: normalizedTopic,
+        source: 'moderation',
+        reason: 'topic_not_allowed',
+        flaggedCategories: moderationResult.flaggedCategories,
+        moderationModel: moderationResult.moderationModel,
+      });
       if (typeof logger.info === 'function') {
         logger.info('crossword_topic_blocked', blockedLogPayload);
       } else if (typeof logger.debug === 'function') {
@@ -293,8 +410,12 @@ export function createGenerateCrosswordHandler({
         auth0Id: auth0Id || null,
       });
       return res.json(payload);
-    } catch {
-      return res.status(500).json({ error: CROSSWORD_GENERATION_ERROR });
+    } catch (error) {
+      return res.status(500).json({
+        error: error?.message === CROSSWORD_TOPIC_GENERATION_ERROR
+          ? CROSSWORD_TOPIC_GENERATION_ERROR
+          : CROSSWORD_GENERATION_ERROR,
+      });
     }
   };
 }
