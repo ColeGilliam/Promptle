@@ -27,6 +27,8 @@
         [currentRoom]="currentRoom"
         [players]="players"
         [headers]="headers"
+        [chatMessages]="chatMessages"
+        (chatSend)="onSendChat($event)"
       ></app-promptle-game-card>
 
       <div

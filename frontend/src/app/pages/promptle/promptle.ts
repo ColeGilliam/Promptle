@@ -343,6 +343,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
   private oneVsOneSubs: Subscription[] = [];
   private gameDataReady = false;
 
+  chatMessages: {senderName: string; text: string; isMe: boolean}[] = [];
+
   private roomStateSub?:    Subscription;
   private opponentGuessSub?: Subscription;
   private playerWonSub?:    Subscription;
@@ -350,6 +352,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
   private hostStatusSub?:   Subscription;
   private powerupSub?:      Subscription;
   private joinErrorSub?:    Subscription;
+  private chatSub?:         Subscription;
 
   constructor(
     private dbGameService: DbGameService,
@@ -378,6 +381,11 @@ export class PromptleComponent implements OnInit, OnDestroy {
 
     this.multiplayerService.onRoomDeleted().subscribe(() => {
       this.router.navigate(['/']);
+    });
+
+    this.chatSub = this.multiplayerService.onChatMessage().subscribe(data => {
+      this.chatMessages.push({ ...data, isMe: data.senderName === this.myUsername });
+      this.cdr.detectChanges();
     });
 
     this.auth.user$.pipe(take(1)).subscribe(user => {
@@ -610,6 +618,10 @@ export class PromptleComponent implements OnInit, OnDestroy {
     });
 
     this.oneVsOneSubs = [sub1, sub2, sub3, sub4, sub5];
+  }
+
+  onSendChat(text: string) {
+    this.multiplayerService.sendChatMessage(text);
   }
 
   hostStartGame() {
@@ -1823,6 +1835,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.powerupSub?.unsubscribe();
     this.oneVsOneSubs.forEach(s => s.unsubscribe());
     this.joinErrorSub?.unsubscribe();
+    this.chatSub?.unsubscribe();
     if (this.blackoutInterval) clearInterval(this.blackoutInterval);
     if (this.freezeInterval) clearInterval(this.freezeInterval);
     if (this.powerupHintTimeout) clearTimeout(this.powerupHintTimeout);
