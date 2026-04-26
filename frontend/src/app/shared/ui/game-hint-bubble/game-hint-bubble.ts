@@ -25,7 +25,7 @@ import { SettingsService } from '../../../services/settings.service';
 export class GameHintBubble {
   @Input() icon = 'lightbulb';
   @Input() message = '';
-  @Input() arrowSide: 'up' | 'down' = 'down';
+  @Input() arrowSide: 'up' | 'down' | 'left' = 'down';
   @Input() show = false;
   @Output() dismissed = new EventEmitter<void>();
 
@@ -37,5 +37,10 @@ export class GameHintBubble {
 
   dismiss() {
     this.dismissed.emit();
+  }
+
+  disableHints() {
+    this.settings.setHints(false);
+    this.dismiss();
   }
 }

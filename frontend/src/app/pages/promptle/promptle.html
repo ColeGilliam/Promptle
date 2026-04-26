@@ -132,77 +132,82 @@
       </div>
 
       <!-- ══ 1v1 SKIP-TURN POWER-UP ══ -->
-      <app-game-hint-bubble
-        *ngIf="isOneVsOne && gameStarted && !isGameOver"
-        icon="bolt"
-        message="Skip Turn ends your opponent's turn early — one use only!"
-        arrowSide="down"
-        [show]="showSkipTurnHint"
-        (dismissed)="showSkipTurnHint = false"
-      ></app-game-hint-bubble>
       <div class="skip-turn-bar" *ngIf="isOneVsOne && gameStarted && !isGameOver">
-        <button
-          class="powerup-btn skip-turn-btn"
-          [class.used]="skipTurnUsed"
-          [class.unavailable]="isMyTurn"
-          [disabled]="skipTurnUsed || isMyTurn"
-          (click)="useSkipTurn()"
-          title="End the opponent's turn and play again immediately"
-        >
-          <mat-icon class="powerup-icon">bolt</mat-icon>
-          <span class="powerup-name">Skip Turn</span>
-          <span class="powerup-badge" *ngIf="skipTurnUsed">USED</span>
-          <span class="powerup-badge unavail-badge" *ngIf="!skipTurnUsed && isMyTurn">YOUR TURN</span>
-        </button>
+        <div class="skip-turn-anchor">
+          <app-game-hint-bubble
+            icon="bolt"
+            message="Skip Turn ends your opponent's turn early — one use only!"
+            arrowSide="down"
+            [show]="showSkipTurnHint"
+            (dismissed)="showSkipTurnHint = false"
+          ></app-game-hint-bubble>
+          <button
+            class="powerup-btn skip-turn-btn"
+            [class.used]="skipTurnUsed"
+            [class.unavailable]="isMyTurn"
+            [disabled]="skipTurnUsed || isMyTurn"
+            (click)="useSkipTurn()"
+            title="End the opponent's turn and play again immediately"
+          >
+            <mat-icon class="powerup-icon">bolt</mat-icon>
+            <span class="powerup-name">Skip Opponent's Turn</span>
+            <span class="powerup-badge" *ngIf="skipTurnUsed">USED</span>
+            <span class="powerup-badge unavail-badge" *ngIf="!skipTurnUsed && isMyTurn">YOUR TURN</span>
+          </button>
+        </div>
       </div>
 
       <!-- ══ POWER-UPS (chaos mode only — not while spectating) ══ -->
-      <app-game-hint-bubble
-        *ngIf="isChaos && gameStarted && !isGameOver && !isSpectating"
-        icon="auto_awesome"
-        message="<strong>Ad Break</strong> blinds opponents &nbsp;·&nbsp; <strong>Peek</strong> reveals a hidden value &nbsp;·&nbsp; <strong>Freeze</strong> locks opponent input. Each is one use only!"
-        arrowSide="down"
-        [show]="showPowerupHint"
-        (dismissed)="showPowerupHint = false"
-      ></app-game-hint-bubble>
       <div class="powerup-bar" *ngIf="isChaos && gameStarted && !isGameOver && !isSpectating">
         <span class="powerup-label">POWER-UPS</span>
 
-        <button
-          class="powerup-btn blackout-btn"
-          [class.used]="powerupsUsed.blackout"
-          [disabled]="powerupsUsed.blackout"
-          (click)="usePowerup('blackout')"
-          title="Cover all opponents' screens with an ad for 6 seconds"
-        >
-          <mat-icon class="powerup-icon">tv</mat-icon>
-          <span class="powerup-name">Ad Break</span>
-          <span class="powerup-badge" *ngIf="powerupsUsed.blackout">USED</span>
-        </button>
+        <div class="powerup-buttons-group">
+          <div class="powerup-hint-anchor">
+            <app-game-hint-bubble
+              icon="auto_awesome"
+              message="<strong>Ad Break</strong> — blinds all opponents for 6s<br><strong>Peek</strong> — reveals a hidden column value<br><strong>Freeze</strong> — locks opponent input for 8s<br><span style='opacity:0.6;font-size:0.75rem'>Each power-up is one use only</span>"
+              arrowSide="down"
+              [show]="showPowerupHint"
+              (dismissed)="showPowerupHint = false"
+            ></app-game-hint-bubble>
+          </div>
 
-        <button
-          class="powerup-btn peek-btn"
-          [class.used]="powerupsUsed.peek"
-          [disabled]="powerupsUsed.peek"
-          (click)="usePowerup('peek')"
-          title="Reveal one hidden column value from the answer"
-        >
-          <mat-icon class="powerup-icon">lightbulb</mat-icon>
-          <span class="powerup-name">Peek</span>
-          <span class="powerup-badge" *ngIf="powerupsUsed.peek">USED</span>
-        </button>
+          <button
+            class="powerup-btn blackout-btn"
+            [class.used]="powerupsUsed.blackout"
+            [disabled]="powerupsUsed.blackout"
+            (click)="usePowerup('blackout')"
+            title="Cover all opponents' screens with an ad for 6 seconds"
+          >
+            <mat-icon class="powerup-icon">tv</mat-icon>
+            <span class="powerup-name">Ad Break</span>
+            <span class="powerup-badge" *ngIf="powerupsUsed.blackout">USED</span>
+          </button>
 
-        <button
-          class="powerup-btn freeze-btn"
-          [class.used]="powerupsUsed.freeze"
-          [disabled]="powerupsUsed.freeze"
-          (click)="usePowerup('freeze')"
-          title="Lock all opponents' guess input for 8 seconds"
-        >
-          <mat-icon class="powerup-icon">ac_unit</mat-icon>
-          <span class="powerup-name">Freeze</span>
-          <span class="powerup-badge" *ngIf="powerupsUsed.freeze">USED</span>
-        </button>
+          <button
+            class="powerup-btn peek-btn"
+            [class.used]="powerupsUsed.peek"
+            [disabled]="powerupsUsed.peek"
+            (click)="usePowerup('peek')"
+            title="Reveal one hidden column value from the answer"
+          >
+            <mat-icon class="powerup-icon">lightbulb</mat-icon>
+            <span class="powerup-name">Peek</span>
+            <span class="powerup-badge" *ngIf="powerupsUsed.peek">USED</span>
+          </button>
+
+          <button
+            class="powerup-btn freeze-btn"
+            [class.used]="powerupsUsed.freeze"
+            [disabled]="powerupsUsed.freeze"
+            (click)="usePowerup('freeze')"
+            title="Lock all opponents' guess input for 8 seconds"
+          >
+            <mat-icon class="powerup-icon">ac_unit</mat-icon>
+            <span class="powerup-name">Freeze</span>
+            <span class="powerup-badge" *ngIf="powerupsUsed.freeze">USED</span>
+          </button>
+        </div>
       </div>
 
       <!-- Freeze effect banner -->

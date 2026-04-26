@@ -150,6 +150,35 @@ body.high-contrast {
   --feedback-gray-text: #ffffff;
 }
 
+/* High contrast + colorblind combined — colorblind-safe hues at high contrast brightness */
+body.high-contrast.colorblind-deuteranopia,
+body.high-contrast.colorblind-protanopia {
+  --feedback-green: #1d4ed8;
+  --feedback-green-text: #ffffff;
+  --feedback-yellow: #c2410c;
+  --feedback-yellow-text: #ffffff;
+  --feedback-gray: #1f2937;
+  --feedback-gray-text: #ffffff;
+}
+
+body.high-contrast.colorblind-tritanopia {
+  --feedback-green: #065f46;
+  --feedback-green-text: #ffffff;
+  --feedback-yellow: #9d174d;
+  --feedback-yellow-text: #ffffff;
+  --feedback-gray: #1f2937;
+  --feedback-gray-text: #ffffff;
+}
+
+body.high-contrast.colorblind-achromatopsia {
+  --feedback-green: #000000;
+  --feedback-green-text: #ffffff;
+  --feedback-yellow: #4b5563;
+  --feedback-yellow-text: #ffffff;
+  --feedback-gray: #e5e7eb;
+  --feedback-gray-text: #000000;
+}
+
 /* Apply tile color overrides */
 body[class*="colorblind-"] .guess-cell[style*="green"],
 body.high-contrast .guess-cell[style*="green"],

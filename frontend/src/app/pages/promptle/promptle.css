@@ -147,6 +147,7 @@
   flex-wrap: nowrap;
   gap: 14px;
   width: max-content;
+  margin: 0 auto;
 }
 
 .game-grid .column {
@@ -344,6 +345,7 @@
   display: flex;
   flex-direction: column;
   width: max-content;
+  margin: 0 auto;
 }
 
 .game-grid-meta {
@@ -392,7 +394,6 @@
   overflow-x: auto;
   padding-bottom: 4px;
   display: flex;
-  justify-content: center;
 }
 
 :host-context(.dark) .column {
@@ -715,6 +716,7 @@
 
 /* ══ Power-up bar ══ */
 .powerup-bar {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -812,6 +814,31 @@
   margin: 0 auto 8px;
   display: flex;
   justify-content: flex-end;
+}
+
+.skip-turn-anchor {
+  position: relative;
+  display: inline-block;
+}
+
+.powerup-buttons-group {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.powerup-hint-anchor {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 0;
+  height: 0;
+  overflow: visible;
+}
+
+.powerup-hint-anchor ::ng-deep .bubble-wrap {
+  bottom: 28px;
 }
 
 .skip-turn-btn {
