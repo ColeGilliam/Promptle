@@ -127,8 +127,8 @@ function collapseWhitespace(value = '') {
 // Converts accented or stylized characters into their basic ASCII form for comparison.
 function toBasicAscii(value = '') {
   return String(value)
-    .normalize('NFKD')
-    .replace(/[^\x00-\x7F]/g, '');
+    .normalize('NFKD')  // Remove accents by decomposing Unicode characters and discarding non-ASCII parts.
+    .replace(/[^\x00-\x7F]/g, ''); // Remove any remaining non-ASCII characters that weren't removed by normalization.
 }
 
 // Normalizes a token before profanity and slur checks.
@@ -213,16 +213,6 @@ export function validateProfileUsernameRules(username) {
     return createValidationFailure(
       'username_invalid_characters',
       'Use only letters, numbers, and hyphens.',
-      normalizedUsername
-    );
-  }
-
-  // Block direct references to the app before checking more general reserved terms.
-  const compactLower = normalizedUsername.toLowerCase().replace(/[\s'-]+/g, '');
-  if (compactLower.includes('promptle')) {
-    return createValidationFailure(
-      'username_impersonation',
-      'Usernames cannot reference Promptle or look official.',
       normalizedUsername
     );
   }

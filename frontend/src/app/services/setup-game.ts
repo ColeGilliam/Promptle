@@ -38,6 +38,13 @@ export interface GameAnswer {
   values?: string[];
 }
 
+export interface DailyGameMeta {
+  mode: string;
+  topic: string;
+  date: string;
+  generatedAt?: string | null;
+}
+
 export interface HydratedGameColumn {
   header: string;
   kind?: GameCellKind;
@@ -58,6 +65,7 @@ export interface GameData {
   answers: GameAnswer[];
   correctAnswer: GameAnswer;
   mode?: string;
+  dailyGame?: DailyGameMeta;
 }
 
 // Define the hydrated game data structure with fully processed cells and answers
@@ -68,6 +76,7 @@ export interface HydratedGameData {
   answers: HydratedGameAnswer[];
   correctAnswer: HydratedGameAnswer;
   mode?: string;
+  dailyGame?: DailyGameMeta;
 }
 
 const GAME_CELL_KINDS = new Set<GameCellKind>(['text', 'set', 'reference', 'number']);
@@ -436,6 +445,14 @@ export function hydrateGameData(data: Partial<GameData> | undefined): HydratedGa
       : [],
     correctAnswer: hydrateGameAnswer(reorderAnswer(data?.correctAnswer), columns),
     mode: stringifyValue(data?.mode) || undefined,
+    dailyGame: data?.dailyGame && typeof data.dailyGame === 'object'
+      ? {
+          mode: stringifyValue(data.dailyGame.mode),
+          topic: stringifyValue(data.dailyGame.topic),
+          date: stringifyValue(data.dailyGame.date),
+          generatedAt: stringifyValue(data.dailyGame.generatedAt) || undefined,
+        }
+      : undefined,
   };
 }
 
@@ -469,6 +486,10 @@ export class DbGameService {
     );
   }
 
+  fetchDailyGame(mode: 'promptle' | 'connections' | 'crossword'): Observable<GameData> {
+    return this.http.get<GameData>(`${this.apiBaseUrl}/daily-games/${encodeURIComponent(mode)}`);
+  }
+
   /**
    * Unified entry point for fetching a game.
    * - topic (string) → AI generation (/subjects)
@@ -481,7 +502,12 @@ export class DbGameService {
     room?: string;
     answer?: string;
     auth0Id?: string;
+    dailyMode?: 'promptle' | 'connections' | 'crossword';
   }): Observable<GameData> {
+    if (params.dailyMode) {
+      return this.fetchDailyGame(params.dailyMode);
+    }
+
     if (params.topic && params.topic.trim()) {
       return this.generateAiGame(params.topic.trim(), params.auth0Id || '');
     }
@@ -494,6 +520,6 @@ export class DbGameService {
       return this.fetchGameByTopic(params.topicId, params.answer);
     }
 
-    return throwError(() => new Error('Missing valid topic, topicId, or room'));
+    return throwError(() => new Error('Missing valid topic, topicId, room, or daily mode'));
   }
 }

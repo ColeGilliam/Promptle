@@ -311,11 +311,13 @@ export function setupSocket(server) {
       });
 
       if (isCorrect) {
+        const score = Math.max(100, 1000 - (guesses - 1) * 100);
         io.to(roomId).emit('player-won', {
           playerName: approvedName,
           playerId: socket.id,
           guesses,
           finishTime,
+          score,
         });
       }
     });

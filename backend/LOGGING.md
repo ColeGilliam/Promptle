@@ -60,6 +60,9 @@ If `LOG_LEVEL` is blank, the code uses the built-in defaults above.
 - `dev_auth_session_create_failed`
 - `dev_settings_load_failed`
 - `dev_settings_update_failed`
+- `daily_game_generation_failed`
+- `daily_game_background_preparation_failed`
+- `daily_game_request_failed`
 
 - `topic_headers_fetch_failed`
 - `popular_topics_fetch_failed`
@@ -105,6 +108,8 @@ If `LOG_LEVEL` is blank, the code uses the built-in defaults above.
 ### Warn
 
 - `http_request_aborted`: client disconnected before the response completed
+- `ai_input_security_rejected`: AI input was rejected by local validation or moderation
+- `ai_output_security_rejected`: Generated AI output was rejected by output security validation
 - `server_started`: backend booted successfully
 - `db_connected`: Mongo became available
 - `db_connection_closed`: Mongo connection closed during shutdown
@@ -132,6 +137,7 @@ If `LOG_LEVEL` is blank, the code uses the built-in defaults above.
 - `subject_generation_succeeded`
 - `connections_generation_succeeded`
 - `crossword_generation_succeeded`
+- `daily_game_generated`
 
 - `socket_connected`
 - `socket_joined_room`
@@ -153,6 +159,7 @@ If `LOG_LEVEL` is blank, the code uses the built-in defaults above.
 ## Notes
 
 - AI success logs include token usage and summary counts.
+- Daily game generation logs include `mode`, `topic`, `date`, and `generationSlot` (`current` or `upcoming`).
 - Moderation block logs include flagged categories and moderation model when available.
 - Request-scoped HTTP error and abort logs include `requestId`, method, path, IP, and duration.
 - Serialized errors include `name`, `message`, `stack`, and any enumerable custom fields.

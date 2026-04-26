@@ -37,13 +37,20 @@
     <!-- Topic entry is only shown before a board exists or after the player explicitly resets it. -->
     <section class="panel-grid" *ngIf="showTopicPrompt">
       <section class="panel-card panel-card--controls">
-        <!-- Swap the prompt card contents based on the global AI-generation gate. -->
-        <div class="panel-header" *ngIf="canUseAI; else connectionsDisabled">
+        <div class="panel-header">
           <div>
             <span class="eyebrow">Generate</span>
             <h2>Topic Prompt</h2>
           </div>
         </div>
+
+        <app-daily-game-cta
+          gameLabel="Connections"
+          [topic]="dailyGameSummary?.topic || ''"
+          [available]="!!dailyGameSummary?.available"
+          [loading]="loading"
+          (activated)="playDailyGame()"
+        ></app-daily-game-cta>
 
         <ng-container *ngIf="canUseAI">
           <!-- The only required input for a generated board is a free-form topic string. -->
@@ -75,7 +82,7 @@
           <p class="control-error" *ngIf="error">{{ error }}</p>
         </ng-container>
 
-        <ng-template #connectionsDisabled>
+        <ng-container *ngIf="!canUseAI">
           <!-- Non-dev users see this instead of the topic form when AI generation is globally disabled. -->
           <div class="connections-disabled">
             <div class="connections-disabled__icon">
@@ -86,7 +93,7 @@
               <h2>Sorry! Connections is currently disabled, please try again later..</h2>
             </div>
           </div>
-        </ng-template>
+        </ng-container>
       </section>
     </section>
 
@@ -238,7 +245,30 @@
           <p>Select four words that belong together, then submit the set.</p>
           <p>You have 4 chances to find all the connections.</p>
         </div>
+
       </section>
     </section>
   </main>
 </div>
+
+<app-game-end-popup
+  *ngIf="showEndPopup"
+  [accent]="endPopupAccent"
+  [title]="endPopupTitle"
+  [summary]="endPopupSummary"
+  [detail]="endPopupDetail"
+  [stats]="endPopupStats"
+  [recapRows]="guessRecapRows"
+  viewLabel="View Board"
+  playAgainLabel="Play Again"
+  [shareText]="shareText"
+  [showFeedback]="showGameFeedback"
+  [feedbackChoice]="feedbackChoice"
+  [feedbackSubmitting]="feedbackSubmitting"
+  [feedbackError]="feedbackError"
+  (returnHome)="returnHome()"
+  (playAgain)="playAgain()"
+  (viewGame)="viewCompletedBoard()"
+  (likedGame)="submitGameFeedback(true)"
+  (dislikedGame)="submitGameFeedback(false)"
+></app-game-end-popup>

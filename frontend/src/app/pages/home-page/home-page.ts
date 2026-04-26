@@ -6,6 +6,7 @@ import { Router, RouterModule } from '@angular/router';
 import { AuthenticationService } from '../../services/authentication.service';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { take } from 'rxjs';
+import { RecommendationItem, RecommendationsService } from '../../services/recommendations';
 
 // Angular Material modules
 import { MatCardModule } from '@angular/material/card';
@@ -23,6 +24,13 @@ import { NavbarComponent } from '../../shared/components/navbar/navbar';
 import { MiniFooterComponent } from '../../shared/ui/minifooter/minifooter';
 import { SwitchMode } from '../../shared/ui/switch-mode/switch-mode';
 import { LoadSavedGameCard } from '../../shared/ui/load-saved-game-card/load-saved-game-card';
+import { DailyGameCtaComponent } from '../../shared/ui/daily-game-cta/daily-game-cta';
+
+interface TopicValidationResponse {
+  allowed?: boolean;
+  topic?: string;
+  error?: string;
+}
 
 @Component({
   selector: 'app-home-page',
@@ -45,6 +53,7 @@ import { LoadSavedGameCard } from '../../shared/ui/load-saved-game-card/load-sav
     MatAutocompleteModule,
     SwitchMode,
     LoadSavedGameCard,
+    DailyGameCtaComponent,
   ],
   templateUrl: './home-page.html',
   styleUrls: ['./home-page.css'],
@@ -56,11 +65,15 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
   selectedTopicQuery = '';
   filteredTopics: TopicInfo[] = [];
   customTopic = '';
+  customTopicError = '';
   matchedCustomTopic: TopicInfo | null = null;
+  recommendations: RecommendationItem[] = [];
+  isCustomTopicFocused = false;
 
   isMultiplayer = false;  // false = single-player, true = multiplayer
   multiplayerMode: 'standard' | 'chaos' | '1v1' = 'standard'; // only relevant when isMultiplayer = true
   isCreatingRoom = false; // true while waiting for MP room creation API
+  isValidatingCustomTopic = false;
   createRoomError = '';
   private revealObserver?: IntersectionObserver;
 
@@ -85,6 +98,7 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
   // Dev settings (fetched from backend)
   allowGuestsCreateRooms = false;
   allowAllAIGeneration = false;
+  dailyGames: Record<string, { topic?: string; date?: string; available?: boolean }> = {};
 
   get canCreateRooms(): boolean {
     return this.isDevAccount || this.allowGuestsCreateRooms;
@@ -94,17 +108,30 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
     return this.isDevAccount || this.allowAllAIGeneration;
   }
 
+  get promptleDailyGame(): { topic?: string; date?: string; available?: boolean } | null {
+    return this.dailyGames['promptle'] || null;
+  }
+
   get resolvedCustomTopicMatch(): TopicInfo | null {
     if (!this.matchedCustomTopic) return null;
     if (this.isMultiplayer && !this.canCreateRooms) return null;
     return this.matchedCustomTopic;
   }
 
+  get customTopicIdeas(): RecommendationItem[] {
+    return this.recommendations.filter((item) => item.type === 'custom').slice(0, 3);
+  }
+
+  get showCustomTopicIdeas(): boolean {
+    return !this.isMultiplayer && this.isLoggedIn && this.isCustomTopicFocused && this.customTopicIdeas.length > 0;
+  }
+
   constructor(
     private topicsService: TopicsListService,
     private router: Router,
     private auth: AuthenticationService,
-    private http: HttpClient
+    private http: HttpClient,
+    private recommendationsService: RecommendationsService
   ) { }
 
   ngOnInit() {
@@ -115,6 +142,9 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
     // Subscribe to Auth0's real authentication state
     this.auth.isAuthenticated$.subscribe((status) => {
       this.isLoggedIn = status;
+      if (!status) {
+        this.recommendations = [];
+      }
     });
 
     this.auth.user$.subscribe((user) => {
@@ -123,9 +153,14 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
         this.myAuth0Id = user.sub ?? '';
         this.isDevAccount = user.email === 'promptle99@gmail.com';
         this.registerUser(user);
+        this.loadRecommendations();
         // Re-run observer so AI card (now in DOM) gets picked up
         setTimeout(() => this.setupRevealObserver(), 50);
+        return;
       }
+
+      this.myAuth0Id = '';
+      this.recommendations = [];
     });
   }
 
@@ -167,6 +202,7 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
       next: (data) => {
         this.allowGuestsCreateRooms = data.allowGuestsCreateRooms ?? false;
         this.allowAllAIGeneration = data.allowAllAIGeneration ?? false;
+        this.dailyGames = data.dailyGames ?? {};
         // Re-run observer so AI card (now in DOM) gets picked up
         setTimeout(() => this.setupRevealObserver(), 50);
       },
@@ -197,7 +233,11 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
       const topic = this.customTopic.trim();
       if (!topic) return;
       const matchedTopic = this.resolvedCustomTopicMatch;
-      payload = matchedTopic ? { id: matchedTopic.topicId } : { topic };
+      if (!matchedTopic) {
+        this.validateAndStartCustomGeneratedGame(topic);
+        return;
+      }
+      payload = { id: matchedTopic.topicId };
     } else {
       if (!this.selectedTopic) return;
       payload = { id: this.selectedTopic.topicId };
@@ -226,7 +266,27 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
     const topic = this.customTopic.trim();
     if (!topic) return;
 
-    this.startGameFromPayload({ topic });
+    this.validateAndStartCustomGeneratedGame(topic);
+  }
+
+  startRecommendedCustomTopic(item: RecommendationItem) {
+    this.startGameFromPayload({ topic: item.topic });
+  }
+
+  startDailyPromptle() {
+    // Clear any in-progress single-player state before jumping into the shared daily puzzle.
+    this.newGame();
+    this.router.navigate(['/game'], { queryParams: { daily: 'true' } });
+  }
+
+  onCustomTopicFocus() {
+    this.isCustomTopicFocused = true;
+  }
+
+  onCustomTopicBlur() {
+    window.setTimeout(() => {
+      this.isCustomTopicFocused = false;
+    }, 120);
   }
 
   // ────────────────────────────────────────────────
@@ -410,15 +470,10 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
   onTopicQueryChange(query: string) {
     this.selectedTopicQuery = query;
     this.filterTopics(query);
-
-    const normalized = query.trim().toLowerCase();
-    if (!normalized) {
+    // Deselect if the selected topic no longer appears in filtered results
+    if (this.selectedTopic && !this.selectedTopic.topicName.toLowerCase().includes(query.trim().toLowerCase())) {
       this.selectedTopic = null;
-      return;
     }
-
-    this.selectedTopic =
-      this.allTopics.find(topic => topic.topicName.toLowerCase() === normalized) ?? null;
   }
 
   onTopicOptionSelected(topicName: string) {
@@ -430,7 +485,38 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
 
   onCustomTopicChange(topic: string) {
     this.customTopic = topic;
+    this.customTopicError = '';
     this.updateCustomTopicMatch();
+  }
+
+  private validateAndStartCustomGeneratedGame(topic: string) {
+    if (this.isValidatingCustomTopic || this.isCreatingRoom) return;
+
+    this.isValidatingCustomTopic = true;
+    this.customTopicError = '';
+    this.http.post<TopicValidationResponse>('/api/subjects/validate-topic', {
+      topic,
+      auth0Id: this.myAuth0Id,
+    }).subscribe({
+      next: (result) => {
+        this.isValidatingCustomTopic = false;
+        if (!result.allowed) {
+          this.rejectCustomTopic(result.error);
+          return;
+        }
+        this.startGameFromPayload({ topic: result.topic || topic });
+      },
+      error: (err) => {
+        this.isValidatingCustomTopic = false;
+        this.rejectCustomTopic(err?.error?.error);
+      },
+    });
+  }
+
+  private rejectCustomTopic(message?: string) {
+    this.customTopic = '';
+    this.matchedCustomTopic = null;
+    this.customTopicError = message || 'That topic is not allowed. Please try a different topic.';
   }
 
   get customTopicActionLabel(): string {
@@ -455,6 +541,24 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
 
   private updateCustomTopicMatch() {
     this.matchedCustomTopic = this.resolveCustomTopic(this.customTopic);
+  }
+
+  private loadRecommendations() {
+    const auth0Id = this.myAuth0Id.trim();
+    if (!auth0Id) {
+      this.recommendations = [];
+      return;
+    }
+
+    this.recommendationsService.getRecommendations(auth0Id).subscribe({
+      next: ({ items }) => {
+        this.recommendations = items ?? [];
+        setTimeout(() => this.setupRevealObserver(), 50);
+      },
+      error: () => {
+        this.recommendations = [];
+      },
+    });
   }
 
   private startGameFromPayload(payload: { topic?: string; id?: number }) {

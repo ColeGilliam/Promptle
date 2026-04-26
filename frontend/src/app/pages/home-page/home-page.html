@@ -58,6 +58,13 @@
           </div>
           <mat-icon class="action-card-arrow">arrow_forward</mat-icon>
         </div>
+
+        <app-daily-game-cta
+          gameLabel="Promptle"
+          [topic]="promptleDailyGame?.topic || ''"
+          [available]="!!promptleDailyGame?.available"
+          (activated)="startDailyPromptle()"
+        ></app-daily-game-cta>
       </div>
 
       <!-- Multiplayer CTA -->
@@ -174,24 +181,18 @@
 
           <div class="play-card-form">
             <mat-form-field appearance="fill" class="topic-field" subscriptSizing="dynamic">
-              <mat-label>Select a topic</mat-label>
+              <mat-label>Select a Topic</mat-label>
               <input
                 type="text"
                 matInput
                 [matAutocomplete]="topicAuto"
                 [(ngModel)]="selectedTopicQuery"
                 (ngModelChange)="onTopicQueryChange($event)"
-                placeholder="Start typing a topic"
+                placeholder="Search topics…"
               >
-              <mat-autocomplete
-                #topicAuto="matAutocomplete"
-                (optionSelected)="onTopicOptionSelected($event.option.value)"
-              >
+              <mat-autocomplete #topicAuto (optionSelected)="onTopicOptionSelected($event.option.value)">
                 <mat-option *ngFor="let topic of filteredTopics" [value]="topic.topicName">
                   {{ topic.topicName }}
-                </mat-option>
-                <mat-option *ngIf="filteredTopics.length === 0" disabled>
-                  No topics found
                 </mat-option>
               </mat-autocomplete>
             </mat-form-field>
@@ -202,7 +203,8 @@
               [disabled]="!selectedTopic || isCreatingRoom"
               (click)="startGame()"
             >
-              {{ isMultiplayer ? 'CREATE MULTIPLAYER ROOM' : 'PLAY THIS TOPIC' }}
+              <mat-icon>play_arrow</mat-icon>
+              {{ isMultiplayer ? 'CREATE ROOM' : 'PLAY' }}{{ selectedTopic ? ': ' + selectedTopic.topicName : ' THIS TOPIC' }}
             </button>
           </div>
         </mat-card-content>
@@ -227,8 +229,26 @@
                 placeholder="e.g. Marvel Characters, Sitcoms..."
                 [(ngModel)]="customTopic"
                 (ngModelChange)="onCustomTopicChange($event)"
+                (focus)="onCustomTopicFocus()"
+                (blur)="onCustomTopicBlur()"
               >
             </mat-form-field>
+
+            <p class="custom-topic-error" *ngIf="customTopicError">{{ customTopicError }}</p>
+
+            <div class="custom-topic-ideas" *ngIf="showCustomTopicIdeas">
+              <p class="custom-topic-ideas-label">Need ideas?</p>
+              <div class="custom-topic-ideas-list">
+                <button
+                  *ngFor="let item of customTopicIdeas"
+                  matButton="outlined"
+                  class="custom-topic-idea-chip"
+                  (mousedown)="startRecommendedCustomTopic(item)"
+                >
+                  {{ item.topic }}
+                </button>
+              </div>
+            </div>
 
             <div class="topic-match-choice" *ngIf="resolvedCustomTopicMatch as matchedTopic; else defaultCustomStart">
               <p class="play-card-desc topic-match-copy">
@@ -239,7 +259,7 @@
                 <button
                   matButton="filled"
                   class="rect-btn promp2-btn play-start-btn"
-                  [disabled]="!customTopic.trim() || isCreatingRoom"
+                  [disabled]="!customTopic.trim() || isCreatingRoom || isValidatingCustomTopic"
                   (click)="startMatchedCustomGame()"
                 >
                   {{ matchedTopicActionLabel }}
@@ -248,7 +268,7 @@
                 <button
                   matButton="outlined"
                   class="rect-btn play-start-btn play-start-btn-alt"
-                  [disabled]="!customTopic.trim() || isCreatingRoom"
+                  [disabled]="!customTopic.trim() || isCreatingRoom || isValidatingCustomTopic"
                   (click)="startCustomGeneratedGame()"
                 >
                   {{ customGeneratedActionLabel }}
@@ -260,7 +280,7 @@
               <button
                 matButton="filled"
                 class="rect-btn promp2-btn play-start-btn"
-                [disabled]="!customTopic.trim() || isCreatingRoom"
+                [disabled]="!customTopic.trim() || isCreatingRoom || isValidatingCustomTopic"
                 (click)="startAiGame()"
               >
                 {{ customTopicActionLabel }}
@@ -289,38 +309,66 @@
 
   <section class="side-games-section">
     <h2 class="section-title reveal">Try Another Mode</h2>
-    <div class="side-games-grid">
-      <a class="side-game-card reveal" routerLink="/connections">
-        <div class="side-game-card-icon side-game-card-icon--connections">
-          <mat-icon>grid_view</mat-icon>
+    <div class="game-cards-grid">
+
+      <!-- Connections card -->
+      <a class="game-card game-card--connections reveal" routerLink="/connections">
+        <div class="game-card-banner">
+          <div class="conn-preview" aria-hidden="true">
+            <div class="conn-preview-row conn-row-yellow"></div>
+            <div class="conn-preview-row conn-row-green"></div>
+            <div class="conn-preview-row conn-row-blue"></div>
+            <div class="conn-preview-row conn-row-purple"></div>
+          </div>
         </div>
-        <div class="side-game-card-copy">
-          <h3>Connections</h3>
-          <p>Generate a topic board and find four overlapping groups before your mistakes run out.</p>
+        <div class="game-card-body">
+          <div class="game-card-icon-row">
+            <div class="game-card-icon-badge game-icon-connections">
+              <mat-icon>grid_view</mat-icon>
+            </div>
+          </div>
+          <h3 class="game-card-title">Connections</h3>
+          <p class="game-card-desc">Find four overlapping groups before your lives run out.</p>
+          <div class="game-card-cta">
+            Play Connections <mat-icon>arrow_forward</mat-icon>
+          </div>
         </div>
-        <mat-icon class="side-game-card-arrow">arrow_forward</mat-icon>
       </a>
 
-      <a class="side-game-card side-game-card--crossword reveal" style="--delay: 90ms" routerLink="/crossword">
-        <div class="side-game-card-icon side-game-card-icon--crossword">
-          <span class="crossword-mode-icon" aria-hidden="true">
-            <span class="crossword-mode-cell"></span>
-            <span class="crossword-mode-cell"></span>
-            <span class="crossword-mode-cell crossword-mode-cell--blocked"></span>
-            <span class="crossword-mode-cell"></span>
-            <span class="crossword-mode-cell crossword-mode-cell--blocked"></span>
-            <span class="crossword-mode-cell"></span>
-            <span class="crossword-mode-cell crossword-mode-cell--blocked"></span>
-            <span class="crossword-mode-cell"></span>
-            <span class="crossword-mode-cell"></span>
-          </span>
+      <!-- Crossword card -->
+      <a class="game-card game-card--crossword reveal" style="--delay: 90ms" routerLink="/crossword">
+        <div class="game-card-banner game-card-banner--crossword">
+          <img
+            class="crossword-preview-image"
+            src="crossword-card-preview.svg"
+            alt=""
+            aria-hidden="true"
+          >
         </div>
-        <div class="side-game-card-copy">
-          <h3>Crossword</h3>
-          <p>Generate a custom crossword based around a topic of your choice.</p>
+        <div class="game-card-body">
+          <div class="game-card-icon-row">
+            <div class="game-card-icon-badge game-icon-crossword">
+              <span class="crossword-nav-icon" aria-hidden="true">
+                <span class="crossword-nav-cell"></span>
+                <span class="crossword-nav-cell"></span>
+                <span class="crossword-nav-cell crossword-nav-cell--blocked"></span>
+                <span class="crossword-nav-cell"></span>
+                <span class="crossword-nav-cell crossword-nav-cell--blocked"></span>
+                <span class="crossword-nav-cell"></span>
+                <span class="crossword-nav-cell crossword-nav-cell--blocked"></span>
+                <span class="crossword-nav-cell"></span>
+                <span class="crossword-nav-cell"></span>
+              </span>
+            </div>
+          </div>
+          <h3 class="game-card-title">Crossword</h3>
+          <p class="game-card-desc">Generate a custom crossword built around any topic of your choice.</p>
+          <div class="game-card-cta">
+            Play Crossword <mat-icon>arrow_forward</mat-icon>
+          </div>
         </div>
-        <mat-icon class="side-game-card-arrow">arrow_forward</mat-icon>
       </a>
+
     </div>
   </section>
 

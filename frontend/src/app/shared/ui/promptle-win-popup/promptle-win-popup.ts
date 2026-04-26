@@ -2,11 +2,12 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { GameFeedbackCard } from '../game-feedback-card/game-feedback-card';
 
 @Component({
   selector: 'app-promptle-win-popup',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule],
+  imports: [CommonModule, MatButtonModule, MatIconModule, GameFeedbackCard],
   templateUrl: './promptle-win-popup.html',
   styleUrls: ['./promptle-win-popup.css']
 })
@@ -18,11 +19,18 @@ export class PromptleWinPopup {
   @Input() guessCount = 0;
   @Input() guessColors: string[][] = [];
   @Input() shareUrl = '';
+  @Input() showFeedback = false;
+  @Input() feedbackChoice: boolean | null = null;
+  @Input() feedbackSubmitting = false;
+  @Input() feedbackError = '';
+  @Input() playerRankings: { name: string; score: number; guesses: number; finishTimeMs?: number; isMe?: boolean }[] = [];
 
   @Output() returnHome = new EventEmitter<void>();
   @Output() playAgain  = new EventEmitter<void>();
   @Output() spectate   = new EventEmitter<void>();
   @Output() viewGame   = new EventEmitter<void>();
+  @Output() likedGame = new EventEmitter<void>();
+  @Output() dislikedGame = new EventEmitter<void>();
 
   copied = false;
 
@@ -59,4 +67,6 @@ export class PromptleWinPopup {
   onPlayAgain():  void { this.playAgain.emit();  }
   onSpectate():   void { this.spectate.emit();   }
   onViewGame():   void { this.viewGame.emit();   }
+  onLikedGame(): void { this.likedGame.emit(); }
+  onDislikedGame(): void { this.dislikedGame.emit(); }
 }

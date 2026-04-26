@@ -3,7 +3,7 @@ import { getTopicCollection, getGuessesCollection, getMultiplayerGamesCollection
 from '../config/db.js';
 import { generateSubjects } from './subjectController.js';  // adjust path if needed
 import { getIo } from '../sockets/socketState.js';
-import { fetchDevSettings } from './devSettingsController.js';
+import { fetchDevSettings } from '../services/devSettings.js';
 import { normalizeGameAnswer, normalizeGamePayload } from '../services/gameCells.js';
 import { appLogger } from '../lib/logger.js';
 
@@ -203,8 +203,6 @@ export const createMultiplayerGame = async (req, res) => {
         id: req.id,
         body: {
           topic: normalizedTopic,
-          minCategories: 6,
-          maxCategories: 8,
           auth0Id,
         }
       };

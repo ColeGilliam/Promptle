@@ -1,9 +1,9 @@
-// promptle.component.ts
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import {
+  DailyGameMeta,
   DbGameService,
   GameCell,
   GameData,
@@ -31,6 +31,64 @@ import { PromptleWinPopup } from '../../shared/ui/promptle-win-popup/promptle-wi
 import { GameOnboardingTour } from '../../shared/ui/game-onboarding-tour/game-onboarding-tour';
 import { GameHintBubble } from '../../shared/ui/game-hint-bubble/game-hint-bubble';
 import { SettingsService } from '../../services/settings.service';
+import { GameFeedbackService } from '../../services/game-feedback';
+import { CustomGameSessionService } from '../../services/custom-game-session';
+
+type GuessColor = 'green' | 'yellow' | 'gray';
+type QuantitativeDirection = 'up' | 'down';
+const QUANTITATIVE_CLOSE_RATIO = 0.25; // Number clues turn yellow when the guess is within this percent of the value range.
+const PROMPTLE_GENERATION_ERROR = 'Sorry! The Promptle failed to generate. Please try again.';
+
+interface GuessCellFeedback {
+  color: GuessColor;
+  direction?: QuantitativeDirection;
+}
+
+interface PromptleGuess {
+  name?: string;
+  values: string[];
+  colors: GuessColor[];
+  feedback: GuessCellFeedback[];
+}
+
+interface SpectateGuess extends PromptleGuess {
+  playerId: string;
+  playerName: string;
+  isMe: boolean;
+}
+
+interface OneVsOneGuess extends PromptleGuess {
+  guesserSocketId: string;
+  guesserName: string;
+  isMe: boolean;
+}
+
+interface PendingSpectateGuess {
+  playerId: string;
+  playerName: string;
+  values: string[];
+  colors: string[];
+  isMe: boolean;
+}
+
+interface PendingOneVsOneGuess {
+  guesserSocketId: string;
+  guesserName: string;
+  guessValues: string[];
+  guessColors: string[];
+  isMe: boolean;
+}
+
+interface DevSettingsResponse {
+  showPromptleAnswerAtTop?: boolean;
+  dailyGames?: {
+    promptle?: {
+      topic?: string;
+      date?: string;
+      available?: boolean;
+    };
+  };
+}
 
 @Component({
   selector: 'app-promptle',
@@ -69,9 +127,6 @@ import { SettingsService } from '../../services/settings.service';
   styleUrls: ['./promptle.css']
 })
 export class PromptleComponent implements OnInit, OnDestroy {
-  //─────────────────────────────────────
-  // === Game state ===
-  //─────────────────────────────────────
   topic = '';
   headers: string[] = [];
   answers: HydratedGameAnswer[] = [];
@@ -82,7 +137,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
   isGameOver = false;
   isViewingCompletedGame = false;
 
-  submittedGuesses: { name?: string; values: string[]; colors: string[] }[] = [];
+  submittedGuesses: PromptleGuess[] = [];
 
   backendHeaders: string[] = [];
   backendRow: string[] = [];
@@ -90,41 +145,92 @@ export class PromptleComponent implements OnInit, OnDestroy {
   gameLoading = false;
   gameError = '';
   savedTimestamp: string | null = null;
+  private serverSaveExists = false;
+
+  get hasSavedGame(): boolean {
+    if (this.isMultiplayer) return false;
+    if (this.savedTimestamp) return true;
+    if (this.serverSaveExists) return true;
+    try { return !!localStorage.getItem('promptle_saved_game'); } catch { return false; }
+  }
 
   // Contextual hint visibility
   showSkipTurnHint = true;
   showPowerupHint = true;
-
-  //─────────────────────────────────────
-  // === Share ===
-  //─────────────────────────────────────
   private shareIdParam = '';
   private shareTopicParam = '';
+  private currentSinglePlayerSource: 'custom' | 'popular' | 'daily' | '' = '';
+  private currentDailyGame: DailyGameMeta | null = null;
+  feedbackChoice: boolean | null = null;
+  feedbackSubmitting = false;
+  feedbackError = '';
+  private customSessionPlayId = '';
+  private customSessionInteracted = false;
+  private customSessionFinalized = false;
 
-  get guessColors(): string[][] {
+  get guessColors(): GuessColor[][] {
     return this.submittedGuesses.map(g => g.colors);
   }
 
-  get displayedSubmittedGuesses(): { name?: string; values: string[]; colors: string[] }[] {
+  get displayedSubmittedGuesses(): PromptleGuess[] {
     return this.reverseForDisplay(this.submittedGuesses);
   }
 
-  get displayedSpectateGuesses(): { playerId: string; playerName: string; values: string[]; colors: string[]; isMe: boolean }[] {
+  get displayedSpectateGuesses(): SpectateGuess[] {
     return this.reverseForDisplay(this.spectateGuesses);
   }
 
-  get displayedOneVsOneGuesses(): {
-    guesserSocketId: string;
-    guesserName: string;
-    values: string[];
-    colors: string[];
-    isMe: boolean;
-  }[] {
+  get displayedOneVsOneGuesses(): OneVsOneGuess[] {
     return this.reverseForDisplay(this.oneVsOneGuesses);
   }
 
   private reverseForDisplay<T>(items: T[]): T[] {
     return [...items].reverse();
+  }
+
+  private queueSpectateGuess(guess: PendingSpectateGuess): void {
+    this.pendingSpectateGuesses.push(guess);
+  }
+
+  private queueOneVsOneGuess(guess: PendingOneVsOneGuess): void {
+    this.pendingOneVsOneGuesses.push(guess);
+  }
+
+  private addSpectateGuess(guess: PendingSpectateGuess): void {
+    const remoteGuess = this.createGuessEntry({
+      values: guess.values,
+      colors: guess.colors,
+    });
+    this.spectateGuesses.push({
+      playerId: guess.playerId,
+      playerName: guess.playerName,
+      values: remoteGuess.values,
+      colors: remoteGuess.colors,
+      feedback: remoteGuess.feedback,
+      isMe: guess.isMe,
+    });
+  }
+
+  private addOneVsOneGuess(guess: PendingOneVsOneGuess): void {
+    const remoteGuess = this.createGuessEntry({
+      values: guess.guessValues,
+      colors: guess.guessColors,
+    });
+    this.oneVsOneGuesses.push({
+      guesserSocketId: guess.guesserSocketId,
+      guesserName: guess.guesserName,
+      values: remoteGuess.values,
+      colors: remoteGuess.colors,
+      feedback: remoteGuess.feedback,
+      isMe: guess.isMe,
+    });
+  }
+
+  private flushPendingMultiplayerGuesses(): void {
+    this.pendingSpectateGuesses.forEach((guess) => this.addSpectateGuess(guess));
+    this.pendingOneVsOneGuesses.forEach((guess) => this.addOneVsOneGuess(guess));
+    this.pendingSpectateGuesses = [];
+    this.pendingOneVsOneGuesses = [];
   }
 
   get shareUrl(): string {
@@ -140,9 +246,13 @@ export class PromptleComponent implements OnInit, OnDestroy {
     return `${window.location.origin}/share?${p.toString()}`;
   }
 
-  //─────────────────────────────────────
-  // === Multiplayer ===
-  //─────────────────────────────────────
+  get rankedPlayers(): { id: string; name: string; score: number; guesses: number; finishTimeMs?: number; isMe?: boolean }[] {
+    return this.players
+      .filter(p => p.won && p.score != null && p.guesses != null)
+      .map(p => ({ id: p.id, name: p.name, score: p.score!, guesses: p.guesses!, finishTimeMs: p.finishTimeMs, isMe: p.isMe }))
+      .sort((a, b) => b.score - a.score || (a.finishTimeMs ?? Infinity) - (b.finishTimeMs ?? Infinity));
+  }
+
   currentRoom = '';
   isMultiplayer = false;
   isHost = false;
@@ -156,19 +266,20 @@ export class PromptleComponent implements OnInit, OnDestroy {
     isMe?: boolean;
     guesses?: number;
     finishTime?: string;
+    finishTimeMs?: number;
+    score?: number;
   }[] = [];
 
   private myUsername = '';
   private mySocketId = '';
+  showPromptleAnswerAtTop = false;
   isDevAccount = false;
   private myAuth0Id = '';
 
-  // Stopwatch
   stopwatchMs = 0;
   myFinishTimeMs: number | null = null;
   private stopwatchInterval: ReturnType<typeof setInterval> | null = null;
 
-  // Power-ups
   powerupsUsed = { blackout: false, peek: false, freeze: false };
   activePowerupEffect: { type: string; fromPlayerName: string; secondsLeft: number } | null = null;
   powerupHint: { column: string; value: string } | null = null;
@@ -177,22 +288,16 @@ export class PromptleComponent implements OnInit, OnDestroy {
   private blackoutInterval: ReturnType<typeof setInterval> | null = null;
   private powerupHintTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  // Chaos incoming effects (shown to the victim)
   isFrozen = false;
   freezeSecondsLeft = 0;
   private freezeInterval: ReturnType<typeof setInterval> | null = null;
 
-  isChaos = false;  // true when mode === 'chaos' (has power-ups)
+  isChaos = false;
 
-  //─────────────────────────────────────
-  // === Spectate state ===
-  //─────────────────────────────────────
   isSpectating = false;
-  spectateGuesses: { playerId: string; playerName: string; values: string[]; colors: string[]; isMe: boolean }[] = [];
+  spectateGuesses: SpectateGuess[] = [];
+  private pendingSpectateGuesses: PendingSpectateGuess[] = [];
 
-  //─────────────────────────────────────
-  // === 1v1 turn-based state ===
-  //─────────────────────────────────────
   isOneVsOne = false;
   isMyTurn = false;
   turnTimeLeft = 30;
@@ -201,15 +306,11 @@ export class PromptleComponent implements OnInit, OnDestroy {
   iLost = false;
   oneVsOneWinnerName = '';
   skipTurnUsed = false;   // 1v1 skip-turn power-up (once per game)
-  oneVsOneGuesses: {
-    guesserSocketId: string;
-    guesserName: string;
-    values: string[];
-    colors: string[];
-    isMe: boolean;
-  }[] = [];
+  oneVsOneGuesses: OneVsOneGuess[] = [];
+  private pendingOneVsOneGuesses: PendingOneVsOneGuess[] = [];
   private turnCountdownInterval: ReturnType<typeof setInterval> | null = null;
   private oneVsOneSubs: Subscription[] = [];
+  private gameDataReady = false;
 
   private roomStateSub?:    Subscription;
   private opponentGuessSub?: Subscription;
@@ -227,7 +328,9 @@ export class PromptleComponent implements OnInit, OnDestroy {
     private http: HttpClient,
     private multiplayerService: MultiplayerService,
     private cdr: ChangeDetectorRef,
-    private settings: SettingsService
+    private settings: SettingsService,
+    private gameFeedbackService: GameFeedbackService,
+    private customGameSessionService: CustomGameSessionService
   ) { }
 
   ngOnInit() {
@@ -247,14 +350,22 @@ export class PromptleComponent implements OnInit, OnDestroy {
 
     this.auth.user$.pipe(take(1)).subscribe(user => {
       if (user) {
-        this.isDevAccount = user.email === 'promptle99@gmail.com';
         this.myAuth0Id = user.sub ?? '';
+        this.isDevAccount = user.email === 'promptle99@gmail.com';
+        this.loadDevSettings();
+        if (user.sub) {
+          this.http.get<any>(`/api/load-game/${encodeURIComponent(user.sub)}`).subscribe({
+            next:  (payload) => { if (payload?.topic) this.serverSaveExists = true; },
+            error: () => {}
+          });
+        }
       }
     });
 
     this.route.queryParamMap.subscribe(params => {
       const loadSaved    = params.get('loadSaved');
       const restartSaved = params.get('restartSaved');
+      const dailyGame    = params.get('daily');
       const aiTopic      = params.get('topic');
       const topicIdParam = params.get('id');
       const topicId      = topicIdParam ? Number(topicIdParam) : NaN;
@@ -265,6 +376,9 @@ export class PromptleComponent implements OnInit, OnDestroy {
         this.currentRoom  = room;
         this.isMultiplayer = true;
         this.gameStarted  = false;
+        this.currentSinglePlayerSource = '';
+        this.resetCustomGameFeedback();
+        this.resetCustomGameSession();
 
         this.auth.user$.pipe(take(1)).subscribe(user => {
           if (user?.sub) {
@@ -293,7 +407,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
         return;
       }
 
-      // ── Single-player ──
       console.log('[Promptle] Single-player mode');
       this.isMultiplayer = false;
       this.gameStarted   = true;   // SP starts immediately
@@ -311,9 +424,31 @@ export class PromptleComponent implements OnInit, OnDestroy {
         return;
       }
 
+      if (dailyGame === 'true' || dailyGame === '1') {
+        this.shareIdParam = '';
+        this.shareTopicParam = '';
+        this.currentSinglePlayerSource = 'daily';
+        this.currentDailyGame = null;
+        this.resetCustomGameFeedback();
+        this.resetCustomGameSession();
+        this.http.get('/api/dev-settings').subscribe({
+          next: () => {
+            this.loadGame({ dailyMode: 'promptle' });
+          },
+          error: () => {
+            this.gameError = 'Daily game is still loading. Reload the app in a moment.';
+          },
+        });
+        return;
+      }
+
       if (aiTopic && aiTopic.trim()) {
         this.shareTopicParam = aiTopic.trim();
         this.shareIdParam = '';
+        this.currentSinglePlayerSource = 'custom';
+        this.currentDailyGame = null;
+        this.resetCustomGameFeedback();
+        this.resetCustomGameSession();
         this.auth.user$.pipe(take(1)).subscribe(user => {
           this.loadGame({ topic: aiTopic.trim(), auth0Id: user?.sub || '' });
         });
@@ -322,14 +457,20 @@ export class PromptleComponent implements OnInit, OnDestroy {
       if (!isNaN(topicId)) {
         this.shareIdParam = String(topicId);
         this.shareTopicParam = '';
+        this.currentSinglePlayerSource = 'popular';
+        this.currentDailyGame = null;
+        this.resetCustomGameFeedback();
+        this.resetCustomGameSession();
         this.loadGame({ topicId, answer: answerSeed }); return;
       }
 
+      this.currentSinglePlayerSource = '';
+      this.currentDailyGame = null;
+      this.resetCustomGameSession();
       this.gameError = 'No valid topic or game ID provided.';
     });
   }
 
-  // ─── Game-flow subscriptions (host status + game started) ───────────────
   private subscribeToGameFlow() {
     this.hostStatusSub = this.multiplayerService.onHostStatus().subscribe(data => {
       this.isHost = data.isHost;
@@ -354,7 +495,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ─── 1v1 subscriptions ────────────────────────────────────────────────
   private subscribeToOneVsOne() {
     const sub1 = this.multiplayerService.on1v1Started().subscribe(data => {
       console.log('[Promptle] 1v1 started! First turn:', data.currentTurnPlayerName);
@@ -383,13 +523,18 @@ export class PromptleComponent implements OnInit, OnDestroy {
     const sub3 = this.multiplayerService.on1v1GuessMade().subscribe(data => {
       const myId = this.multiplayerService.getSocketId() || this.mySocketId;
       const isMe = data.guesserSocketId === myId;
-      this.oneVsOneGuesses.push({
+      const guess = {
         guesserSocketId: data.guesserSocketId,
         guesserName: data.guesserName,
-        values: data.guessValues,
-        colors: data.guessColors,
         isMe,
-      });
+        guessValues: data.guessValues,
+        guessColors: data.guessColors,
+      };
+      if (this.gameDataReady) {
+        this.addOneVsOneGuess(guess);
+      } else {
+        this.queueOneVsOneGuess(guess);
+      }
       if (isMe) {
         // submittedGuesses was already updated optimistically in onSubmitGuess — skip re-add.
         // Just update the player's color indicator in the player list.
@@ -423,14 +568,12 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.oneVsOneSubs = [sub1, sub2, sub3, sub4, sub5];
   }
 
-  // ─── Host action: start game ──────────────────────────────────────────
   hostStartGame() {
     if (!this.isHost || !this.currentRoom) return;
     const mode = this.isOneVsOne ? '1v1' : 'standard';
     this.multiplayerService.startGame(this.currentRoom, mode);
   }
 
-  // ─── 1v1 skip-turn power-up ───────────────────────────────────────────
   useSkipTurn() {
     if (this.skipTurnUsed || !this.isOneVsOne || this.isMyTurn || !this.gameStarted || this.isGameOver) return;
     this.skipTurnUsed = true;
@@ -562,9 +705,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
     }, 1000);
   }
 
-  // ─── Stopwatch helpers ────────────────────────────────────────────────
-  private startStopwatch() {
-    this.stopwatchMs = 0;
+  private startStopwatch(fromMs = 0) {
+    this.stopwatchMs = fromMs;
     this.stopwatchInterval = setInterval(() => {
       this.stopwatchMs += 100;
       this.cdr.detectChanges();
@@ -586,7 +728,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
     return `${min}:${String(sec).padStart(2, '0')}.${tenths}`;
   }
 
-  // ─── Turn countdown helpers (1v1) ─────────────────────────────────────
   private startTurnCountdown() {
     this.turnTimeLeft = 30;
     this.turnCountdownInterval = setInterval(() => {
@@ -603,7 +744,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ─── Opponent events ─────────────────────────────────────────────────
   private subscribeToOpponentEvents() {
     this.opponentGuessSub = this.multiplayerService.onOpponentGuess().subscribe(data => {
       console.log('[Promptle] opponent-guess received:', data);
@@ -613,13 +753,18 @@ export class PromptleComponent implements OnInit, OnDestroy {
           : p
       );
       if (data.values?.length) {
-        this.spectateGuesses.push({
+        const guess = {
           playerId: data.playerId,
           playerName: data.playerName,
           values: data.values,
           colors: data.colors,
-          isMe: false
-        });
+          isMe: false,
+        };
+        if (this.gameDataReady) {
+          this.addSpectateGuess(guess);
+        } else {
+          this.queueSpectateGuess(guess);
+        }
       }
       this.cdr.detectChanges();
     });
@@ -629,7 +774,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
       const formattedTime = finishSecs != null ? `${finishSecs} second${finishSecs === 1 ? '' : 's'}` : undefined;
       this.players = this.players.map(p =>
         p.id === data.playerId
-          ? { ...p, won: true, guesses: data.guesses, finishTime: formattedTime }
+          ? { ...p, won: true, guesses: data.guesses, finishTime: formattedTime, finishTimeMs: data.finishTime, score: data.score }
           : p
       );
       this.cdr.detectChanges();
@@ -658,10 +803,16 @@ export class PromptleComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ─── Save / load ─────────────────────────────────────────────────────
   saveGame() {
     if (this.isMultiplayer) return;
     if (!this.topic || !this.headers.length) return;
+
+    if (this.hasSavedGame) {
+      const confirmed = window.confirm(
+        'You already have a saved game. Saving this game will replace it. Continue?'
+      );
+      if (!confirmed) return;
+    }
 
     const payload = {
       savedAt: Date.now(),
@@ -671,15 +822,18 @@ export class PromptleComponent implements OnInit, OnDestroy {
       correctAnswer: this.correctAnswer,
       submittedGuesses: this.submittedGuesses,
       isGameOver: this.isGameOver,
+      source: this.currentSinglePlayerSource || undefined,
+      dailyGame: this.currentDailyGame || undefined,
       singlePlayerHint: this.singlePlayerHint,
-      singlePlayerHintUsed: this.singlePlayerHintUsed
+      singlePlayerHintUsed: this.singlePlayerHintUsed,
+      elapsedMs: this.stopwatchMs
     };
 
     this.auth.user$.pipe(take(1)).subscribe(user => {
       const savedAtStr = new Date(payload.savedAt).toLocaleString();
       if (user && user.sub) {
         this.http.post('/api/save-game', { auth0Id: user.sub, game: payload }).subscribe({
-          next:  () => { this.savedTimestamp = savedAtStr; },
+          next:  () => { this.savedTimestamp = savedAtStr; this.serverSaveExists = true; },
           error: () => {
             try { localStorage.setItem('promptle_saved_game', JSON.stringify(payload)); this.savedTimestamp = savedAtStr; }
             catch (e) { this.gameError = 'Failed to save game'; }
@@ -733,24 +887,40 @@ export class PromptleComponent implements OnInit, OnDestroy {
     });
 
     this.topic   = hydrated.topic;
+    this.currentSinglePlayerSource = payload?.source === 'custom'
+      ? 'custom'
+      : payload?.source === 'popular'
+        ? 'popular'
+        : payload?.source === 'daily'
+          ? 'daily'
+        : '';
+    this.currentDailyGame = payload?.dailyGame
+      ? {
+          mode: typeof payload.dailyGame.mode === 'string' ? payload.dailyGame.mode : 'promptle',
+          topic: typeof payload.dailyGame.topic === 'string' ? payload.dailyGame.topic : hydrated.topic,
+          date: typeof payload.dailyGame.date === 'string' ? payload.dailyGame.date : '',
+          generatedAt: typeof payload.dailyGame.generatedAt === 'string' ? payload.dailyGame.generatedAt : undefined,
+        }
+      : null;
     this.headers = hydrated.headers;
     this.answers = hydrated.answers;
+    this.correctAnswer  = hydrated.correctAnswer;
     this.submittedGuesses = clearProgress ? [] : Array.isArray(payload.submittedGuesses)
-      ? payload.submittedGuesses.map((g: any) => ({
-          name:   typeof g?.name === 'string' ? g.name : undefined,
-          values: Array.isArray(g?.values) ? g.values : [],
-          colors: Array.isArray(g?.colors) ? g.colors : []
+      ? payload.submittedGuesses.map((guess: any) => this.createGuessEntry({
+          name: typeof guess?.name === 'string' ? guess.name : undefined,
+          values: Array.isArray(guess?.values) ? guess.values : [],
+          colors: Array.isArray(guess?.colors) ? guess.colors : [],
         }))
       : [];
     this.selectedGuess  = '';
     this.guessQuery     = '';
-    this.filterAnswers(this.guessQuery);
-    this.correctAnswer  = hydrated.correctAnswer;
     this.isGameOver     = clearProgress ? false : !!payload.isGameOver;
     this.isViewingCompletedGame = false;
     this.savedTimestamp = clearProgress ? null : payload.savedAt ? new Date(payload.savedAt).toLocaleString() : null;
     this.gameError      = '';
     this.myFinishTimeMs = null;
+    this.resetCustomGameFeedback();
+    this.resetCustomGameSession();
     this.singlePlayerHint = clearProgress || !payload?.singlePlayerHint
       ? null
       : {
@@ -758,6 +928,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
           value: typeof payload.singlePlayerHint.value === 'string' ? payload.singlePlayerHint.value : ''
         };
     this.singlePlayerHintUsed = clearProgress ? false : !!payload?.singlePlayerHintUsed;
+    this.filterAnswers(this.guessQuery);
 
     const correct = this.answers.find(a => a.name === this.correctAnswer.name);
     if (correct) {
@@ -770,12 +941,32 @@ export class PromptleComponent implements OnInit, OnDestroy {
 
     if (!this.isMultiplayer && !this.isGameOver) {
       this.stopStopwatch();
-      this.startStopwatch();
+      const resumeMs = clearProgress ? 0 : (typeof payload?.elapsedMs === 'number' ? payload.elapsedMs : 0);
+      this.startStopwatch(resumeMs);
     }
   }
 
   restartGame() {
     if (this.isMultiplayer) return;
+
+    if (this.currentSinglePlayerSource === 'daily') {
+      this.submittedGuesses       = [];
+      this.selectedGuess          = '';
+      this.guessQuery             = '';
+      this.filterAnswers(this.guessQuery);
+      this.isGameOver             = false;
+      this.isViewingCompletedGame = false;
+      this.gameError              = '';
+      this.myFinishTimeMs         = null;
+      this.showSkipTurnHint       = true;
+      this.showPowerupHint        = true;
+      this.resetCustomGameFeedback();
+      this.singlePlayerHint       = null;
+      this.singlePlayerHintUsed   = false;
+      this.stopStopwatch();
+      this.startStopwatch();
+      return;
+    }
 
     this.isGameOver             = false;
     this.isViewingCompletedGame = false;
@@ -788,6 +979,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.singlePlayerHintUsed   = false;
     this.showSkipTurnHint       = true;
     this.showPowerupHint        = true;
+    this.resetCustomGameFeedback();
     this.stopStopwatch();
 
     if (this.shareIdParam) {
@@ -807,9 +999,12 @@ export class PromptleComponent implements OnInit, OnDestroy {
     }
   }
 
-  private loadGame(params: { topic?: string; topicId?: number; room?: string; answer?: string; auth0Id?: string }) {
+  private loadGame(params: { topic?: string; topicId?: number; room?: string; answer?: string; auth0Id?: string; dailyMode?: 'promptle' | 'connections' | 'crossword' }) {
     this.gameLoading = true;
     this.gameError   = '';
+    this.gameDataReady = false;
+    this.pendingSpectateGuesses = [];
+    this.pendingOneVsOneGuesses = [];
     this.dbGameService.fetchGame(params).subscribe({
       next: (data: GameData) => {
         this.applyGameData(data);
@@ -817,7 +1012,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
         if (this.isMultiplayer) this.cdr.detectChanges();
       },
       error: (err) => {
-        this.gameError   = err?.error?.error ?? err?.message ?? 'Failed to load game data';
+        this.gameError   = err?.error?.error ?? err?.message ?? PROMPTLE_GENERATION_ERROR;
         this.gameLoading = false;
         if (this.isMultiplayer) this.cdr.detectChanges();
       }
@@ -828,6 +1023,10 @@ export class PromptleComponent implements OnInit, OnDestroy {
     const hydrated = hydrateGameData(data);
 
     this.topic   = hydrated.topic;
+    this.currentDailyGame = hydrated.dailyGame || null;
+    if (!this.isMultiplayer && this.currentDailyGame?.mode === 'promptle') {
+      this.currentSinglePlayerSource = 'daily';
+    }
     this.headers = hydrated.headers;
     this.answers = hydrated.answers;
     this.filterAnswers(this.guessQuery);
@@ -839,15 +1038,22 @@ export class PromptleComponent implements OnInit, OnDestroy {
     const correct = this.answers.find(a => a.name === this.correctAnswer.name);
     this.backendHeaders = correct ? [...this.headers] : [];
     this.backendRow     = correct ? [...correct.values] : [];
+    this.gameDataReady = true;
+    this.flushPendingMultiplayerGuesses();
 
     this.submittedGuesses = [];
     this.selectedGuess    = '';
     this.guessQuery       = '';
     this.isGameOver       = false;
     this.isViewingCompletedGame = false;
+    this.resetCustomGameFeedback();
+    this.resetCustomGameSession();
     this.singlePlayerHint = null;
     this.singlePlayerHintUsed = false;
     this.filterAnswers(this.guessQuery);
+    if (this.shouldTrackCustomSession()) {
+      this.startCustomGameSession(this.topic);
+    }
     if (!this.isMultiplayer) {
       this.stopStopwatch();
       this.startStopwatch();
@@ -855,7 +1061,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
     if (this.isMultiplayer) this.cdr.detectChanges();
   }
 
-  // ─── Guess logic ─────────────────────────────────────────────────────
   onGuessQueryChange(query: string) {
     this.guessQuery = query;
     this.filterAnswers(query);
@@ -880,14 +1085,59 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.filteredAnswers = result;
   }
 
+  private normalizeGuessColor(color: string): GuessColor {
+    return color === 'green' || color === 'yellow' ? color : 'gray';
+  }
+
+  private findAnswerByGuess(name?: string, values: string[] = []): HydratedGameAnswer | undefined {
+    const normalizedName = name?.trim().toLowerCase();
+    if (normalizedName) {
+      return this.answers.find((answer) => answer.name.trim().toLowerCase() === normalizedName);
+    }
+
+    return this.answers.find((answer) =>
+      answer.values.length === values.length
+      && answer.values.every((value, index) =>
+        value.trim().toLowerCase() === String(values[index] ?? '').trim().toLowerCase()
+      )
+    );
+  }
+
+  private createGuessEntry(payload: {
+    name?: string;
+    values?: string[];
+    colors?: string[];
+  }): PromptleGuess {
+    const name = typeof payload.name === 'string' ? payload.name : undefined;
+    const values = Array.isArray(payload.values)
+      ? payload.values.map((value) => String(value ?? ''))
+      : [];
+    const guessedAnswer = this.findAnswerByGuess(name, values);
+    if (guessedAnswer && this.correctAnswer?.cells?.length) {
+      const feedback = this.evaluateGuessFeedback(guessedAnswer.cells, this.correctAnswer.cells);
+      return {
+        ...(name ? { name } : {}),
+        values,
+        colors: feedback.map(({ color }) => color),
+        feedback,
+      };
+    }
+
+    const colors = Array.isArray(payload.colors)
+      ? payload.colors.map((color) => this.normalizeGuessColor(String(color)))
+      : [];
+    return {
+      ...(name ? { name } : {}),
+      values,
+      colors,
+      feedback: colors.map((color) => ({ color })),
+    };
+  }
+
   private getGuessedNamesLowercase(): Set<string> {
     const set = new Set<string>();
     for (const guess of this.submittedGuesses) {
-      if (guess.name?.trim()) { set.add(guess.name.trim().toLowerCase()); continue; }
-      const matched = this.answers.find(a =>
-        a.values.length === guess.values.length &&
-        a.values.every((v, i) => v.trim().toLowerCase() === String(guess.values[i] ?? '').trim().toLowerCase())
-      );
+      const matched = this.findAnswerByGuess(guess.name, guess.values);
       if (matched) set.add(matched.name.toLowerCase());
     }
     return set;
@@ -897,29 +1147,38 @@ export class PromptleComponent implements OnInit, OnDestroy {
     return this.getGuessedNamesLowercase().has(name.trim().toLowerCase());
   }
 
-  // Evaluate guess colors based on the guessed cells and the correct answer's cells.
-  private evaluateGuessColors(guessedCells: GameCell[], correctCells: GameCell[]): string[] {
-    return guessedCells.map((cell, i) => this.getCellColor(cell, correctCells[i]));
+  private evaluateGuessFeedback(guessedCells: GameCell[], correctCells: GameCell[]): GuessCellFeedback[] {
+    return guessedCells.map((cell, index) => this.getCellFeedback(cell, correctCells[index], index));
   }
 
-  // Determine the color of a cell based on its value and the correct answer's cell.
-  private getCellColor(guessedCell?: GameCell, correctCell?: GameCell): string {
+  private evaluateGuessColors(guessedCells: GameCell[], correctCells: GameCell[]): GuessColor[] {
+    return this.evaluateGuessFeedback(guessedCells, correctCells).map(({ color }) => color);
+  }
+
+  private getCellFeedback(
+    guessedCell?: GameCell,
+    correctCell?: GameCell,
+    columnIndex: number = -1
+  ): GuessCellFeedback {
     const guessNorm = this.normalizeDisplay(guessedCell?.display ?? '');
     const correctNorm = this.normalizeDisplay(correctCell?.display ?? '');
 
-    if (!guessNorm || !correctNorm) return 'gray';
-    if (this.hasMatchingNumberValue(guessedCell, correctCell)) return 'green';
-    if (guessNorm === correctNorm) return 'green';
+    if (!guessNorm || !correctNorm) return { color: 'gray' };
+    if (this.hasMatchingNumberValue(guessedCell, correctCell)) return { color: 'green' };
+    if (this.hasMatchingReferenceValue(guessedCell, correctCell)) return { color: 'green' };
+    if (guessNorm === correctNorm) return { color: 'green' };
 
-    if (this.hasListItemMatch(guessedCell, correctCell)) return 'yellow';
+    const quantitativeFeedback = this.getQuantitativeCellFeedback(guessedCell, correctCell, columnIndex);
+    if (quantitativeFeedback) return quantitativeFeedback;
+
+    if (this.hasListItemMatch(guessedCell, correctCell)) return { color: 'yellow' };
     if (guessedCell?.kind === 'reference' || correctCell?.kind === 'reference') {
-      return this.hasReferencePartMatch(guessedCell, correctCell) ? 'yellow' : 'gray';
+      return { color: this.hasReferencePartMatch(guessedCell, correctCell) ? 'yellow' : 'gray' };
     }
-    if (this.hasTextTokenMatch(guessedCell, correctCell)) return 'yellow';
-    return 'gray';
+    if (this.hasTextTokenMatch(guessedCell, correctCell)) return { color: 'yellow' };
+    return { color: 'gray' };
   }
 
-  // For number-type cells: check if the 'value' part matches exactly (after confirming both are numbers).
   private hasMatchingNumberValue(guessedCell?: GameCell, correctCell?: GameCell): boolean {
     if (guessedCell?.kind !== 'number' || correctCell?.kind !== 'number') return false;
 
@@ -930,7 +1189,104 @@ export class PromptleComponent implements OnInit, OnDestroy {
       && guessedValue === correctValue;
   }
 
-  // For list-type cells: check if there's at least one overlapping item after normalization.
+  private hasMatchingReferenceValue(guessedCell?: GameCell, correctCell?: GameCell): boolean {
+    if (guessedCell?.kind !== 'reference' || correctCell?.kind !== 'reference') return false;
+
+    const guessedLabel = this.normalizeDisplay(String(guessedCell.parts?.label ?? ''));
+    const correctLabel = this.normalizeDisplay(String(correctCell.parts?.label ?? ''));
+    const guessedNumber = String(guessedCell.parts?.number ?? '').trim().toLowerCase();
+    const correctNumber = String(correctCell.parts?.number ?? '').trim().toLowerCase();
+
+    return !!guessedLabel
+      && guessedLabel === correctLabel
+      && !!guessedNumber
+      && guessedNumber === correctNumber;
+  }
+
+  private getQuantitativeCellFeedback(
+    guessedCell?: GameCell,
+    correctCell?: GameCell,
+    columnIndex: number = -1
+  ): GuessCellFeedback | null {
+    if (!guessedCell || !correctCell || columnIndex < 0) return null;
+
+    if (guessedCell.kind === 'number' && correctCell.kind === 'number') {
+      const guessedValue = this.getNumericCellValue(guessedCell);
+      const correctValue = this.getNumericCellValue(correctCell);
+      if (guessedValue === null || correctValue === null || guessedValue === correctValue) return null;
+
+      return {
+        color: this.isQuantitativelyClose(
+          guessedValue,
+          correctValue,
+          this.getColumnNumericValues(columnIndex)
+        ) ? 'yellow' : 'gray',
+        direction: correctValue > guessedValue ? 'up' : 'down',
+      };
+    }
+
+    if (
+      guessedCell.kind === 'reference'
+      && correctCell.kind === 'reference'
+      && this.hasReferencePartMatch(guessedCell, correctCell)
+    ) {
+      const guessedNumber = this.getReferenceOrdinalValue(guessedCell);
+      const correctNumber = this.getReferenceOrdinalValue(correctCell);
+      if (guessedNumber === null || correctNumber === null || guessedNumber === correctNumber) {
+        return { color: 'yellow' };
+      }
+
+      return {
+        color: 'yellow',
+        direction: correctNumber > guessedNumber ? 'up' : 'down',
+      };
+    }
+
+    return null;
+  }
+
+  private parseComparableNumber(value: unknown): number | null {
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+
+    const trimmed = String(value ?? '').trim();
+    if (!trimmed || !/^-?\d+(?:\.\d+)?$/.test(trimmed)) return null;
+
+    const parsed = Number(trimmed);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  private getNumericCellValue(cell?: GameCell): number | null {
+    if (cell?.kind !== 'number') return null;
+    return this.parseComparableNumber(cell.parts?.value);
+  }
+
+  private getReferenceOrdinalValue(cell?: GameCell): number | null {
+    if (cell?.kind !== 'reference') return null;
+    return this.parseComparableNumber(cell.parts?.number);
+  }
+
+  private getColumnNumericValues(columnIndex: number): number[] {
+    return this.answers
+      .map((answer) => this.getNumericCellValue(answer.cells[columnIndex]))
+      .filter((value): value is number => value !== null);
+  }
+
+  private isQuantitativelyClose(
+    guessedValue: number,
+    correctValue: number,
+    comparisonValues: number[]
+  ): boolean {
+    const difference = Math.abs(correctValue - guessedValue);
+    if (comparisonValues.length < 2) return false;
+
+    const minValue = Math.min(...comparisonValues);
+    const maxValue = Math.max(...comparisonValues);
+    const range = maxValue - minValue;
+    if (!Number.isFinite(range) || range <= 0) return false;
+
+    return difference <= range * QUANTITATIVE_CLOSE_RATIO;
+  }
+
   private hasListItemMatch(guessedCell?: GameCell, correctCell?: GameCell): boolean {
     const guessedItems = this.getComparableItems(guessedCell);
     const correctItems = this.getComparableItems(correctCell);
@@ -939,7 +1295,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
     return this.countOverlap(guessedItems, correctItems) >= 1;
   }
 
-  // For reference-type cells: check if the 'label' part matches after normalization.
   private hasReferencePartMatch(guessedCell?: GameCell, correctCell?: GameCell): boolean {
     const guessedIsReference = guessedCell?.kind === 'reference';
     const correctIsReference = correctCell?.kind === 'reference';
@@ -950,7 +1305,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
     return !!guessedLabel && guessedLabel === correctLabel;
   }
 
-  // For text-type cells: check if there's significant token overlap (at least 2 shared tokens) after normalization.
   private hasTextTokenMatch(guessedCell?: GameCell, correctCell?: GameCell): boolean {
     if (!guessedCell || !correctCell) return false;
     if (guessedCell.kind === 'number' || correctCell.kind === 'number') return false;
@@ -960,7 +1314,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
     return this.countOverlap(guessedTokens, correctTokens) >= 2;
   }
 
-  // For list-type cells: extract and normalize the list items for comparison.
   private getComparableItems(cell?: GameCell): string[] {
     if (!cell) return [];
     const items = Array.isArray(cell.items) ? cell.items : [];
@@ -982,7 +1335,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
     return tokenizeDisplay(value).join(' ');
   }
 
-  // Count the number of overlapping items between two arrays of strings.
   private countOverlap(left: string[], right: string[]): number {
     if (!left.length || !right.length) return 0;
     const rightSet = new Set(right);
@@ -997,12 +1349,148 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.isGameOver = true;
     this.isViewingCompletedGame = false;
     this.stopStopwatch();
+    this.finalizeCustomGameSession('completed');
     if (this.isMultiplayer) return;
     this.auth.user$.pipe(take(1)).subscribe(user => {
       if (user?.sub) {
-        this.http.post('/api/increment-win', { auth0Id: user.sub })
-          .subscribe({ error: (e) => console.error('Failed to update stats', e) });
+        this.http.post('/api/increment-win', {
+          auth0Id: user.sub,
+          guessCount: this.submittedGuesses.length,
+          finishMs: this.myFinishTimeMs ?? undefined
+        }).subscribe({ error: (e) => console.error('Failed to update stats', e) });
       }
+    });
+  }
+
+  get showCustomGameFeedback(): boolean {
+    return !this.isMultiplayer && this.currentSinglePlayerSource === 'custom';
+  }
+
+  private resetCustomGameFeedback() {
+    this.feedbackChoice = null;
+    this.feedbackSubmitting = false;
+    this.feedbackError = '';
+  }
+
+  private resetCustomGameSession() {
+    this.customSessionPlayId = '';
+    this.customSessionInteracted = false;
+    this.customSessionFinalized = false;
+  }
+
+  private shouldTrackCustomSession(): boolean {
+    return !this.isMultiplayer && this.currentSinglePlayerSource === 'custom' && !!this.topic.trim();
+  }
+
+  private createPlayId(): string {
+    return typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
+
+  private startCustomGameSession(topic: string) {
+    this.auth.user$.pipe(take(1)).subscribe((user) => {
+      const auth0Id = user?.sub?.trim() || '';
+      if (!auth0Id) {
+        this.resetCustomGameSession();
+        return;
+      }
+
+      const playId = this.createPlayId();
+      this.customSessionPlayId = playId;
+      this.customSessionInteracted = false;
+      this.customSessionFinalized = false;
+
+      this.customGameSessionService.startSession({
+        playId,
+        auth0Id,
+        topic,
+        gameType: 'promptle',
+      }).subscribe({
+        error: () => {
+          this.resetCustomGameSession();
+        },
+      });
+    });
+  }
+
+  private markCustomGameSessionInteracted() {
+    if (!this.shouldTrackCustomSession() || !this.customSessionPlayId || this.customSessionInteracted) {
+      return;
+    }
+
+    this.auth.user$.pipe(take(1)).subscribe((user) => {
+      const auth0Id = user?.sub?.trim() || '';
+      if (!auth0Id) return;
+
+      this.customSessionInteracted = true;
+      this.customGameSessionService.markInteracted({
+        playId: this.customSessionPlayId,
+        auth0Id,
+      }).subscribe({
+        error: () => {
+          this.customSessionInteracted = false;
+        },
+      });
+    });
+  }
+
+  private finalizeCustomGameSession(
+    finalState: 'completed' | 'abandoned',
+    options: { keepalive?: boolean } = {}
+  ) {
+    if (!this.shouldTrackCustomSession() || !this.customSessionPlayId || this.customSessionFinalized) {
+      return;
+    }
+
+    if (finalState === 'abandoned' && (!this.customSessionInteracted || this.isGameOver)) {
+      return;
+    }
+
+    this.auth.user$.pipe(take(1)).subscribe((user) => {
+      const auth0Id = user?.sub?.trim() || '';
+      if (!auth0Id) return;
+
+      this.customSessionFinalized = true;
+      this.customGameSessionService.finalizeSession(
+        {
+          playId: this.customSessionPlayId,
+          auth0Id,
+          finalState,
+        },
+        options
+      ).subscribe({
+        error: () => {
+          this.customSessionFinalized = false;
+        },
+      });
+    });
+  }
+
+  submitCustomGameFeedback(liked: boolean) {
+    if (!this.showCustomGameFeedback || this.feedbackSubmitting || this.feedbackChoice !== null) return;
+    if (!this.topic.trim()) return;
+
+    this.feedbackSubmitting = true;
+    this.feedbackError = '';
+
+    this.auth.user$.pipe(take(1)).subscribe(user => {
+      this.gameFeedbackService.submitFeedback({
+        auth0Id: user?.sub || '',
+        topic: this.topic,
+        liked,
+        gameType: 'promptle',
+        result: 'won',
+      }).subscribe({
+        next: () => {
+          this.feedbackChoice = liked;
+          this.feedbackSubmitting = false;
+        },
+        error: () => {
+          this.feedbackChoice = liked;
+          this.feedbackSubmitting = false;
+        },
+      });
     });
   }
 
@@ -1021,18 +1509,23 @@ export class PromptleComponent implements OnInit, OnDestroy {
     const correct = this.answers.find(a => a.name === this.correctAnswer.name);
     if (!guessed || !correct) return;
 
-    const colors = this.evaluateGuessColors(guessed.cells, correct.cells);
+    const feedback = this.evaluateGuessFeedback(guessed.cells, correct.cells);
+    const colors = feedback.map(({ color }) => color);
 
     const isCorrect = this.selectedGuess === this.correctAnswer.name;
     const finishMs  = isCorrect ? this.stopwatchMs : undefined;
 
+    this.markCustomGameSessionInteracted();
     this.selectedGuess = '';
     this.guessQuery    = '';
 
     if (this.isOneVsOne) {
-      // Add to submittedGuesses immediately so the dropdown filter removes this answer right away.
-      // on1v1GuessMade will handle adding to oneVsOneGuesses (the shared grid) once server confirms.
-      this.submittedGuesses.push({ name: guessed.name, values: [...guessed.values], colors });
+      this.submittedGuesses.push({
+        name: guessed.name,
+        values: [...guessed.values],
+        colors,
+        feedback,
+      });
       this.filterAnswers(this.guessQuery);
       this.multiplayerService.emit1v1Guess(
         this.currentRoom, this.myUsername, guessed.values, colors, isCorrect, finishMs
@@ -1041,8 +1534,12 @@ export class PromptleComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Standard (non-1v1) flow
-    this.submittedGuesses.push({ name: guessed.name, values: [...guessed.values], colors });
+    this.submittedGuesses.push({
+      name: guessed.name,
+      values: [...guessed.values],
+      colors,
+      feedback,
+    });
     this.filterAnswers(this.guessQuery);
 
     if (this.isMultiplayer && this.currentRoom) {
@@ -1055,6 +1552,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
         playerName: this.myUsername,
         values: [...guessed.values],
         colors,
+        feedback,
         isMe: true
       });
       this.multiplayerService.emitGuess(this.currentRoom, this.myUsername, colors, isCorrect, finishMs, [...guessed.values]);
@@ -1073,7 +1571,18 @@ export class PromptleComponent implements OnInit, OnDestroy {
     return this.players.map(p => p.name || 'Unknown').join(', ');
   }
 
-  quitGame() { this.router.navigate(['/']); }
+  get showDevAnswerPreview(): boolean {
+    return this.showPromptleAnswerAtTop
+      && !this.gameLoading
+      && !this.gameError
+      && !!this.correctAnswer?.values?.length;
+  }
+
+  quitGame() {
+    // Leaving an unsolved custom game after interaction counts as abandonment.
+    this.finalizeCustomGameSession('abandoned', { keepalive: true });
+    this.router.navigate(['/']);
+  }
 
   viewCompletedGame() {
     if (!this.isGameOver) return;
@@ -1086,7 +1595,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
   }
 
   deleteCurrentRoom() {
-    if (!this.isDevAccount || !this.currentRoom) return;
+    if (!this.currentRoom) return;
     if (!confirm(`Delete room ${this.currentRoom}? All players will be removed.`)) return;
     this.http.delete(`/api/game/rooms/${this.currentRoom}`, { body: { auth0Id: this.myAuth0Id } }).subscribe({
       next: () => {
@@ -1102,11 +1611,29 @@ export class PromptleComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
+  stopSpectating() {
+    this.isSpectating = false;
+    this.cdr.detectChanges();
+  }
+
+  private loadDevSettings() {
+    this.http.get<DevSettingsResponse>('/api/dev-settings').subscribe({
+      next: (settings) => {
+        this.showPromptleAnswerAtTop = settings.showPromptleAnswerAtTop ?? false;
+      },
+      error: () => {
+        this.showPromptleAnswerAtTop = false;
+      },
+    });
+  }
+
   get noGameAnims(): boolean {
     return !this.settings.getGameAnimations();
   }
 
   ngOnDestroy() {
+    // Covers direct route changes and browser exits while a custom game is still active.
+    this.finalizeCustomGameSession('abandoned', { keepalive: true });
     this.stopStopwatch();
     this.stopTurnCountdown();
     this.opponentGuessSub?.unsubscribe();

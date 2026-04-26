@@ -227,6 +227,148 @@
   border-color: rgba(253, 164, 175, 0.18);
 }
 
+.daily-game-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.daily-game-card {
+  border: 1px solid rgba(99, 102, 241, 0.16);
+  border-radius: 14px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.55);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+:host-context(.dark) .daily-game-card {
+  background: rgba(15, 23, 42, 0.56);
+  border-color: rgba(129, 140, 248, 0.2);
+}
+
+.daily-game-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.daily-game-card__header h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #1e293b;
+}
+
+.daily-game-card__header p {
+  margin: 4px 0 0;
+  font-size: 0.78rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.daily-game-card__header mat-icon {
+  color: #6366f1;
+}
+
+:host-context(.dark) .daily-game-card__header h3 {
+  color: #e2e8f0;
+}
+
+:host-context(.dark) .daily-game-card__header p {
+  color: #94a3b8;
+}
+
+:host-context(.dark) .daily-game-card__header mat-icon {
+  color: #a5b4fc;
+}
+
+.daily-game-card__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.daily-topic-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.daily-topic-empty {
+  border: 1px dashed rgba(99, 102, 241, 0.24);
+  border-radius: 12px;
+  padding: 14px 12px;
+  font-size: 0.82rem;
+  color: #64748b;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+:host-context(.dark) .daily-topic-empty {
+  color: #94a3b8;
+  border-color: rgba(129, 140, 248, 0.28);
+  background: rgba(15, 23, 42, 0.42);
+}
+
+.daily-topic-item {
+  border: 1px solid rgba(99, 102, 241, 0.16);
+  border-radius: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+:host-context(.dark) .daily-topic-item {
+  background: rgba(15, 23, 42, 0.46);
+  border-color: rgba(129, 140, 248, 0.18);
+}
+
+.daily-topic-item__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.daily-topic-item__label {
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #4338ca;
+}
+
+:host-context(.dark) .daily-topic-item__label {
+  color: #a5b4fc;
+}
+
+.daily-topic-item__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.daily-topic-item__action {
+  color: #6366f1;
+}
+
+:host-context(.dark) .daily-topic-item__action {
+  color: #a5b4fc;
+}
+
+.daily-queue-field {
+  width: 100%;
+}
+
+.daily-topic-add-btn {
+  align-self: flex-start;
+  gap: 6px;
+}
+
 /* ── Footer ── */
 .settings-footer {
   padding: 20px 28px 24px;

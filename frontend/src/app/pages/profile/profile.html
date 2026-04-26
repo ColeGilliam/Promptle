@@ -73,18 +73,36 @@
             <mat-card-content>
               <h2 class="card-section-title">Player Stats</h2>
 
-              <div class="stat-big">
-                <div class="stat-big-icon"><mat-icon>emoji_events</mat-icon></div>
-                <div class="stat-big-value">{{ winCount }}</div>
-                <div class="stat-big-label">Total Wins</div>
+              <!-- Top 2-column highlight grid -->
+              <div class="stats-top-grid">
+                <div class="stat-mini">
+                  <mat-icon class="stat-mini-icon trophy-icon">emoji_events</mat-icon>
+                  <div class="stat-mini-value">{{ winCount }}</div>
+                  <div class="stat-mini-label">Total Wins</div>
+                </div>
+                <div class="stat-mini">
+                  <mat-icon class="stat-mini-icon streak-icon">local_fire_department</mat-icon>
+                  <div class="stat-mini-value">{{ winStreak }}</div>
+                  <div class="stat-mini-label">Win Streak</div>
+                </div>
               </div>
 
               <div class="stat-divider"></div>
 
               <div class="stat-row">
-                <div class="stat-row-icon"><mat-icon>sports_esports</mat-icon></div>
-                <span class="stat-row-label">Games Played</span>
-                <span class="stat-row-value">{{ winCount }}</span>
+                <mat-icon class="stat-row-icon">military_tech</mat-icon>
+                <span class="stat-row-label">Best Streak</span>
+                <span class="stat-row-value">{{ bestStreak || '—' }}</span>
+              </div>
+              <div class="stat-row">
+                <mat-icon class="stat-row-icon">target</mat-icon>
+                <span class="stat-row-label">Avg Guesses</span>
+                <span class="stat-row-value">{{ avgGuesses }}</span>
+              </div>
+              <div class="stat-row">
+                <mat-icon class="stat-row-icon">timer</mat-icon>
+                <span class="stat-row-label">Avg Finish Time</span>
+                <span class="stat-row-value">{{ avgFinishTime }}</span>
               </div>
             </mat-card-content>
           </mat-card>

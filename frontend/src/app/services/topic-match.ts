@@ -10,11 +10,11 @@ function collapseWhitespace(value: string): string {
 function normalizeTopicText(value: string): string {
   return collapseWhitespace(
     String(value ?? '')
-      .normalize('NFKD')
-      .replace(/[^\x00-\x7F]/g, '')
+      .normalize('NFKD') // Remove accents by decomposing Unicode characters and discarding non-ASCII parts.
+      .replace(/[^\x00-\x7F]/g, '') // Remove any remaining non-ASCII characters that weren't removed by normalization.
       .toLowerCase()
-      .replace(/&/g, ' and ')
-      .replace(/[^a-z0-9]+/g, ' ')
+      .replace(/&/g, ' and ') // Replace ampersands with "and" for better tokenization.
+      .replace(/[^a-z0-9]+/g, ' ') // Replace non-alphanumeric characters with spaces to separate tokens.
   );
 }
 

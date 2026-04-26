@@ -29,6 +29,29 @@
         [headers]="headers"
       ></app-promptle-game-card>
 
+      <div
+        class="dev-answer-preview-card"
+        *ngIf="showDevAnswerPreview"
+        [@cardEnter]
+      >
+        <div class="dev-answer-preview-header">
+          <div class="dev-answer-preview-badge">
+            <mat-icon>visibility</mat-icon>
+            Dev Answer Preview
+          </div>
+          <p class="dev-answer-preview-name">{{ correctAnswer.name }}</p>
+        </div>
+
+        <div class="game-grid-scroll">
+          <div class="game-grid single-row">
+            <div class="column" *ngFor="let header of headers; let i = index">
+              <div class="header">{{ header }}</div>
+              <div class="guess-cell backend-cell">{{ correctAnswer.values[i] }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Error -->
       <div *ngIf="gameError" class="error-state">
         <div class="error-banner">
@@ -96,7 +119,7 @@
         </div>
       </div>
 
-      <!-- ══ DEV: Delete room (in-game) ══ -->
+      <!-- Delete room (dev only, in-game) -->
       <div class="dev-delete-bar" *ngIf="isDevAccount && isMultiplayer && gameStarted">
         <button matButton class="rect-btn delete-room-btn" (click)="deleteCurrentRoom()">
           <mat-icon>delete</mat-icon>
@@ -106,7 +129,6 @@
 
       <div class="dev-delete-bar" *ngIf="isGameOver && isViewingCompletedGame && !iLost && !isSpectating">
         <button matButton class="rect-btn promp2-btn" (click)="returnToResultsPopup()">
-          <mat-icon>arrow_back</mat-icon>
           BACK TO RESULTS
         </button>
       </div>
@@ -180,7 +202,7 @@
             title="Cover all opponents' screens with an ad for 6 seconds"
           >
             <mat-icon class="powerup-icon">tv</mat-icon>
-            <span class="powerup-name">Ad Break</span>
+            <span class="powerup-name">Give Opponents Ad Break</span>
             <span class="powerup-badge" *ngIf="powerupsUsed.blackout">USED</span>
           </button>
 
@@ -192,7 +214,7 @@
             title="Reveal one hidden column value from the answer"
           >
             <mat-icon class="powerup-icon">lightbulb</mat-icon>
-            <span class="powerup-name">Peek</span>
+            <span class="powerup-name">Hint</span>
             <span class="powerup-badge" *ngIf="powerupsUsed.peek">USED</span>
           </button>
 
@@ -204,7 +226,7 @@
             title="Lock all opponents' guess input for 8 seconds"
           >
             <mat-icon class="powerup-icon">ac_unit</mat-icon>
-            <span class="powerup-name">Freeze</span>
+            <span class="powerup-name">Freeze Opponents</span>
             <span class="powerup-badge" *ngIf="powerupsUsed.freeze">USED</span>
           </button>
         </div>
@@ -220,16 +242,6 @@
       <div class="powerup-hint-toast" *ngIf="powerupHint">
         <mat-icon class="hint-icon">lightbulb</mat-icon>
         <span><strong>{{ powerupHint.column }}</strong> = <strong>{{ powerupHint.value }}</strong></span>
-      </div>
-
-      <!-- Hidden correct-answer preview (dev only) -->
-      <div *ngIf="!gameLoading && !gameError && correctAnswer?.values?.length" hidden>
-        <div class="game-grid single-row">
-          <div class="column" *ngFor="let header of headers; let i = index">
-            <div class="header">{{ header }}</div>
-            <div class="guess-cell backend-cell">{{ correctAnswer.values[i] }}</div>
-          </div>
-        </div>
       </div>
 
       <!-- ══ GUESS INPUT ══ -->
@@ -252,11 +264,12 @@
             <mat-label>Select a Guess</mat-label>
             <input
               type="text"
+              inputmode="none"
               matInput
               [matAutocomplete]="guessAuto"
               [(ngModel)]="guessQuery"
               (ngModelChange)="onGuessQueryChange($event)"
-              placeholder="Start typing a guess"
+              placeholder="Tap to pick a guess"
               [disabled]="(isOneVsOne && !isMyTurn) || isFrozen"
             >
             <mat-autocomplete
@@ -295,6 +308,10 @@
             <button matButton="filled" class="rect-btn promp2-btn" (click)="restartGame()" [disabled]="!answers.length">RESTART</button>
             <span *ngIf="savedTimestamp" class="saved-status-inline">Saved: {{ savedTimestamp }}</span>
           </ng-container>
+        </div>
+        <div class="save-slot-notice" *ngIf="!isMultiplayer && answers.length">
+          <mat-icon class="save-slot-notice-icon">info</mat-icon>
+          <span>Only one game can be saved at a time{{ hasSavedGame ? ' — saving will replace your current save' : '' }}.</span>
         </div>
       </div>
 
@@ -337,7 +354,17 @@
                 [@cardEnter]
                 [style.background-color]="guess.colors[i]"
               >
-                {{ guess.values[i] }}
+                <div class="guess-cell-content">
+                  <span class="guess-cell-value">{{ guess.values[i] }}</span>
+                  <span
+                    *ngIf="guess.feedback[i]?.direction"
+                    class="guess-cell-arrow"
+                    [title]="guess.feedback[i].direction === 'up' ? 'Correct answer is higher' : 'Correct answer is lower'"
+                    aria-hidden="true"
+                  >
+                    {{ guess.feedback[i].direction === 'up' ? '↑' : '↓' }}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -353,6 +380,15 @@
         <div class="spectate-banner">
           <mat-icon>visibility</mat-icon>
           <span>You are spectating — watching other players' guesses live</span>
+          <button
+            *ngIf="isGameOver"
+            matButton="outlined"
+            class="rect-btn spectate-back-btn"
+            (click)="stopSpectating()"
+          >
+            <mat-icon>emoji_events</mat-icon>
+            Back to Results
+          </button>
         </div>
 
         <div class="game-grid-meta">
@@ -381,7 +417,17 @@
                 [@cardEnter]
                 [style.background-color]="guess.colors[i]"
               >
-                {{ guess.values[i] }}
+                <div class="guess-cell-content">
+                  <span class="guess-cell-value">{{ guess.values[i] }}</span>
+                  <span
+                    *ngIf="guess.feedback[i]?.direction"
+                    class="guess-cell-arrow"
+                    [title]="guess.feedback[i].direction === 'up' ? 'Correct answer is higher' : 'Correct answer is lower'"
+                    aria-hidden="true"
+                  >
+                    {{ guess.feedback[i].direction === 'up' ? '↑' : '↓' }}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -419,7 +465,17 @@
                   [@cardEnter]
                   [style.background-color]="guess.colors[i]"
                 >
-                  {{ guess.values[i] }}
+                  <div class="guess-cell-content">
+                    <span class="guess-cell-value">{{ guess.values[i] }}</span>
+                    <span
+                      *ngIf="guess.feedback[i]?.direction"
+                      class="guess-cell-arrow"
+                      [title]="guess.feedback[i].direction === 'up' ? 'Correct answer is higher' : 'Correct answer is lower'"
+                      aria-hidden="true"
+                    >
+                      {{ guess.feedback[i].direction === 'up' ? '↑' : '↓' }}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -442,10 +498,17 @@
   [guessCount]="submittedGuesses.length"
   [guessColors]="guessColors"
   [shareUrl]="shareUrl"
+  [showFeedback]="showCustomGameFeedback"
+  [feedbackChoice]="feedbackChoice"
+  [feedbackSubmitting]="feedbackSubmitting"
+  [feedbackError]="feedbackError"
+  [playerRankings]="rankedPlayers"
   (returnHome)="quitGame()"
   (playAgain)="restartGame()"
   (spectate)="startSpectating()"
   (viewGame)="viewCompletedGame()"
+  (likedGame)="submitCustomGameFeedback(true)"
+  (dislikedGame)="submitCustomGameFeedback(false)"
 ></app-promptle-win-popup>
 
 <!-- ══ LOSS OVERLAY (1v1 only) ══ -->

@@ -285,3 +285,34 @@
   border-radius: 4px;
   padding: 1px 6px;
 }
+
+.player-score {
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: 4px;
+  padding: 1px 6px;
+  color: #4f46e5;
+}
+
+.player-leader-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(249, 115, 22, 0.15));
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #b45309;
+  border-radius: 6px;
+  padding: 1px 6px;
+  vertical-align: middle;
+}
+
+.player-leader-badge mat-icon {
+  font-size: 0.85rem;
+  width: 0.85rem;
+  height: 0.85rem;
+  line-height: 1;
+}
