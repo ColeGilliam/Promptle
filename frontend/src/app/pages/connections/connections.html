@@ -200,11 +200,11 @@
 
       <section class="panel-card panel-card--stats">
         <!-- Sidebar keeps meta state visible without competing with the puzzle grid itself. -->
-        <div class="stats-card-header">
-          <div>
-            <h2>{{ activeTopic || 'No board loaded' }}</h2>
-          </div>
+        <div class="stats-topic-row">
+          <h2>{{ activeTopic || 'No board loaded' }}</h2>
+        </div>
 
+        <div class="stats-action-row">
           <button
             matButton="outlined"
             class="rect-btn secondary-btn stats-new-topic-btn"
@@ -214,12 +214,24 @@
             <mat-icon>edit</mat-icon>
             New Topic
           </button>
+
+          <button
+            *ngIf="canShowShareButton"
+            matButton="outlined"
+            class="rect-btn secondary-btn stats-new-topic-btn"
+            type="button"
+            (click)="copyShareLink()"
+            [disabled]="!canUseShareButton"
+          >
+            <mat-icon>{{ shareCopied ? 'check' : 'share' }}</mat-icon>
+            {{ shareLoading ? 'Preparing...' : shareCopied ? 'Copied!' : 'Share Board' }}
+          </button>
         </div>
 
         <div class="stats-grid">
           <!-- Hearts reflect remaining mistakes rather than showing a raw numeric counter. -->
           <div class="stat-pill">
-            <span class="stat-label">Mistakes</span>
+            <span class="stat-label">Lives</span>
             <div class="hearts-row" aria-label="Mistakes remaining">
               <mat-icon
                 *ngFor="let hasHeart of mistakeHearts"
@@ -229,14 +241,6 @@
                 {{ hasHeart ? 'favorite' : 'favorite_border' }}
               </mat-icon>
             </div>
-          </div>
-          <div class="stat-pill">
-            <span class="stat-label">Solved groups</span>
-            <span class="stat-value">{{ solvedCount }}/4</span>
-          </div>
-          <div class="stat-pill">
-            <span class="stat-label">Selected</span>
-            <span class="stat-value">{{ selectedCount }}/4</span>
           </div>
         </div>
 
