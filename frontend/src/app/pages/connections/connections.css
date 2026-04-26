@@ -224,11 +224,24 @@
   font-size: 1.15rem;
 }
 
-.stats-card-header {
+.stats-topic-row {
+  margin-bottom: 14px;
+}
+
+.stats-topic-row h2 {
+  margin: 0;
+  color: #10213d;
+}
+
+:host-context(.dark) .stats-topic-row h2 {
+  color: #eff6ff;
+}
+
+.stats-action-row {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .topic-field {
@@ -362,14 +375,6 @@
   color: #475569;
 }
 
-.stat-value {
-  display: block;
-  margin-top: 6px;
-  font-size: 1.1rem;
-  color: #10213d;
-  font-weight: 600;
-}
-
 .hearts-row {
   display: flex;
   gap: 8px;
@@ -389,10 +394,6 @@
 
 :host-context(.dark) .stat-label {
   color: #cbd5e1;
-}
-
-:host-context(.dark) .stat-value {
-  color: #eff6ff;
 }
 
 :host-context(.dark) .heart-icon {
@@ -734,7 +735,7 @@
   /* On very small screens, stack all control rows to preserve tap targets and avoid clipping. */
   .panel-header,
   .control-actions,
-  .stats-card-header,
+  .stats-action-row,
   .board-actions,
   .board-group-header {
     flex-direction: column;
