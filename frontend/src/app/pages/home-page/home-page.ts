@@ -26,6 +26,12 @@ import { SwitchMode } from '../../shared/ui/switch-mode/switch-mode';
 import { LoadSavedGameCard } from '../../shared/ui/load-saved-game-card/load-saved-game-card';
 import { DailyGameCtaComponent } from '../../shared/ui/daily-game-cta/daily-game-cta';
 
+interface TopicValidationResponse {
+  allowed?: boolean;
+  topic?: string;
+  error?: string;
+}
+
 @Component({
   selector: 'app-home-page',
   standalone: true,
@@ -59,6 +65,7 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
   selectedTopicQuery = '';
   filteredTopics: TopicInfo[] = [];
   customTopic = '';
+  customTopicError = '';
   matchedCustomTopic: TopicInfo | null = null;
   recommendations: RecommendationItem[] = [];
   isCustomTopicFocused = false;
@@ -66,6 +73,7 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
   isMultiplayer = false;  // false = single-player, true = multiplayer
   multiplayerMode: 'standard' | 'chaos' | '1v1' = 'standard'; // only relevant when isMultiplayer = true
   isCreatingRoom = false; // true while waiting for MP room creation API
+  isValidatingCustomTopic = false;
   createRoomError = '';
   private revealObserver?: IntersectionObserver;
 
@@ -225,7 +233,11 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
       const topic = this.customTopic.trim();
       if (!topic) return;
       const matchedTopic = this.resolvedCustomTopicMatch;
-      payload = matchedTopic ? { id: matchedTopic.topicId } : { topic };
+      if (!matchedTopic) {
+        this.validateAndStartCustomGeneratedGame(topic);
+        return;
+      }
+      payload = { id: matchedTopic.topicId };
     } else {
       if (!this.selectedTopic) return;
       payload = { id: this.selectedTopic.topicId };
@@ -254,7 +266,7 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
     const topic = this.customTopic.trim();
     if (!topic) return;
 
-    this.startGameFromPayload({ topic });
+    this.validateAndStartCustomGeneratedGame(topic);
   }
 
   startRecommendedCustomTopic(item: RecommendationItem) {
@@ -473,7 +485,38 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
 
   onCustomTopicChange(topic: string) {
     this.customTopic = topic;
+    this.customTopicError = '';
     this.updateCustomTopicMatch();
+  }
+
+  private validateAndStartCustomGeneratedGame(topic: string) {
+    if (this.isValidatingCustomTopic || this.isCreatingRoom) return;
+
+    this.isValidatingCustomTopic = true;
+    this.customTopicError = '';
+    this.http.post<TopicValidationResponse>('/api/subjects/validate-topic', {
+      topic,
+      auth0Id: this.myAuth0Id,
+    }).subscribe({
+      next: (result) => {
+        this.isValidatingCustomTopic = false;
+        if (!result.allowed) {
+          this.rejectCustomTopic(result.error);
+          return;
+        }
+        this.startGameFromPayload({ topic: result.topic || topic });
+      },
+      error: (err) => {
+        this.isValidatingCustomTopic = false;
+        this.rejectCustomTopic(err?.error?.error);
+      },
+    });
+  }
+
+  private rejectCustomTopic(message?: string) {
+    this.customTopic = '';
+    this.matchedCustomTopic = null;
+    this.customTopicError = message || 'That topic is not allowed. Please try a different topic.';
   }
 
   get customTopicActionLabel(): string {

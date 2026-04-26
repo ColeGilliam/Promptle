@@ -610,6 +610,14 @@
   gap: 12px;
 }
 
+.custom-topic-error {
+  margin: -4px 0 0;
+  color: #dc2626;
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
 .custom-topic-ideas {
   display: grid;
   gap: 10px;
@@ -879,6 +887,10 @@
 
 :host-context(.dark) .custom-topic-ideas-label {
   color: #67e8f9;
+}
+
+:host-context(.dark) .custom-topic-error {
+  color: #fca5a5;
 }
 
 :host-context(.dark) .custom-topic-idea-chip {

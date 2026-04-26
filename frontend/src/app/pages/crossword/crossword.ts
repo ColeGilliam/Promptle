@@ -29,7 +29,7 @@ import { GameEndPopup, GameEndPopupStat } from '../../shared/ui/game-end-popup/g
 import { DailyGameCtaComponent } from '../../shared/ui/daily-game-cta/daily-game-cta';
 
 type FeedbackTone = 'neutral' | 'success' | 'danger';
-const CROSSWORD_GENERATION_ERROR = 'Sorry! The puzzle failed to generate. Please try again.';
+const CROSSWORD_GENERATION_ERROR = 'Sorry! The crossword failed to generate. Please try again.';
 const NON_ALPHANUMERIC_CELL_VALUE = /[^A-Z0-9]/g;
 
 function sanitizeCrosswordCellValue(value: string): string {
@@ -318,9 +318,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
         error: (err) => {
           this.loading = false;
           this.currentDailyGame = null;
-          this.error = err?.error?.code === 'topic_not_allowed'
-            ? (err?.error?.error ?? 'This topic is not allowed.')
-            : CROSSWORD_GENERATION_ERROR;
+          this.error = err?.error?.error ?? CROSSWORD_GENERATION_ERROR;
           this.feedback = 'Try a different topic or try again.';
           this.feedbackTone = 'danger';
           this.showTopicPrompt = true;

@@ -22,6 +22,8 @@ import { CustomGameSessionService } from '../../services/custom-game-session';
 import { GameEndPopup, GameEndPopupRecapRow, GameEndPopupStat } from '../../shared/ui/game-end-popup/game-end-popup';
 import { DailyGameCtaComponent } from '../../shared/ui/daily-game-cta/daily-game-cta';
 
+const CONNECTIONS_GENERATION_ERROR = 'Sorry! The Connections failed to generate. Please try again.';
+
 interface BoardWord {
   // Stable keys let the board keep selection/shake state even as tiles are shuffled or removed.
   key: string;
@@ -255,7 +257,7 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
           // On failure, fall back to the prompt form so the player can retry immediately.
           this.loading = false;
           this.currentDailyGame = null;
-          this.error = err?.error?.error ?? 'Failed to generate a Connections puzzle.';
+          this.error = err?.error?.error ?? CONNECTIONS_GENERATION_ERROR;
           this.activeTopic = '';
           this.showTopicPrompt = true;
           this.feedback = 'Try a different topic or try again.';

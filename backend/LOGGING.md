@@ -108,6 +108,8 @@ If `LOG_LEVEL` is blank, the code uses the built-in defaults above.
 ### Warn
 
 - `http_request_aborted`: client disconnected before the response completed
+- `ai_input_security_rejected`: AI input was rejected by local validation or moderation
+- `ai_output_security_rejected`: Generated AI output was rejected by output security validation
 - `server_started`: backend booted successfully
 - `db_connected`: Mongo became available
 - `db_connection_closed`: Mongo connection closed during shutdown

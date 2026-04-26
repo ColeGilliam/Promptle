@@ -34,6 +34,7 @@ import { CustomGameSessionService } from '../../services/custom-game-session';
 type GuessColor = 'green' | 'yellow' | 'gray';
 type QuantitativeDirection = 'up' | 'down';
 const QUANTITATIVE_CLOSE_RATIO = 0.25; // Number clues turn yellow when the guess is within this percent of the value range.
+const PROMPTLE_GENERATION_ERROR = 'Sorry! The Promptle failed to generate. Please try again.';
 
 interface GuessCellFeedback {
   color: GuessColor;
@@ -993,7 +994,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
         if (this.isMultiplayer) this.cdr.detectChanges();
       },
       error: (err) => {
-        this.gameError   = err?.error?.error ?? err?.message ?? 'Failed to load game data';
+        this.gameError   = err?.error?.error ?? err?.message ?? PROMPTLE_GENERATION_ERROR;
         this.gameLoading = false;
         if (this.isMultiplayer) this.cdr.detectChanges();
       }
