@@ -462,9 +462,9 @@ export class DbGameService {
 
   constructor(private http: HttpClient) {}
 
-  // Database-backed game fetch (numeric topicId, optional answer seed)
-  fetchGameByTopic(topicId: number, answer?: string): Observable<GameData> {
-    const answerParam = answer ? `&answer=${encodeURIComponent(answer)}` : '';
+  // Database-backed game fetch (numeric topicId, optional fixed answer)
+  fetchGameByTopic(topicId: number, fixedAnswer?: string): Observable<GameData> {
+    const answerParam = fixedAnswer ? `&answer=${encodeURIComponent(fixedAnswer)}` : '';
     return this.http.get<GameData>(
       `${this.apiBaseUrl}/game/start?topicId=${topicId}${answerParam}`
     );
@@ -500,7 +500,7 @@ export class DbGameService {
     topic?: string;
     topicId?: number;
     room?: string;
-    answer?: string;
+    fixedAnswer?: string;
     auth0Id?: string;
     dailyMode?: 'promptle' | 'connections' | 'crossword';
   }): Observable<GameData> {
@@ -517,7 +517,7 @@ export class DbGameService {
     }
 
     if (params.topicId !== undefined && Number.isFinite(params.topicId)) {
-      return this.fetchGameByTopic(params.topicId, params.answer);
+      return this.fetchGameByTopic(params.topicId, params.fixedAnswer);
     }
 
     return throwError(() => new Error('Missing valid topic, topicId, room, or daily mode'));

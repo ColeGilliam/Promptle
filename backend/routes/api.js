@@ -12,6 +12,7 @@ import { getDevSettings, updateDevSettings } from '../controllers/devSettingsCon
 import { getDevAuthSession } from '../controllers/devAuthController.js';
 import { saveGameFeedback } from '../controllers/gameFeedbackController.js';
 import { getDailyGame } from '../controllers/dailyGameController.js';
+import { createSharedGame, loadSharedGame } from '../controllers/sharedGameController.js';
 import {
   finalizeCustomGameSession,
   markCustomGameSessionInteracted,
@@ -45,6 +46,8 @@ router.put('/api/update-profile', updateProfile);
 router.post('/api/increment-win', incrementWin);
 router.post('/api/save-game', saveGame);
 router.post('/api/game-feedback', saveGameFeedback);
+router.post('/api/shared-games', createSharedGame);
+router.get('/api/shared-games/:shareCode', loadSharedGame);
 router.post('/api/custom-game-session/start', startCustomGameSession);
 router.post('/api/custom-game-session/interacted', markCustomGameSessionInteracted);
 router.post('/api/custom-game-session/finalize', finalizeCustomGameSession);

@@ -7,7 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { take } from 'rxjs';
 import { AuthenticationService } from '../../services/authentication.service';
 import { DailyGameMeta } from '../../services/setup-game';
@@ -19,6 +19,7 @@ import {
 import { NavbarComponent } from '../../shared/components/navbar/navbar';
 import { GameFeedbackService } from '../../services/game-feedback';
 import { CustomGameSessionService } from '../../services/custom-game-session';
+import { SharedGameService } from '../../services/shared-game';
 import { GameEndPopup, GameEndPopupRecapRow, GameEndPopupStat } from '../../shared/ui/game-end-popup/game-end-popup';
 import { DailyGameCtaComponent } from '../../shared/ui/daily-game-cta/daily-game-cta';
 
@@ -93,6 +94,12 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
   private auth0Id = '';
   private currentPlayId = '';
   private currentDailyGame: DailyGameMeta | null = null;
+  shareUrl = '';
+  shareExpiresAt: string | null = null;
+  shareLoading = false;
+  shareCopied = false;
+  private shareSnapshot: ConnectionsGameData | null = null;
+  private isSharedGame = false;
   private sessionInteracted = false;
   private sessionFinalized = false;
 
@@ -106,7 +113,9 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
     private http: HttpClient,
     private gameFeedbackService: GameFeedbackService,
     private customGameSessionService: CustomGameSessionService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute,
+    private sharedGameService: SharedGameService
   ) {}
 
   ngOnInit(): void {
@@ -116,6 +125,12 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
     this.auth.user$.subscribe((user) => {
       this.isDevAccount = user?.email === 'promptle99@gmail.com';
       this.auth0Id = user?.sub ?? '';
+    });
+
+    this.route.queryParamMap.subscribe((params) => {
+      const sharedGameCode = params.get('share')?.trim();
+      if (!sharedGameCode) return;
+      this.loadSharedGame(sharedGameCode);
     });
   }
 
@@ -192,15 +207,29 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
   }
 
   get shareText(): string {
+    if (!this.shareUrl) return '';
+
     const topicName = this.activeTopic.trim() || 'Connections';
     const status = this.gameWon ? 'Solved' : 'Revealed';
     const recap = this.guessRecapRows
       .map((row) => row.colors.map((color) => this.colorToEmoji(color)).join(''))
       .join('\n');
     const summary = `${status} · ${this.solvedCount}/4 groups · ${this.formatTime(this.elapsedSeconds)}`;
-    return recap
+    const baseText = recap
       ? `Connections: ${topicName}\n${summary}\n\n${recap}`
       : `Connections: ${topicName}\n${summary}`;
+    return `${baseText}\n\nPlay this same puzzle:\n${this.shareUrl}`;
+  }
+
+  get canUseShareButton(): boolean {
+    if (this.shareLoading) return false;
+    if (!this.hasGame) return false;
+    if (!this.auth0Id) return true;
+    return !!this.shareSnapshot;
+  }
+
+  get canShowShareButton(): boolean {
+    return this.hasGame;
   }
 
   get showGameFeedback(): boolean {
@@ -236,6 +265,7 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
     const normalizedTopic = this.topic.trim();
     if (!normalizedTopic || this.loading || !this.canUseAI) return;
 
+    this.clearShareQueryParam();
     this.loading = true;
     this.clearPendingShake();
     // Move into the board view immediately so generation feels responsive instead of blocking on the form.
@@ -270,6 +300,7 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
   playDailyGame(): void {
     if (this.loading || (!this.dailyGameSummary?.available && !this.currentDailyGame)) return;
 
+    this.clearShareQueryParam();
     this.loading = true;
     this.clearPendingShake();
     this.resetBoardState();
@@ -293,6 +324,34 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
         this.feedback = 'Try again later or generate a custom board.';
         this.feedbackTone = 'danger';
       },
+    });
+  }
+
+  copyShareLink(): void {
+    if (!this.auth0Id) {
+      this.feedback = 'Sign in to share this board.';
+      this.feedbackTone = 'neutral';
+      return;
+    }
+
+    if (!this.canUseShareButton) return;
+
+    if (this.shareUrl) {
+      this.copyShareUrl();
+      return;
+    }
+
+    this.createShareLinkAndCopy();
+  }
+
+  private copyShareUrl(): void {
+    navigator.clipboard.writeText(this.shareUrl).then(() => {
+      this.shareCopied = true;
+      this.feedback = 'Share link copied.';
+      this.feedbackTone = 'success';
+      setTimeout(() => {
+        this.shareCopied = false;
+      }, 2500);
     });
   }
 
@@ -323,6 +382,7 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
     if (!confirmed) return;
 
     this.finalizeCurrentSession('abandoned', { keepalive: true });
+    this.clearShareQueryParam();
     this.resetBoardState();
     this.topic = '';
     this.showTopicPrompt = true;
@@ -447,6 +507,12 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
   }
 
   playAgain(): void {
+    if (this.isSharedGame && this.shareSnapshot) {
+      this.viewingEndedBoard = false;
+      this.applyGame(this.cloneSharedSnapshot(this.shareSnapshot), { isShared: true });
+      return;
+    }
+
     if (this.currentDailyGame) {
       this.viewingEndedBoard = false;
       this.playDailyGame();
@@ -488,9 +554,37 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
     return `${group.index}-${group.category}`;
   }
 
-  private applyGame(game: ConnectionsGameData): void {
+  private loadSharedGame(shareCode: string): void {
+    this.loading = true;
+    this.clearPendingShake();
+    this.resetBoardState();
+    this.activeTopic = '';
+    this.showTopicPrompt = false;
+    this.error = '';
+    this.feedback = 'Loading shared board...';
+    this.feedbackTone = 'neutral';
+    this.sharedGameService.loadSharedGame<ConnectionsGameData>(shareCode, 'connections').subscribe({
+      next: (response) => {
+        this.applyGame(response.payload, { isShared: true });
+        this.loading = false;
+      },
+      error: (err) => {
+        this.loading = false;
+        this.currentDailyGame = null;
+        this.error = err?.error?.error ?? err?.error?.message ?? err?.message ?? 'Failed to load the shared Connections board.';
+        this.activeTopic = '';
+        this.showTopicPrompt = true;
+        this.feedback = 'Try another board or create a new topic.';
+        this.feedbackTone = 'danger';
+      },
+    });
+  }
+
+  private applyGame(game: ConnectionsGameData, options: { isShared?: boolean } = {}): void {
     this.clearPendingShake();
     this.currentDailyGame = game.dailyGame ?? null;
+    this.isSharedGame = !!options.isShared;
+    this.shareSnapshot = this.cloneSharedSnapshot(game);
     this.activeTopic = game.topic;
     this.showTopicPrompt = false;
     this.error = '';
@@ -538,6 +632,10 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
     this.feedbackTone = 'neutral';
     this.startTimer();
     this.startSession(game.topic);
+    this.shareUrl = '';
+    this.shareExpiresAt = null;
+    this.shareLoading = false;
+    this.shareCopied = false;
   }
 
   private matchesGroup(group: ConnectionsGroupState): boolean {
@@ -598,7 +696,75 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
     this.stopTimer();
     this.resetGameFeedback();
     this.viewingEndedBoard = false;
+    this.resetShareState();
     this.resetSessionState();
+  }
+
+  private resetShareState(): void {
+    this.shareUrl = '';
+    this.shareExpiresAt = null;
+    this.shareLoading = false;
+    this.shareCopied = false;
+    this.shareSnapshot = null;
+    this.isSharedGame = false;
+  }
+
+  private createShareLink(): void {
+    if (!this.auth0Id || !this.shareSnapshot) {
+      this.shareUrl = '';
+      this.shareExpiresAt = null;
+      this.shareLoading = false;
+      this.shareCopied = false;
+      return;
+    }
+
+    this.shareLoading = true;
+    this.shareCopied = false;
+    this.sharedGameService.createSharedGame('connections', this.shareSnapshot, this.auth0Id).subscribe({
+      next: (response) => {
+        this.shareUrl = this.sharedGameService.buildSharedGameUrl('connections', response.shareCode);
+        this.shareExpiresAt = response.expiresAt;
+        this.shareLoading = false;
+      },
+      error: () => {
+        this.shareUrl = '';
+        this.shareExpiresAt = null;
+        this.shareLoading = false;
+      },
+    });
+  }
+
+  private createShareLinkAndCopy(): void {
+    if (!this.auth0Id || !this.shareSnapshot) return;
+
+    this.shareLoading = true;
+    this.shareCopied = false;
+    this.sharedGameService.createSharedGame('connections', this.shareSnapshot, this.auth0Id).subscribe({
+      next: (response) => {
+        this.shareUrl = this.sharedGameService.buildSharedGameUrl('connections', response.shareCode);
+        this.shareExpiresAt = response.expiresAt;
+        this.shareLoading = false;
+        this.copyShareUrl();
+      },
+      error: () => {
+        this.shareUrl = '';
+        this.shareExpiresAt = null;
+        this.shareLoading = false;
+      },
+    });
+  }
+
+  private cloneSharedSnapshot(game: ConnectionsGameData): ConnectionsGameData {
+    return JSON.parse(JSON.stringify(game)) as ConnectionsGameData;
+  }
+
+  private clearShareQueryParam(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { share: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   private resetGameFeedback(): void {

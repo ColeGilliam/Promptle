@@ -305,6 +305,15 @@
               {{ singlePlayerHintUsed ? 'HINT USED' : 'HINT' }}
             </button>
             <button matButton="filled" class="rect-btn promp2-btn" (click)="saveGame()" [disabled]="!answers.length">SAVE</button>
+            <button
+              *ngIf="canShowShareButton"
+              matButton="filled"
+              class="rect-btn promp2-btn"
+              (click)="copyShareLink()"
+              [disabled]="!canUseShareButton"
+            >
+              {{ shareLoading ? 'PREPARING...' : shareCopied ? 'COPIED!' : 'SHARE' }}
+            </button>
             <button matButton="filled" class="rect-btn promp2-btn" (click)="restartGame()" [disabled]="!answers.length">RESTART</button>
             <span *ngIf="savedTimestamp" class="saved-status-inline">Saved: {{ savedTimestamp }}</span>
           </ng-container>
