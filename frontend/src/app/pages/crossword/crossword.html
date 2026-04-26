@@ -157,18 +157,6 @@
                     Save
                   </button>
 
-                  <button
-                    *ngIf="canShowShareButton"
-                    matButton="filled"
-                    class="rect-btn promp2-btn"
-                    type="button"
-                    (click)="copyShareLink()"
-                    [disabled]="!canUseShareButton"
-                  >
-                    <mat-icon>{{ shareCopied ? 'check' : 'share' }}</mat-icon>
-                    {{ shareLoading ? 'Preparing...' : shareCopied ? 'Copied!' : 'Share Puzzle' }}
-                  </button>
-
                   <button matButton="filled" class="rect-btn promp1-btn" type="button" (click)="resetPuzzle()">
                     <mat-icon>refresh</mat-icon>
                     Reset
