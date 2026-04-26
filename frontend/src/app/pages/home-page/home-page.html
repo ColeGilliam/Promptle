@@ -234,6 +234,8 @@
               >
             </mat-form-field>
 
+            <p class="custom-topic-error" *ngIf="customTopicError">{{ customTopicError }}</p>
+
             <div class="custom-topic-ideas" *ngIf="showCustomTopicIdeas">
               <p class="custom-topic-ideas-label">Need ideas?</p>
               <div class="custom-topic-ideas-list">
@@ -257,7 +259,7 @@
                 <button
                   matButton="filled"
                   class="rect-btn promp2-btn play-start-btn"
-                  [disabled]="!customTopic.trim() || isCreatingRoom"
+                  [disabled]="!customTopic.trim() || isCreatingRoom || isValidatingCustomTopic"
                   (click)="startMatchedCustomGame()"
                 >
                   {{ matchedTopicActionLabel }}
@@ -266,7 +268,7 @@
                 <button
                   matButton="outlined"
                   class="rect-btn play-start-btn play-start-btn-alt"
-                  [disabled]="!customTopic.trim() || isCreatingRoom"
+                  [disabled]="!customTopic.trim() || isCreatingRoom || isValidatingCustomTopic"
                   (click)="startCustomGeneratedGame()"
                 >
                   {{ customGeneratedActionLabel }}
@@ -278,7 +280,7 @@
               <button
                 matButton="filled"
                 class="rect-btn promp2-btn play-start-btn"
-                [disabled]="!customTopic.trim() || isCreatingRoom"
+                [disabled]="!customTopic.trim() || isCreatingRoom || isValidatingCustomTopic"
                 (click)="startAiGame()"
               >
                 {{ customTopicActionLabel }}

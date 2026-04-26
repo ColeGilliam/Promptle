@@ -2,7 +2,7 @@
 import express from 'express';
 import { generateConnectionsGame } from '../controllers/connectionsController.js';
 import { generateCrosswordGame } from '../controllers/crosswordController.js';
-import { generateSubjects } from '../controllers/subjectController.js';
+import { generateSubjects, validateSubjectTopic } from '../controllers/subjectController.js';
 import { getHeaders, getPopularTopics } from '../controllers/topicController.js';
 import { startGame, createMultiplayerGame, listRooms, deleteRoom } from '../controllers/gameController.js';
 import { authUser, deleteUserAccount, incrementWin } from '../controllers/authController.js';
@@ -31,6 +31,7 @@ router.get('/health', (_req, res) => res.json({ status: 'ok' }));
 router.get('/api/dev-auth/session', getDevAuthSession);
 
 router.post('/api/subjects', aiGenerationBurstLimiter, generateSubjects);
+router.post('/api/subjects/validate-topic', validateSubjectTopic);
 router.post('/api/connections', aiGenerationBurstLimiter, generateConnectionsGame);
 router.post('/api/crossword', aiGenerationBurstLimiter, generateCrosswordGame);
 router.get('/api/daily-games/:mode', getDailyGame);

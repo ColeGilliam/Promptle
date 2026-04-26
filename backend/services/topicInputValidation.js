@@ -6,13 +6,42 @@ export const TOPIC_TOO_LONG_ERROR = `Topic must be ${TOPIC_MAX_LENGTH} character
 export const TOPIC_INSTRUCTION_ERROR = 'Please enter a topic, not instructions.';
 
 const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/;
-// Patterns to detect potential prompt injection or system instruction attempts
+const TOPIC_PATTERN_WINDOW = TOPIC_MAX_LENGTH;
+// Instruction patterns indicative of a prompt injection attempt rather than a genuine topic
 const INSTRUCTION_PATTERNS = [
-  new RegExp(`\\b(ignore|disregard|forget|override)\\b.{0,${TOPIC_MAX_LENGTH}}\\b(instructions?|prompts?|rules?|system|developer)\\b`, 'i'),
+  new RegExp(`\\b(ignore|disregard|forget|override)\\b.{0,${TOPIC_PATTERN_WINDOW}}\\b(instructions?|prompts?|rules?|system|developer)\\b`, 'i'),
   /\b(system|developer)\s+(prompt|message|instructions?)\b/i,
-  /\b(prompt injection|jailbreak)\b/i,
-  new RegExp(`\\b(reveal|show|print|repeat|output|return)\\b.{0,${TOPIC_MAX_LENGTH}}\\b(prompt|instructions?|system message|developer message|api key|secret)\\b`, 'i'),
-  /^\s*act\s+as\b/i,
+  new RegExp(`\\b(reveal|show|print|repeat|output|return)\\b.{0,${TOPIC_PATTERN_WINDOW}}\\b(prompt|instructions?|system message|developer message|api key|secret)\\b`, 'i'),
+  /^\s*(act|behave)\s+(as|like)\b/i,
+  /^\s*pretend\s+(to\s+be|you\s+are)\b/i,
+  /^\s*role[-\s]?play\s+as\b/i,
+  /^\s*simulate\s+(being|an?|the)\b/i,
+  /^\s*respond\s+as\b/i,
+  /^\s*you\s+are\s+now\b/i,
+  /^\s*you\s+are\s+(an?\s+)?(assistant|developer|system|model|bot|chatgpt)\b/i,
+  /^\s*from\s+now\s+on\b/i,
+  /\b(make|set|change|turn)\s+(the\s+)?topic\b/i,
+  /\b(the\s+real\s+topic|actual\s+topic)\s+(is|should\s+be)\b/i,
+  new RegExp(`\\b(generate|create|write|return|output|include|use)\\b.{0,${TOPIC_PATTERN_WINDOW}}\\b(categories?|headers?|answers?|columns?|json|schema|format|response)\\b`, 'i'),
+  new RegExp(`\\b(always|never|only|do\\s+not|don't)\\b.{0,${TOPIC_PATTERN_WINDOW}}\\b(follow|generate|return|output|include|use)\\b`, 'i'),
+  new RegExp(`\\b(decode|base64)\\b.{0,${TOPIC_PATTERN_WINDOW}}\\b(instructions?|payload|prompt)\\b`, 'i'),
+  /\b(hidden instructions?|hidden prompt|smuggled instructions?|instruction payload)\b/i,
+];
+
+// Code patterns indicative of injection attacks
+const CODE_OR_MARKUP_PATTERNS = [
+  /```|<\?php|<%|%\>/i,
+  /<\s*\/?\s*[a-z][a-z0-9-]*\b[^>]*>/i,
+  /<\s*\/?\s*(script|iframe|object|embed|svg|style|link|meta|form|input|button)\b/i,
+  /\bjavascript\s*:/i,
+  /\bon\w+\s*=/i,
+  /\b(function|const|let|var|import|require)\b.{0,40}[{(;=]/i,
+  /\b(drop\s+table|delete\s+from|insert\s+into|update\s+[a-z0-9_]+\s+set)\b/i,
+  /^\s*(sudo\s+)?rm\s+[-/]/i,
+  /^\s*(curl|wget)\s+(-|https?:|www\.)/i,
+  /^\s*(bash|sh|zsh|powershell|cmd)\s+[-/]/i,
+  /^\s*(python|node|npm)\s+(-|run|install|exec|eval|require|import|\/)/i,
+  /(;|&&|\|\||\||`|\$\()\s*(sudo\s+)?(rm|curl|wget|bash|sh|zsh|powershell|cmd|python|node|npm)\b/i,
 ];
 
 export function validateTopicInput(topic) {
@@ -42,6 +71,7 @@ export function validateTopicInput(topic) {
   if (
     CONTROL_CHARACTER_PATTERN.test(normalizedTopic)
     || INSTRUCTION_PATTERNS.some((pattern) => pattern.test(normalizedTopic))
+    || CODE_OR_MARKUP_PATTERNS.some((pattern) => pattern.test(normalizedTopic))
   ) {
     return {
       valid: false,
