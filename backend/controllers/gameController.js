@@ -166,7 +166,7 @@ export async function startGame(req, res) {
 // ────────────────────────────────────────────────
 export const createMultiplayerGame = async (req, res) => {
   try {
-    const { topic, id, mode, auth0Id } = req.body;
+    const { topic, id, mode, auth0Id, improvedGeneration } = req.body;
     const normalizedTopic = typeof topic === 'string' ? topic.trim() : '';
 
     const isDevUser = await isDevAccount(auth0Id);
@@ -198,6 +198,7 @@ export const createMultiplayerGame = async (req, res) => {
         body: {
           topic: normalizedTopic,
           auth0Id,
+          improvedGeneration,
         }
       };
 

@@ -66,19 +66,27 @@ export function buildPromptleResponseFormat({
   maxCategories,
   minSubjects,
   maxSubjects,
+  allowNonViable = false,
 } = {}) {
+  const minColumnItems = allowNonViable ? 0 : minCategories;
+  const minAnswerItems = allowNonViable ? 0 : minSubjects;
+
   return strictJsonSchema(
     'promptle_generation',
     'Structured Promptle game data.',
     {
       type: 'object',
       additionalProperties: false,
-      required: ['topic', 'columns', 'answers'],
+      required: ['topic', 'viable', 'reason', 'columns', 'answers'],
       properties: {
         topic: shortString(OUTPUT_LIMITS.topic),
+        viable: {
+          type: 'boolean',
+        },
+        reason: shortString(OUTPUT_LIMITS.promptleReason),
         columns: {
           type: 'array',
-          minItems: minCategories,
+          minItems: minColumnItems,
           maxItems: maxCategories,
           items: {
             type: 'object',
@@ -96,7 +104,7 @@ export function buildPromptleResponseFormat({
         },
         answers: {
           type: 'array',
-          minItems: minSubjects,
+          minItems: minAnswerItems,
           maxItems: maxSubjects,
           items: {
             type: 'object',
@@ -106,7 +114,7 @@ export function buildPromptleResponseFormat({
               name: shortString(OUTPUT_LIMITS.promptleSubjectName),
               cells: {
                 type: 'array',
-                minItems: minCategories,
+                minItems: minColumnItems,
                 maxItems: maxCategories,
                 items: promptleCellSchema,
               },
