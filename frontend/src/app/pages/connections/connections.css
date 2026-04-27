@@ -283,8 +283,25 @@
   color: #dc2626;
 }
 
+.improved-generation-checkbox {
+  align-self: flex-start;
+  margin-top: -4px;
+}
+
+.improved-generation-note {
+  margin: -6px 0 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #b45309;
+  line-height: 1.4;
+}
+
 :host-context(.dark) .control-error {
   color: #fda4af;
+}
+
+:host-context(.dark) .improved-generation-note {
+  color: #fbbf24;
 }
 
 /* Alternate prompt-card content shown when global AI generation is unavailable. */

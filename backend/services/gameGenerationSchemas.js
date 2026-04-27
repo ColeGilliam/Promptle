@@ -163,6 +163,26 @@ export const CONNECTIONS_RESPONSE_FORMAT = strictJsonSchema(
   }
 );
 
+export const CONNECTIONS_REVIEW_RESPONSE_FORMAT = strictJsonSchema(
+  'connections_board_review',
+  'Structured review of a Connections board for overlap and difficulty quality.',
+  {
+    type: 'object',
+    additionalProperties: false,
+    required: ['acceptable', 'primaryIssue', 'reason'],
+    properties: {
+      acceptable: {
+        type: 'boolean',
+      },
+      primaryIssue: {
+        type: 'string',
+        enum: ['none', 'isolated_group', 'weak_overlap', 'yellow_too_obvious', 'difficulty_balance', 'multiple'],
+      },
+      reason: shortString(OUTPUT_LIMITS.connectionsReviewReason),
+    },
+  }
+);
+
 export function buildCrosswordResponseFormat({
   minCandidates = CROSSWORD_GENERATION_CONFIG.minGeneratedCandidates,
   maxCandidates = CROSSWORD_GENERATION_CONFIG.maxGeneratedCandidates,
