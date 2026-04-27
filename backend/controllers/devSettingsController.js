@@ -8,6 +8,7 @@ import {
   getEffectiveDailyGames,
   mergeDailyGameQueues,
   prepareDailyGamesForToday,
+  regenerateUpcomingDailyGame,
   sanitizeDailyGames,
 } from '../services/dailyGames.js';
 
@@ -128,5 +129,44 @@ export async function updateDevSettings(req, res) {
       error: err,
     });
     res.status(500).json({ error: 'Failed to update settings.' });
+  }
+}
+
+export async function regenerateDailyGame(req, res) {
+  try {
+    const { auth0Id } = req.body || {};
+
+    if (!(await isDevAccount(auth0Id))) {
+      return res.status(403).json({ error: 'Only the dev account can regenerate daily games.' });
+    }
+
+    const coll = getDevSettingsCollection();
+    const dailyGames = await regenerateUpcomingDailyGame({
+      mode: req.params.mode,
+      requestId: req.id || null,
+      logger: devSettingsLogger,
+      coll,
+    });
+
+    res.json({
+      success: true,
+      dailyGames: buildPublicDailyGamesSummary(dailyGames),
+      dailyGameAdmin: buildAdminDailyGamesSummary(dailyGames),
+    });
+  } catch (err) {
+    const statusCode = Number.isInteger(err?.statusCode) ? err.statusCode : 500;
+
+    if (statusCode >= 500) {
+      devSettingsLogger.error('daily_game_regeneration_failed', {
+        requestId: req.id || null,
+        auth0Id: req.body?.auth0Id || null,
+        mode: req.params.mode,
+        error: err,
+      });
+    }
+
+    res.status(statusCode).json({
+      error: err.message || 'Failed to regenerate the daily game.',
+    });
   }
 }

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { HttpClient, HttpClientModule, HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -7,7 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { take } from 'rxjs';
 import { AuthenticationService } from '../../services/authentication.service';
 import { DailyGameMeta } from '../../services/setup-game';
@@ -25,8 +25,10 @@ import { NavbarComponent } from '../../shared/components/navbar/navbar';
 import { LoadSavedGameCard } from '../../shared/ui/load-saved-game-card/load-saved-game-card';
 import { GameFeedbackService } from '../../services/game-feedback';
 import { CustomGameSessionService } from '../../services/custom-game-session';
+import { SharedGameService } from '../../services/shared-game';
 import { GameEndPopup, GameEndPopupStat } from '../../shared/ui/game-end-popup/game-end-popup';
 import { DailyGameCtaComponent } from '../../shared/ui/daily-game-cta/daily-game-cta';
+import { RecommendationItem, RecommendationsService } from '../../services/recommendations';
 
 type FeedbackTone = 'neutral' | 'success' | 'danger';
 const CROSSWORD_GENERATION_ERROR = 'Sorry! The crossword failed to generate. Please try again.';
@@ -95,6 +97,8 @@ export class CrosswordComponent implements OnInit, OnDestroy {
   isDevAccount = false;
   allowAllAIGeneration = false;
   dailyGameSummary: { topic?: string; date?: string; available?: boolean } | null = null;
+  recommendations: RecommendationItem[] = [];
+  isTopicFocused = false;
 
   activePuzzle: CrosswordPuzzle | null = null;
   activeGame: CrosswordGameData | null = null;
@@ -125,6 +129,14 @@ export class CrosswordComponent implements OnInit, OnDestroy {
   private auth0Id = '';
   private currentPlayId = '';
   private currentDailyGame: DailyGameMeta | null = null;
+  shareUrl = '';
+  shareExpiresAt: string | null = null;
+  shareLoading = false;
+  shareCopied = false;
+  shareRateLimitedUntil = 0;
+  private shareSnapshot: CrosswordGameData | null = null;
+  private shareRateLimitTimeout: ReturnType<typeof window.setTimeout> | null = null;
+  private isSharedGame = false;
   private sessionInteracted = false;
   private sessionFinalized = false;
 
@@ -143,7 +155,10 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     private http: HttpClient,
     private gameFeedbackService: GameFeedbackService,
     private customGameSessionService: CustomGameSessionService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute,
+    private sharedGameService: SharedGameService,
+    private recommendationsService: RecommendationsService
   ) {}
 
   ngOnInit(): void {
@@ -152,19 +167,39 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     this.auth.user$.subscribe((user) => {
       this.isDevAccount = user?.email === 'promptle99@gmail.com';
       this.auth0Id = user?.sub ?? '';
+      if (this.auth0Id) {
+        this.loadRecommendations();
+      } else {
+        this.recommendations = [];
+      }
     });
 
     this.refreshSavedGameMetadata();
+
+    this.route.queryParamMap.subscribe((params) => {
+      const sharedGameCode = params.get('share')?.trim();
+      if (!sharedGameCode) return;
+      this.loadSharedGame(sharedGameCode);
+    });
   }
 
   ngOnDestroy(): void {
     // If the player leaves a custom crossword mid-solve after typing, count it as abandonment.
     this.finalizeCurrentSession('abandoned', { keepalive: true });
     this.stopTimer();
+    this.clearShareRateLimitCooldown();
   }
 
   get canUseAI(): boolean {
     return this.isDevAccount || this.allowAllAIGeneration;
+  }
+
+  get topicIdeas(): RecommendationItem[] {
+    return this.recommendations.filter((item) => item.type === 'custom').slice(0, 3);
+  }
+
+  get showTopicIdeas(): boolean {
+    return this.canUseAI && !!this.auth0Id && this.isTopicFocused && this.topicIdeas.length > 0 && !this.loading;
   }
 
   get hasPuzzle(): boolean {
@@ -266,31 +301,49 @@ export class CrosswordComponent implements OnInit, OnDestroy {
   get endPopupStats(): GameEndPopupStat[] {
     return [
       { icon: 'timer', label: this.formatTime(this.elapsedSeconds) },
-      { icon: 'check_circle', label: `${this.letterCheckCount} letter checks` },
+      { icon: 'check_circle', label: `${this.letterCheckCount} character checks` },
       { icon: 'spellcheck', label: `${this.wordCheckCount} word checks` },
       { icon: 'rule', label: `${this.puzzleCheckCount} puzzle checks` },
-      { icon: 'visibility', label: `${this.letterRevealCount} letter reveals` },
+      { icon: 'visibility', label: `${this.letterRevealCount} character reveals` },
       { icon: 'preview', label: `${this.wordRevealCount} word reveals` },
       { icon: 'visibility_off', label: `${this.puzzleRevealCount} puzzle reveals` },
     ];
   }
 
   get shareText(): string {
+    if (!this.shareUrl) return '';
+
     const topicName = (this.activeGame?.topic || this.topic).trim() || 'Crossword';
     const status = this.revealed ? 'Revealed' : 'Solved';
-    return [
+    const lines = [
       `Crossword: ${topicName}`,
       `${status} · ${this.formatTime(this.elapsedSeconds)}`,
       `${this.totalClueCount} clues`,
-      `${this.letterCheckCount} letter checks · ${this.wordCheckCount} word checks · ${this.puzzleCheckCount} puzzle checks`,
-      `${this.letterRevealCount} letter reveals · ${this.wordRevealCount} word reveals · ${this.puzzleRevealCount} puzzle reveals`,
-    ].join('\n');
+      `${this.letterCheckCount} character checks · ${this.wordCheckCount} word checks · ${this.puzzleCheckCount} puzzle checks`,
+      `${this.letterRevealCount} character reveals · ${this.wordRevealCount} word reveals · ${this.puzzleRevealCount} puzzle reveals`,
+    ];
+    lines.push('', 'Play this same puzzle:', this.shareUrl);
+    return lines.join('\n');
+  }
+
+  get canUseShareButton(): boolean {
+    if (this.shareLoading) return false;
+    if (this.shareUrl) return true;
+    if (this.isShareRateLimited()) return false;
+    if (!this.activeGame) return false;
+    if (!this.auth0Id) return true;
+    return !!this.shareSnapshot;
+  }
+
+  get canShowShareButton(): boolean {
+    return !!this.activeGame;
   }
 
   generateGame(): void {
     const normalizedTopic = this.topic.trim();
     if (!normalizedTopic || this.loading || !this.canUseAI) return;
 
+    this.clearShareQueryParam();
     this.loading = true;
     this.error = '';
     this.feedback = 'Generating your crossword...';
@@ -327,9 +380,25 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     });
   }
 
+  onTopicFocus(): void {
+    this.isTopicFocused = true;
+  }
+
+  onTopicBlur(): void {
+    window.setTimeout(() => {
+      this.isTopicFocused = false;
+    }, 120);
+  }
+
+  startRecommendedTopic(item: RecommendationItem): void {
+    this.topic = item.topic;
+    this.generateGame();
+  }
+
   playDailyGame(): void {
     if (this.loading || (!this.dailyGameSummary?.available && !this.currentDailyGame)) return;
 
+    this.clearShareQueryParam();
     this.loading = true;
     this.error = '';
     this.feedback = 'Loading today\'s crossword...';
@@ -364,6 +433,37 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     });
   }
 
+  copyShareLink(): void {
+    if (!this.auth0Id) {
+      this.feedback = 'Sign in to share this puzzle.';
+      this.feedbackTone = 'neutral';
+      return;
+    }
+
+    if (this.shareUrl) {
+      this.copyShareUrl();
+      return;
+    }
+
+    if (this.isShareRateLimited()) {
+      this.notifyShareRateLimit();
+      return;
+    }
+
+    if (!this.canUseShareButton) return;
+
+    this.createShareLinkAndCopy();
+  }
+
+  private copyShareUrl(): void {
+    navigator.clipboard.writeText(this.shareUrl).then(() => {
+      this.shareCopied = true;
+      setTimeout(() => {
+        this.shareCopied = false;
+      }, 2500);
+    });
+  }
+
   continueSavedGame(): void {
     const savedState = this.readSavedGameState();
     if (!savedState?.game) {
@@ -372,6 +472,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     }
 
     try {
+      this.clearShareQueryParam();
       this.activateGame(savedState.game, savedState);
       this.feedback = this.revealed ? 'Saved crossword restored. Revealed puzzle ready to review.' : 'Saved crossword restored.';
       this.feedbackTone = 'success';
@@ -395,6 +496,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     if (!confirmed) return;
 
     this.removeSavedGame(false);
+    this.clearShareQueryParam();
     this.activateGame(savedState.game, undefined, { trackSession: false });
     this.feedback = 'Crossword restarted.';
     this.feedbackTone = 'success';
@@ -412,6 +514,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     if (!confirmed) return;
 
     this.finalizeCurrentSession('abandoned', { keepalive: true });
+    this.clearShareQueryParam();
     this.loading = false;
     this.error = '';
     this.topic = '';
@@ -492,7 +595,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
   resetPuzzle(): void {
     if (!this.activePuzzle || !this.activeGame) return;
 
-    const confirmed = window.confirm(`Reset "${this.activePuzzle.topic}"? All entered cells will be cleared.`);
+    const confirmed = window.confirm(`Reset "${this.activePuzzle.topic}"? All entered characters will be cleared.`);
     if (!confirmed) return;
 
     this.activateGame(this.activeGame, undefined, { trackSession: false });
@@ -553,7 +656,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
 
     const guess = this.guesses[cell.row]?.[cell.col];
     if (!guess) {
-      this.feedback = 'Fill the active cell before checking it.';
+      this.feedback = 'Fill the active character before checking it.';
       this.feedbackTone = 'neutral';
       return;
     }
@@ -566,12 +669,12 @@ export class CrosswordComponent implements OnInit, OnDestroy {
 
     if (guess === cell.solution) {
       this.checkedCorrectCellKeys.add(key);
-      this.feedback = 'That letter is correct.';
+      this.feedback = 'That character is correct.';
       this.feedbackTone = 'success';
       this.maybeCompletePuzzle();
     } else {
       this.wrongCellKeys.add(key);
-      this.feedback = 'That letter is incorrect.';
+      this.feedback = 'That character is incorrect.';
       this.feedbackTone = 'danger';
     }
 
@@ -586,7 +689,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
 
     const missingCell = clue.cells.find((cell) => !this.guesses[cell.row]?.[cell.col]);
     if (missingCell) {
-      this.feedback = 'Fill every cell in the active word before checking it.';
+      this.feedback = 'Fill the whole word before checking it.';
       this.feedbackTone = 'neutral';
       this.setActiveCell(missingCell.row, missingCell.col, true);
       return;
@@ -604,8 +707,8 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     } else {
       this.feedback =
         summary.wrongCells.length === 1
-          ? '1 cell needs a second look.'
-          : `${summary.wrongCells.length} cells need a second look.`;
+          ? '1 character needs a second look.'
+          : `${summary.wrongCells.length} characters need a second look.`;
       this.feedbackTone = 'danger';
       this.setActiveCell(summary.wrongCells[0].row, summary.wrongCells[0].col, true);
     }
@@ -645,14 +748,14 @@ export class CrosswordComponent implements OnInit, OnDestroy {
       if (this.filledCellCount === this.totalFillableCells) {
         this.maybeCompletePuzzle();
       } else {
-        this.feedback = `No issues so far. ${this.filledCellCount}/${this.totalFillableCells} cells filled.`;
+        this.feedback = `No issues so far. ${this.filledCellCount}/${this.totalFillableCells} characters filled.`;
         this.feedbackTone = 'success';
       }
     } else {
       const [firstWrongKey] = wrongCellKeys;
       const [row, col] = firstWrongKey.split(':').map((value) => Number(value));
       this.feedback =
-        wrongCellKeys.size === 1 ? '1 cell is off right now.' : `${wrongCellKeys.size} cells need attention.`;
+        wrongCellKeys.size === 1 ? '1 character is off right now.' : `${wrongCellKeys.size} characters need attention.`;
       this.feedbackTone = 'danger';
       this.setActiveCell(row, col, true);
     }
@@ -669,7 +772,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     this.letterRevealCount += 1;
     this.setGuess(cell.row, cell.col, cell.solution);
     this.checkedCorrectCellKeys.add(this.getCellKey(cell.row, cell.col));
-    this.feedback = 'Letter revealed.';
+    this.feedback = 'Character revealed.';
     this.feedbackTone = 'success';
     this.markDirty();
     this.maybeCompletePuzzle();
@@ -746,34 +849,30 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     if (!this.activePuzzle || this.completed) return;
 
     const input = event.target as HTMLInputElement;
-    const letters = input.value.toUpperCase().replace(NON_ALPHANUMERIC_CELL_VALUE, '');
+    const character = sanitizeCrosswordCellValue(input.value);
+    input.value = character;
 
-    if (!letters) {
-      this.markSessionInteracted();
+    this.markSessionInteracted();
+
+    if (!character) {
       this.setGuess(row, col, '');
       return;
     }
 
     const clue = this.resolveClueAtCell(row, col, this.activeDirection);
+    this.setGuess(row, col, character);
+    this.maybeCompletePuzzle();
     if (!clue) return;
 
     const startIndex = clue.cells.findIndex((cell) => cell.row === row && cell.col === col);
     if (startIndex < 0) return;
 
-    const clueLetters = letters.split('');
-    let lastWrittenIndex = startIndex;
-    this.markSessionInteracted();
+    const nextCell = clue.cells[Math.min(startIndex + 1, clue.cells.length - 1)];
+    if (nextCell.row === row && nextCell.col === col) {
+      this.focusCell(row, col, true);
+      return;
+    }
 
-    clueLetters.forEach((letter, offset) => {
-      const targetCell = clue.cells[startIndex + offset];
-      if (!targetCell) return;
-      this.setGuess(targetCell.row, targetCell.col, letter);
-      lastWrittenIndex = startIndex + offset;
-    });
-
-    this.maybeCompletePuzzle();
-
-    const nextCell = clue.cells[Math.min(lastWrittenIndex + 1, clue.cells.length - 1)];
     this.setActiveCell(nextCell.row, nextCell.col, true);
   }
 
@@ -887,6 +986,23 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     });
   }
 
+  private loadRecommendations(): void {
+    const auth0Id = this.auth0Id.trim();
+    if (!auth0Id) {
+      this.recommendations = [];
+      return;
+    }
+
+    this.recommendationsService.getRecommendations(auth0Id).subscribe({
+      next: ({ items }) => {
+        this.recommendations = items ?? [];
+      },
+      error: () => {
+        this.recommendations = [];
+      },
+    });
+  }
+
   private refreshSavedGameMetadata(): void {
     const savedState = this.readSavedGameState();
     this.savedGameTopic = savedState?.game?.topic ?? null;
@@ -926,7 +1042,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
   private activateGame(
     game: CrosswordGameData,
     savedState?: SavedCrosswordState,
-    options: { trackSession?: boolean } = {}
+    options: { trackSession?: boolean; isShared?: boolean } = {}
   ): void {
     const puzzle = createCrosswordPuzzleFromGame(game);
     const guesses = this.coerceSavedGuesses(puzzle, savedState?.guesses);
@@ -935,6 +1051,8 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     // Rehydrate all runtime-only structures from the saved snapshot plus the rebuilt puzzle model.
     this.activeGame = game;
     this.currentDailyGame = game.dailyGame ?? null;
+    this.isSharedGame = !!options.isShared;
+    this.shareSnapshot = this.cloneSharedSnapshot(game);
     this.activePuzzle = puzzle;
     this.topic = game.topic;
     this.guesses = guesses;
@@ -968,6 +1086,45 @@ export class CrosswordComponent implements OnInit, OnDestroy {
       // Saved-game restores and same-topic resets should not create a fresh recommendation signal.
       this.startSession(game.topic);
     }
+    this.shareUrl = '';
+    this.shareExpiresAt = null;
+    this.shareLoading = false;
+    this.shareCopied = false;
+  }
+
+  private loadSharedGame(shareCode: string): void {
+    this.loading = true;
+    this.error = '';
+    this.feedback = 'Loading shared crossword...';
+    this.feedbackTone = 'neutral';
+    this.showTopicPrompt = false;
+    this.clearActivePuzzleState();
+
+    this.sharedGameService.loadSharedGame<CrosswordGameData>(shareCode, 'crossword').subscribe({
+      next: (response) => {
+        try {
+          this.activateGame(response.payload, undefined, { isShared: true });
+          this.feedback = `Shared crossword ready: ${response.payload.topic}`;
+          this.feedbackTone = 'success';
+          this.loading = false;
+        } catch {
+          this.loading = false;
+          this.currentDailyGame = null;
+          this.error = CROSSWORD_GENERATION_ERROR;
+          this.feedback = 'Try another puzzle or generate a different topic.';
+          this.feedbackTone = 'danger';
+          this.showTopicPrompt = true;
+        }
+      },
+      error: (err) => {
+        this.loading = false;
+        this.currentDailyGame = null;
+        this.error = err?.error?.error ?? err?.error?.message ?? err?.message ?? 'Failed to load the shared crossword.';
+        this.feedback = 'Try another puzzle or generate a different topic.';
+        this.feedbackTone = 'danger';
+        this.showTopicPrompt = true;
+      },
+    });
   }
 
   private resolveSavedActiveCell(puzzle: CrosswordPuzzle, savedCell: CrosswordPosition | null | undefined): CrosswordPosition | null {
@@ -1015,7 +1172,120 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     this.checkedIncorrectClueIds.clear();
     this.clueLookup.clear();
     this.resetGameFeedback();
+    this.resetShareState();
     this.resetSessionState();
+  }
+
+  private resetShareState(): void {
+    this.clearShareRateLimitCooldown();
+    this.shareUrl = '';
+    this.shareExpiresAt = null;
+    this.shareLoading = false;
+    this.shareCopied = false;
+    this.shareSnapshot = null;
+    this.isSharedGame = false;
+  }
+
+  private createShareLink(): void {
+    if (!this.auth0Id || !this.shareSnapshot) {
+      this.shareUrl = '';
+      this.shareExpiresAt = null;
+      this.shareLoading = false;
+      this.shareCopied = false;
+      return;
+    }
+
+    this.shareLoading = true;
+    this.shareCopied = false;
+    this.sharedGameService.createSharedGame('crossword', this.shareSnapshot, this.auth0Id).subscribe({
+      next: (response) => {
+        this.shareUrl = this.sharedGameService.buildSharedGameUrl('crossword', response.shareCode);
+        this.shareExpiresAt = response.expiresAt;
+        this.shareLoading = false;
+      },
+      error: (error: HttpErrorResponse) => {
+        this.shareUrl = '';
+        this.shareExpiresAt = null;
+        this.shareLoading = false;
+        if (this.handleShareRateLimit(error)) return;
+      },
+    });
+  }
+
+  private createShareLinkAndCopy(): void {
+    if (!this.auth0Id || !this.shareSnapshot) return;
+
+    this.shareLoading = true;
+    this.shareCopied = false;
+    this.sharedGameService.createSharedGame('crossword', this.shareSnapshot, this.auth0Id).subscribe({
+      next: (response) => {
+        this.shareUrl = this.sharedGameService.buildSharedGameUrl('crossword', response.shareCode);
+        this.shareExpiresAt = response.expiresAt;
+        this.shareLoading = false;
+        this.copyShareUrl();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.shareUrl = '';
+        this.shareExpiresAt = null;
+        this.shareLoading = false;
+        if (this.handleShareRateLimit(error)) return;
+      },
+    });
+  }
+
+  private handleShareRateLimit(error: HttpErrorResponse): boolean {
+    if (error.status !== 429) return false;
+
+    const retryAfterSeconds = Number.parseInt(error.headers?.get('Retry-After') || '', 10);
+    const cooldownMs = Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0
+      ? retryAfterSeconds * 1000
+      : 60_000;
+    this.setShareRateLimitCooldown(cooldownMs);
+    this.notifyShareRateLimit();
+    return true;
+  }
+
+  private notifyShareRateLimit(): void {
+    this.feedback = `Please wait ${this.getShareRateLimitSecondsRemaining()}s before sharing again.`;
+    this.feedbackTone = 'neutral';
+  }
+
+  private isShareRateLimited(): boolean {
+    return this.shareRateLimitedUntil > Date.now();
+  }
+
+  private getShareRateLimitSecondsRemaining(): number {
+    return Math.max(1, Math.ceil((this.shareRateLimitedUntil - Date.now()) / 1000));
+  }
+
+  private setShareRateLimitCooldown(durationMs: number): void {
+    this.clearShareRateLimitCooldown();
+    this.shareRateLimitedUntil = Date.now() + durationMs;
+    this.shareRateLimitTimeout = window.setTimeout(() => {
+      this.shareRateLimitedUntil = 0;
+      this.shareRateLimitTimeout = null;
+    }, durationMs);
+  }
+
+  private clearShareRateLimitCooldown(): void {
+    if (this.shareRateLimitTimeout) {
+      clearTimeout(this.shareRateLimitTimeout);
+      this.shareRateLimitTimeout = null;
+    }
+    this.shareRateLimitedUntil = 0;
+  }
+
+  private cloneSharedSnapshot(game: CrosswordGameData): CrosswordGameData {
+    return JSON.parse(JSON.stringify(game)) as CrosswordGameData;
+  }
+
+  private clearShareQueryParam(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { share: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   private isPuzzleCompleteWithGuesses(puzzle: CrosswordPuzzle, guesses: string[][]): boolean {
@@ -1059,6 +1329,10 @@ export class CrosswordComponent implements OnInit, OnDestroy {
 
     this.viewingEndedPuzzle = false;
     this.topic = replayTopic;
+    if (this.isSharedGame && this.shareSnapshot) {
+      this.activateGame(this.cloneSharedSnapshot(this.shareSnapshot), undefined, { isShared: true });
+      return;
+    }
     if (this.currentDailyGame) {
       this.playDailyGame();
       return;

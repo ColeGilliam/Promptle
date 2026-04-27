@@ -150,6 +150,111 @@
   gap: 8px;
 }
 
+/* ── Left-side chat panel ── */
+.game-topic-chat {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 8px;
+}
+
+.chat-messages {
+  flex: 1;
+  min-height: 90px;
+  max-height: 140px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--game-topic-room-pill-bg);
+  border: 1px solid var(--game-topic-divider);
+}
+
+.chat-empty {
+  margin: auto;
+  font-size: 0.78rem;
+  color: var(--game-topic-guess-text);
+  text-align: center;
+}
+
+.chat-msg {
+  display: flex;
+  gap: 5px;
+  align-items: baseline;
+  font-size: 0.82rem;
+}
+
+.chat-sender {
+  font-weight: 700;
+  color: var(--game-topic-accent);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.chat-msg--me .chat-sender {
+  color: #3c91f1;
+}
+
+.chat-text {
+  color: var(--game-topic-player-name);
+  word-break: break-word;
+}
+
+.chat-input-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  width: 100%;
+}
+
+.chat-input {
+  flex: 1;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1.5px solid var(--game-topic-divider);
+  background: var(--game-topic-card-bg);
+  font-size: 0.82rem;
+  color: var(--game-topic-player-name);
+  outline: none;
+  transition: border-color 0.15s;
+  min-width: 0;
+}
+
+.chat-input:focus {
+  border-color: var(--game-topic-accent);
+}
+
+.chat-send-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: none;
+  background: var(--game-topic-accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+
+.chat-send-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.chat-send-btn mat-icon {
+  font-size: 17px;
+  width: 17px;
+  height: 17px;
+}
+
 .topic-mp-heading {
   margin: 0 0 6px;
   font-size: 0.75rem;
@@ -315,4 +420,21 @@
   width: 0.85rem;
   height: 0.85rem;
   line-height: 1;
+}
+
+@media (max-width: 600px) {
+  /* Stack the two-column layout vertically so the player panel isn't clipped */
+  .split-topic-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .game-topic-right {
+    border-left: none;
+    padding-left: 0;
+    border-top: 1.5px solid var(--game-topic-divider);
+    padding-top: 12px;
+    margin-top: 4px;
+  }
 }

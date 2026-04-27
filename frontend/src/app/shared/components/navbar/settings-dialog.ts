@@ -55,6 +55,20 @@ import { ColorblindMode, SettingsService } from '../../../services/settings.serv
 
       <mat-divider class="sd-divider"></mat-divider>
 
+      <!-- hints -->
+      <div class="sd-row">
+        <div class="sd-info">
+          <mat-icon class="sd-icon">lightbulb</mat-icon>
+          <div>
+            <div class="sd-label">In-Game Hints</div>
+            <div class="sd-desc">Show onboarding tips when you start a new game</div>
+          </div>
+        </div>
+        <mat-slide-toggle [(ngModel)]="hints" (change)="onHintsChange()" color="primary"></mat-slide-toggle>
+      </div>
+
+      <mat-divider class="sd-divider"></mat-divider>
+
       <!-- ui animations -->
       <div class="sd-row">
         <div class="sd-info">
@@ -235,6 +249,7 @@ export class SettingsDialogComponent implements OnInit {
   uiAnimations = true;
   highContrast = false;
   colorblindMode: ColorblindMode = 'none';
+  hints = true;
 
   readonly colorblindOptions: { value: ColorblindMode; label: string }[] = [
     { value: 'none',          label: 'None' },
@@ -255,6 +270,7 @@ export class SettingsDialogComponent implements OnInit {
     this.uiAnimations = this.settingsService.getUiAnimations();
     this.highContrast = this.settingsService.getHighContrast();
     this.colorblindMode = this.settingsService.getColorblindMode();
+    this.hints = this.settingsService.getHints();
   }
 
   onThemeChange(): void {
@@ -275,6 +291,10 @@ export class SettingsDialogComponent implements OnInit {
 
   onColorblindChange(): void {
     this.settingsService.setColorblindMode(this.colorblindMode);
+  }
+
+  onHintsChange(): void {
+    this.settingsService.setHints(this.hints);
   }
 
   close(): void {

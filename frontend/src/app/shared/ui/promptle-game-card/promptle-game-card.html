@@ -1,28 +1,28 @@
 <div class="game-topic-card">
   <div class="game-topic-content" [class.split-topic-card]="isMultiplayer">
 
-    <!-- Left: Logo + Topic -->
-    <div class="game-topic-left-shell" [class.left-hidden]="isMultiplayer && leftPanelHidden">
+    <!-- Left: Logo + Topic  OR  Chat (toggled by button) -->
+    <div class="game-topic-left-shell">
       <button
         *ngIf="isMultiplayer"
         matMiniFab
         type="button"
         class="left-pane-toggle"
-        [class.left-pane-toggle-enabled]="!leftPanelHidden"
-        [class.left-pane-toggle-disabled]="leftPanelHidden"
-        (click)="toggleLeftPanel()"
-        [attr.aria-label]="leftPanelHidden ? 'Show topic panel' : 'Hide topic panel'"
+        [class.left-pane-toggle-enabled]="chatOpen"
+        [class.left-pane-toggle-disabled]="!chatOpen"
+        (click)="toggleChat()"
+        [attr.aria-label]="chatOpen ? 'Back to topic' : 'Open chat'"
       >
-        <mat-icon>{{ leftPanelHidden ? 'chat_bubble_outline' : 'chat_bubble' }}</mat-icon>
+        <mat-icon>{{ chatOpen ? 'close' : 'chat' }}</mat-icon>
       </button>
 
+      <!-- Topic view (default) -->
       <div
         class="game-topic-left"
-        [@leftPane]="isMultiplayer && leftPanelHidden ? 'hidden' : 'visible'"
-        [attr.aria-hidden]="isMultiplayer && leftPanelHidden ? 'true' : null"
+        *ngIf="!isMultiplayer || !chatOpen"
       >
         <img class="game-topic-logo game-topic-logo-light" src="PromptleLogoTransparent.png" alt="Promptle logo">
-        <img class="game-topic-logo game-topic-logo-dark"  src="promptle_logo_dark.png"        alt="Promptle logo">
+        <img class="game-topic-logo game-topic-logo-dark"  src="promptle_logo_dark1.png"        alt="Promptle logo">
         <div class="game-topic-copy">
           <p class="game-topic-kicker">Promptle</p>
           <ng-container *ngIf="loading; else loadedTopic">
@@ -34,6 +34,34 @@
           <ng-template #loadedTopic>
             <h1 class="game-topic-title">{{ topic || 'Loading topic...' }}</h1>
           </ng-template>
+        </div>
+      </div>
+
+      <!-- Chat view (when toggled) -->
+      <div class="game-topic-chat" *ngIf="isMultiplayer && chatOpen">
+        <div class="chat-messages" #chatScroll>
+          <p class="chat-empty" *ngIf="chatMessages.length === 0">No messages yet — say hello!</p>
+          <div
+            *ngFor="let msg of chatMessages"
+            class="chat-msg"
+            [class.chat-msg--me]="msg.isMe"
+          >
+            <span class="chat-sender">{{ msg.senderName }}</span>
+            <span class="chat-text">{{ msg.text }}</span>
+          </div>
+        </div>
+        <div class="chat-input-row">
+          <input
+            class="chat-input"
+            type="text"
+            [(ngModel)]="chatInput"
+            placeholder="Message…"
+            maxlength="200"
+            (keyup.enter)="sendChat()"
+          >
+          <button class="chat-send-btn" (click)="sendChat()" [disabled]="!chatInput.trim()">
+            <mat-icon>send</mat-icon>
+          </button>
         </div>
       </div>
     </div>

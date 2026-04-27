@@ -30,6 +30,10 @@ export class GameEndPopup {
   @Input() viewLabel = 'View Game';
   @Input() playAgainLabel = 'Play Again';
   @Input() shareText = '';
+  @Input() showShareButton = false;
+  @Input() shareDisabled = false;
+  @Input() shareLoading = false;
+  @Input() shareCopied = false;
   @Input() showFeedback = false;
   @Input() feedbackChoice: boolean | null = null;
   @Input() feedbackSubmitting = false;
@@ -38,29 +42,18 @@ export class GameEndPopup {
   @Output() returnHome = new EventEmitter<void>();
   @Output() playAgain = new EventEmitter<void>();
   @Output() viewGame = new EventEmitter<void>();
+  @Output() share = new EventEmitter<void>();
   @Output() likedGame = new EventEmitter<void>();
   @Output() dislikedGame = new EventEmitter<void>();
-
-  copied = false;
 
   get titleIcon(): string {
     return this.accent === 'success' ? 'emoji_events' : 'visibility';
   }
 
-  copyShare(): void {
-    if (!this.shareText.trim()) return;
-
-    navigator.clipboard.writeText(this.shareText).then(() => {
-      this.copied = true;
-      setTimeout(() => {
-        this.copied = false;
-      }, 2500);
-    });
-  }
-
   onReturnHome(): void { this.returnHome.emit(); }
   onPlayAgain(): void { this.playAgain.emit(); }
   onViewGame(): void { this.viewGame.emit(); }
+  onShare(): void { this.share.emit(); }
   onLikedGame(): void { this.likedGame.emit(); }
   onDislikedGame(): void { this.dislikedGame.emit(); }
 }

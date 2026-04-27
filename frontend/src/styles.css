@@ -159,6 +159,35 @@ body.high-contrast {
   --feedback-gray-text: #ffffff;
 }
 
+/* High contrast + colorblind combined — colorblind-safe hues at high contrast brightness */
+body.high-contrast.colorblind-deuteranopia,
+body.high-contrast.colorblind-protanopia {
+  --feedback-green: #1d4ed8;
+  --feedback-green-text: #ffffff;
+  --feedback-yellow: #c2410c;
+  --feedback-yellow-text: #ffffff;
+  --feedback-gray: #1f2937;
+  --feedback-gray-text: #ffffff;
+}
+
+body.high-contrast.colorblind-tritanopia {
+  --feedback-green: #065f46;
+  --feedback-green-text: #ffffff;
+  --feedback-yellow: #9d174d;
+  --feedback-yellow-text: #ffffff;
+  --feedback-gray: #1f2937;
+  --feedback-gray-text: #ffffff;
+}
+
+body.high-contrast.colorblind-achromatopsia {
+  --feedback-green: #000000;
+  --feedback-green-text: #ffffff;
+  --feedback-yellow: #4b5563;
+  --feedback-yellow-text: #ffffff;
+  --feedback-gray: #e5e7eb;
+  --feedback-gray-text: #000000;
+}
+
 /* Apply tile color overrides */
 body[class*="colorblind-"] .guess-cell[style*="green"],
 body.high-contrast .guess-cell[style*="green"],
@@ -197,4 +226,144 @@ body.high-contrast .color-dot[style*="gray"] {
   background-color: var(--feedback-gray) !important;
   border-color: var(--feedback-gray) !important;
   color: var(--feedback-gray-text) !important;
+}
+
+body.colorblind-deuteranopia,
+body.colorblind-protanopia {
+  --connections-yellow: #f97316;
+  --connections-yellow-soft: #ffedd5;
+  --connections-green: #2563eb;
+  --connections-green-soft: #dbeafe;
+  --connections-blue: #0f766e;
+  --connections-blue-soft: #ccfbf1;
+  --connections-purple: #9333ea;
+  --connections-purple-soft: #ede9fe;
+  --crossword-correct-bg: rgba(37, 99, 235, 0.14);
+  --crossword-correct-border: rgba(37, 99, 235, 0.3);
+  --crossword-wrong-bg: rgba(249, 115, 22, 0.16);
+  --crossword-wrong-border: rgba(249, 115, 22, 0.3);
+}
+
+body.dark.colorblind-deuteranopia,
+body.dark.colorblind-protanopia {
+  --connections-yellow: #fb923c;
+  --connections-yellow-soft: rgba(194, 65, 12, 0.76);
+  --connections-green: #60a5fa;
+  --connections-green-soft: rgba(29, 78, 216, 0.72);
+  --connections-blue: #2dd4bf;
+  --connections-blue-soft: rgba(15, 118, 110, 0.76);
+  --connections-purple: #c084fc;
+  --connections-purple-soft: rgba(109, 40, 217, 0.76);
+  --crossword-correct-bg: rgba(37, 99, 235, 0.34);
+  --crossword-correct-border: rgba(96, 165, 250, 0.4);
+  --crossword-wrong-bg: rgba(194, 65, 12, 0.4);
+  --crossword-wrong-border: rgba(251, 146, 60, 0.36);
+}
+
+body.colorblind-tritanopia {
+  --connections-yellow: #dc2626;
+  --connections-yellow-soft: #fee2e2;
+  --connections-green: #059669;
+  --connections-green-soft: #d1fae5;
+  --connections-blue: #9333ea;
+  --connections-blue-soft: #ede9fe;
+  --connections-purple: #2563eb;
+  --connections-purple-soft: #dbeafe;
+  --crossword-correct-bg: rgba(5, 150, 105, 0.14);
+  --crossword-correct-border: rgba(5, 150, 105, 0.28);
+  --crossword-wrong-bg: rgba(220, 38, 38, 0.14);
+  --crossword-wrong-border: rgba(220, 38, 38, 0.28);
+}
+
+body.dark.colorblind-tritanopia {
+  --connections-yellow: #f87171;
+  --connections-yellow-soft: rgba(153, 27, 27, 0.78);
+  --connections-green: #34d399;
+  --connections-green-soft: rgba(6, 95, 70, 0.78);
+  --connections-blue: #c084fc;
+  --connections-blue-soft: rgba(91, 33, 182, 0.78);
+  --connections-purple: #60a5fa;
+  --connections-purple-soft: rgba(29, 78, 216, 0.76);
+  --crossword-correct-bg: rgba(6, 95, 70, 0.42);
+  --crossword-correct-border: rgba(52, 211, 153, 0.34);
+  --crossword-wrong-bg: rgba(127, 29, 29, 0.42);
+  --crossword-wrong-border: rgba(248, 113, 113, 0.32);
+}
+
+body.colorblind-achromatopsia {
+  --connections-yellow: #f8fafc;
+  --connections-yellow-soft: #e2e8f0;
+  --connections-green: #e5e7eb;
+  --connections-green-soft: #d1d5db;
+  --connections-blue: #d1d5db;
+  --connections-blue-soft: #cbd5e1;
+  --connections-purple: #cbd5e1;
+  --connections-purple-soft: #94a3b8;
+  --crossword-correct-bg: rgba(203, 213, 225, 0.58);
+  --crossword-correct-border: rgba(100, 116, 139, 0.34);
+  --crossword-wrong-bg: rgba(156, 163, 175, 0.46);
+  --crossword-wrong-border: rgba(75, 85, 99, 0.3);
+}
+
+body.dark.colorblind-achromatopsia {
+  --connections-yellow: #1f2937;
+  --connections-yellow-soft: #111827;
+  --connections-green: #334155;
+  --connections-green-soft: #1f2937;
+  --connections-blue: #475569;
+  --connections-blue-soft: #334155;
+  --connections-purple: #64748b;
+  --connections-purple-soft: #475569;
+  --crossword-correct-bg: rgba(71, 85, 105, 0.56);
+  --crossword-correct-border: rgba(203, 213, 225, 0.2);
+  --crossword-wrong-bg: rgba(51, 65, 85, 0.56);
+  --crossword-wrong-border: rgba(148, 163, 184, 0.2);
+}
+
+body[class*="colorblind-"] .solved-group--yellow {
+  background: linear-gradient(90deg, var(--connections-yellow), var(--connections-yellow-soft)) !important;
+}
+
+body[class*="colorblind-"] .solved-group--green {
+  background: linear-gradient(90deg, var(--connections-green), var(--connections-green-soft)) !important;
+}
+
+body[class*="colorblind-"] .solved-group--blue {
+  background: linear-gradient(90deg, var(--connections-blue), var(--connections-blue-soft)) !important;
+}
+
+body[class*="colorblind-"] .solved-group--purple {
+  background: linear-gradient(90deg, var(--connections-purple), var(--connections-purple-soft)) !important;
+}
+
+body[class*="colorblind-"] .connections-dot--yellow,
+body[class*="colorblind-"] .end-cell.cell-yellow {
+  background: var(--connections-yellow) !important;
+}
+
+body[class*="colorblind-"] .connections-dot--green,
+body[class*="colorblind-"] .end-cell.cell-green {
+  background: var(--connections-green) !important;
+}
+
+body[class*="colorblind-"] .connections-dot--blue,
+body[class*="colorblind-"] .end-cell.cell-blue {
+  background: var(--connections-blue) !important;
+}
+
+body[class*="colorblind-"] .connections-dot--purple,
+body[class*="colorblind-"] .end-cell.cell-purple {
+  background: var(--connections-purple) !important;
+}
+
+body[class*="colorblind-"] .crossword-cell--checked-correct,
+body[class*="colorblind-"] .clue-button--checked-correct {
+  background: var(--crossword-correct-bg) !important;
+  border-color: var(--crossword-correct-border) !important;
+}
+
+body[class*="colorblind-"] .crossword-cell--wrong,
+body[class*="colorblind-"] .clue-button--checked-wrong {
+  background: var(--crossword-wrong-bg) !important;
+  border-color: var(--crossword-wrong-border) !important;
 }

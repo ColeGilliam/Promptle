@@ -306,7 +306,7 @@
 /* Scroll hint */
 .hero-scroll-hint {
   position: absolute;
-  bottom: 24px;
+  bottom: 18px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -610,6 +610,19 @@
   gap: 12px;
 }
 
+.improved-generation-checkbox {
+  align-self: flex-start;
+  margin-top: -4px;
+}
+
+.improved-generation-note {
+  margin: -6px 0 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #b45309;
+  line-height: 1.4;
+}
+
 .custom-topic-error {
   margin: -4px 0 0;
   color: #dc2626;
@@ -731,6 +744,10 @@
 :host-context(.dark) .play-start-btn-alt {
   border-color: rgba(129, 140, 248, 0.32);
   color: #c7d2fe !important;
+}
+
+:host-context(.dark) .improved-generation-note {
+  color: #fbbf24;
 }
 
 .load-confirm-section {

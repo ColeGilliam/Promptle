@@ -43,7 +43,7 @@ function getMultiplayerGamesColl() {
 // ────────────────────────────────────────────────
 // Shared logic: build full game data from a topic
 // ────────────────────────────────────────────────
-async function buildGameData(topicIdentifier, isNumericId = true, answerOverride = null) {
+async function buildGameData(topicIdentifier, isNumericId = true) {
   const topicColl = getTopicColl();
   const guessesColl = getGuessesColl();
 
@@ -88,11 +88,7 @@ async function buildGameData(topicIdentifier, isNumericId = true, answerOverride
     return normalizeGameAnswer({ name: doc.name, cells }, columns);
   });
 
-  // Pick correct answer — use override if provided (share link seeding), else random
-  const overrideMatch = answerOverride
-    ? answers.find(a => a.name === answerOverride)
-    : null;
-  const correctAnswer = overrideMatch ?? answers[Math.floor(Math.random() * answers.length)];
+  const correctAnswer = answers[Math.floor(Math.random() * answers.length)];
 
   return normalizeGamePayload({
     topic: topicName,
@@ -122,7 +118,7 @@ async function roomExists(roomId) {
 // ────────────────────────────────────────────────
 export async function startGame(req, res) {
   try {
-    const { topicId, room, answer } = req.query;
+    const { topicId, room } = req.query;
 
     let gameData;
 
@@ -148,8 +144,7 @@ export async function startGame(req, res) {
       gameData = normalizeGamePayload(gameData);
 
     } else if (topicId) {
-      // Single-player classic mode (answer param seeds a specific correct answer)
-      gameData = await buildGameData(topicId, true, answer || null);
+      gameData = await buildGameData(topicId, true);
     } else {
       return res.status(400).json({ error: 'Missing topicId or room' });
     }
@@ -160,7 +155,6 @@ export async function startGame(req, res) {
       requestId: req.id || null,
       topicId: req.query?.topicId || null,
       room: req.query?.room || null,
-      answer: req.query?.answer || null,
       error: err,
     });
     res.status(500).json({ error: err.message || 'Server error' });
@@ -172,7 +166,7 @@ export async function startGame(req, res) {
 // ────────────────────────────────────────────────
 export const createMultiplayerGame = async (req, res) => {
   try {
-    const { topic, id, mode, auth0Id } = req.body;
+    const { topic, id, mode, auth0Id, improvedGeneration } = req.body;
     const normalizedTopic = typeof topic === 'string' ? topic.trim() : '';
 
     const isDevUser = await isDevAccount(auth0Id);
@@ -204,6 +198,7 @@ export const createMultiplayerGame = async (req, res) => {
         body: {
           topic: normalizedTopic,
           auth0Id,
+          improvedGeneration,
         }
       };
 

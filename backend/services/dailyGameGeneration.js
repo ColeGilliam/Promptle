@@ -1,4 +1,5 @@
 import { appLogger } from '../lib/logger.js';
+import { PROMPTLE_GENERATION_CONFIG } from './gameGenerationConfig.js';
 import {
   generatePromptleGameForTopic as generatePromptleGameForTopicBase,
 } from '../controllers/subjectController.js';
@@ -16,11 +17,13 @@ const generationLogger = appLogger.child({ component: 'daily-game-generation' })
 const DAILY_PROMPTLE_MODEL = 'gpt-5.4-mini';
 const DAILY_CONNECTIONS_MODEL = 'gpt-5.4-mini';
 const DAILY_CROSSWORD_MODEL = 'gpt-5.4-mini';
+const DAILY_PROMPTLE_TARGET_SUBJECTS = PROMPTLE_GENERATION_CONFIG.improvedTargetSubjects;
 
 export async function generatePromptleGameForTopic(options = {}) {
   return generatePromptleGameForTopicBase({
     ...options,
     model: options.model ?? DAILY_PROMPTLE_MODEL,
+    targetSubjects: options.targetSubjects ?? DAILY_PROMPTLE_TARGET_SUBJECTS,
     logger: options.logger ?? generationLogger,
   });
 }

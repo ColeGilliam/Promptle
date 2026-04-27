@@ -19,6 +19,10 @@ export class PromptleWinPopup {
   @Input() guessCount = 0;
   @Input() guessColors: string[][] = [];
   @Input() shareUrl = '';
+  @Input() showShareButton = false;
+  @Input() shareDisabled = false;
+  @Input() shareLoading = false;
+  @Input() shareCopied = false;
   @Input() showFeedback = false;
   @Input() feedbackChoice: boolean | null = null;
   @Input() feedbackSubmitting = false;
@@ -29,10 +33,9 @@ export class PromptleWinPopup {
   @Output() playAgain  = new EventEmitter<void>();
   @Output() spectate   = new EventEmitter<void>();
   @Output() viewGame   = new EventEmitter<void>();
+  @Output() share = new EventEmitter<void>();
   @Output() likedGame = new EventEmitter<void>();
   @Output() dislikedGame = new EventEmitter<void>();
-
-  copied = false;
 
   formatTime(ms: number): string {
     const totalSec = Math.floor(ms / 1000);
@@ -48,25 +51,11 @@ export class PromptleWinPopup {
     return '⬛';
   }
 
-  copyShare(): void {
-    const emojiGrid = this.guessColors
-      .map(row => row.map(c => this.colorToEmoji(c)).join(''))
-      .join('\n');
-
-    const time = this.finishTimeMs !== null ? ` · ${this.formatTime(this.finishTimeMs)}` : '';
-    const title = this.topicName.trim() ? `Promptle: ${this.topicName.trim()}` : 'Promptle';
-    const text = `${title}\n${this.guessCount} guess${this.guessCount === 1 ? '' : 'es'}${time}\n\n${emojiGrid}\n\n${this.shareUrl}`;
-
-    navigator.clipboard.writeText(text).then(() => {
-      this.copied = true;
-      setTimeout(() => { this.copied = false; }, 2500);
-    });
-  }
-
   onReturnHome(): void { this.returnHome.emit(); }
   onPlayAgain():  void { this.playAgain.emit();  }
   onSpectate():   void { this.spectate.emit();   }
   onViewGame():   void { this.viewGame.emit();   }
+  onShare(): void { this.share.emit(); }
   onLikedGame(): void { this.likedGame.emit(); }
   onDislikedGame(): void { this.dislikedGame.emit(); }
 }

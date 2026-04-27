@@ -17,15 +17,18 @@ test('buildPromptleResponseFormat uses provided category and subject limits', ()
     maxCategories: 7,
     minSubjects: 10,
     maxSubjects: 80,
+    allowNonViable: true,
   });
   const schema = responseFormat.json_schema.schema;
 
-  assert.equal(schema.properties.columns.minItems, 4);
+  assert.equal(schema.properties.columns.minItems, 0);
   assert.equal(schema.properties.columns.maxItems, 7);
-  assert.equal(schema.properties.answers.minItems, 10);
+  assert.equal(schema.properties.answers.minItems, 0);
   assert.equal(schema.properties.answers.maxItems, 80);
-  assert.equal(schema.properties.answers.items.properties.cells.minItems, 4);
+  assert.equal(schema.properties.answers.items.properties.cells.minItems, 0);
   assert.equal(schema.properties.answers.items.properties.cells.maxItems, 7);
+  assert.equal(schema.properties.viable.type, 'boolean');
+  assert.equal(schema.properties.reason.maxLength, OUTPUT_LIMITS.promptleReason);
   assert.equal(schema.properties.topic.maxLength, OUTPUT_LIMITS.topic);
   assert.equal(schema.properties.columns.items.properties.header.maxLength, OUTPUT_LIMITS.promptleHeader);
   assert.equal(schema.properties.answers.items.properties.name.maxLength, OUTPUT_LIMITS.promptleSubjectName);

@@ -8,10 +8,11 @@ import { startGame, createMultiplayerGame, listRooms, deleteRoom } from '../cont
 import { authUser, deleteUserAccount, incrementWin } from '../controllers/authController.js';
 import { getProfile, updateProfile } from '../controllers/userController.js';
 import { saveGame, loadGame, deleteSavedGame } from '../controllers/saveController.js';
-import { getDevSettings, updateDevSettings } from '../controllers/devSettingsController.js';
+import { getDevSettings, updateDevSettings, regenerateDailyGame } from '../controllers/devSettingsController.js';
 import { getDevAuthSession } from '../controllers/devAuthController.js';
 import { saveGameFeedback } from '../controllers/gameFeedbackController.js';
 import { getDailyGame } from '../controllers/dailyGameController.js';
+import { createSharedGame, loadSharedGame } from '../controllers/sharedGameController.js';
 import {
   finalizeCustomGameSession,
   markCustomGameSessionInteracted,
@@ -20,6 +21,7 @@ import {
 import { getRecommendations } from '../controllers/recommendationController.js';
 import {
   aiGenerationBurstLimiter,
+  sharedGameCreationBurstLimiter,
   topicAiGenerationBurstLimiter,
 } from '../middleware/rateLimit.js';
 
@@ -45,6 +47,8 @@ router.put('/api/update-profile', updateProfile);
 router.post('/api/increment-win', incrementWin);
 router.post('/api/save-game', saveGame);
 router.post('/api/game-feedback', saveGameFeedback);
+router.post('/api/shared-games', sharedGameCreationBurstLimiter, createSharedGame);
+router.get('/api/shared-games/:shareCode', loadSharedGame);
 router.post('/api/custom-game-session/start', startCustomGameSession);
 router.post('/api/custom-game-session/interacted', markCustomGameSessionInteracted);
 router.post('/api/custom-game-session/finalize', finalizeCustomGameSession);
@@ -56,5 +60,6 @@ router.get('/api/game/rooms', listRooms);
 router.delete('/api/game/rooms/:roomId', deleteRoom);
 router.get('/api/dev-settings', getDevSettings);
 router.put('/api/dev-settings', updateDevSettings);
+router.post('/api/dev-settings/daily-games/:mode/regenerate', regenerateDailyGame);
 
 export default router;

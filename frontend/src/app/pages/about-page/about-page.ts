@@ -121,8 +121,8 @@ export class AboutPageComponent {
 
   members: TeamMember[] = [
     { name: 'Cole Gilliam', role: 'Game Logic / Setup', githubUrl: 'https://github.com/ColeGilliam/' },
-    { name: 'Richard Nguyen', role: 'Deployment / User Data', githubUrl: 'https://github.com/rnguyen2024' },
-    { name: 'Jorge Cervacio', role: 'UI / Frontend', githubUrl: 'https://github.com/Jorge-Cervacio-Izquierdo' },
+    { name: 'Richard Nguyen', role: 'Deployment / User Data', githubUrl: 'https://github.com/rnguyen2024', linkedinUrl: 'https://www.linkedin.com/in/richard-nguyen1289/' },
+    { name: 'Jorge Cervacio', role: 'UI / Frontend', githubUrl: 'https://github.com/Jorge-Cervacio-Izquierdo', linkedinUrl: 'https://www.linkedin.com/in/jorge-cervacio-izquierdo-458150406/' },
     { name: 'Cody Shrive', role: 'AI Features / Testing Tools', githubUrl: 'https://github.com/CodyShrive' },
   ];
 

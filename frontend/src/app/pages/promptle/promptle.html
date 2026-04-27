@@ -27,6 +27,8 @@
         [currentRoom]="currentRoom"
         [players]="players"
         [headers]="headers"
+        [chatMessages]="chatMessages"
+        (chatSend)="onSendChat($event)"
       ></app-promptle-game-card>
 
       <section
@@ -182,6 +184,11 @@
       </div>
 
       <!-- ══ STOPWATCH (standard mode only — not shown in 1v1) ══ -->
+      <app-game-onboarding-tour
+        *ngIf="!isOneVsOne && !gameLoading && gameStarted && !isGameOver"
+        [forStep]="3"
+        [arrowSide]="'down'"
+      ></app-game-onboarding-tour>
       <div class="stopwatch-bar" *ngIf="!isOneVsOne && !gameLoading && gameStarted && !isGameOver">
         <mat-icon>timer</mat-icon>
         <span class="stopwatch-value">{{ formatTime(stopwatchMs) }}</span>
@@ -198,60 +205,81 @@
 
       <!-- ══ 1v1 SKIP-TURN POWER-UP ══ -->
       <div class="skip-turn-bar" *ngIf="isOneVsOne && gameStarted && !isGameOver">
-        <button
-          class="powerup-btn skip-turn-btn"
-          [class.used]="skipTurnUsed"
-          [class.unavailable]="isMyTurn"
-          [disabled]="skipTurnUsed || isMyTurn"
-          (click)="useSkipTurn()"
-          title="End the opponent's turn and play again immediately"
-        >
-          <mat-icon class="powerup-icon">bolt</mat-icon>
-          <span class="powerup-name">Skip Opponent's Turn</span>
-          <span class="powerup-badge" *ngIf="skipTurnUsed">USED</span>
-          <span class="powerup-badge unavail-badge" *ngIf="!skipTurnUsed && isMyTurn">YOUR TURN</span>
-        </button>
+        <div class="skip-turn-anchor">
+          <app-game-hint-bubble
+            icon="bolt"
+            message="Skip Turn ends your opponent's turn early — one use only!"
+            arrowSide="down"
+            [show]="showSkipTurnHint"
+            (dismissed)="showSkipTurnHint = false"
+          ></app-game-hint-bubble>
+          <button
+            class="powerup-btn skip-turn-btn"
+            [class.used]="skipTurnUsed"
+            [class.unavailable]="isMyTurn"
+            [disabled]="skipTurnUsed || isMyTurn"
+            (click)="useSkipTurn()"
+            title="End the opponent's turn and play again immediately"
+          >
+            <mat-icon class="powerup-icon">bolt</mat-icon>
+            <span class="powerup-name">Skip Opponent's Turn</span>
+            <span class="powerup-badge" *ngIf="skipTurnUsed">USED</span>
+            <span class="powerup-badge unavail-badge" *ngIf="!skipTurnUsed && isMyTurn">YOUR TURN</span>
+          </button>
+        </div>
       </div>
 
       <!-- ══ POWER-UPS (chaos mode only — not while spectating) ══ -->
       <div class="powerup-bar" *ngIf="isChaos && gameStarted && !isGameOver && !isSpectating">
         <span class="powerup-label">POWER-UPS</span>
 
-        <button
-          class="powerup-btn blackout-btn"
-          [class.used]="powerupsUsed.blackout"
-          [disabled]="powerupsUsed.blackout"
-          (click)="usePowerup('blackout')"
-          title="Cover all opponents' screens with an ad for 6 seconds"
-        >
-          <mat-icon class="powerup-icon">tv</mat-icon>
-          <span class="powerup-name">Give Opponents Ad Break</span>
-          <span class="powerup-badge" *ngIf="powerupsUsed.blackout">USED</span>
-        </button>
+        <div class="powerup-buttons-group">
+          <div class="powerup-hint-anchor">
+            <app-game-hint-bubble
+              icon="auto_awesome"
+              message="<strong>Ad Break</strong> — blinds all opponents for 6s<br><strong>Hint</strong> — reveals a hidden column value<br><strong>Freeze</strong> — locks opponent input for 8s<br><span style='opacity:0.6;font-size:0.75rem'>Each power-up is one use only</span>"
+              arrowSide="down"
+              [show]="showPowerupHint"
+              (dismissed)="showPowerupHint = false"
+            ></app-game-hint-bubble>
+          </div>
 
-        <button
-          class="powerup-btn peek-btn"
-          [class.used]="powerupsUsed.peek"
-          [disabled]="powerupsUsed.peek"
-          (click)="usePowerup('peek')"
-          title="Reveal one hidden column value from the answer"
-        >
-          <mat-icon class="powerup-icon">lightbulb</mat-icon>
-          <span class="powerup-name">Hint</span>
-          <span class="powerup-badge" *ngIf="powerupsUsed.peek">USED</span>
-        </button>
+          <button
+            class="powerup-btn blackout-btn"
+            [class.used]="powerupsUsed.blackout"
+            [disabled]="powerupsUsed.blackout"
+            (click)="usePowerup('blackout')"
+            title="Cover all opponents' screens with an ad for 6 seconds"
+          >
+            <mat-icon class="powerup-icon">tv</mat-icon>
+            <span class="powerup-name">Give Opponents Ad Break</span>
+            <span class="powerup-badge" *ngIf="powerupsUsed.blackout">USED</span>
+          </button>
 
-        <button
-          class="powerup-btn freeze-btn"
-          [class.used]="powerupsUsed.freeze"
-          [disabled]="powerupsUsed.freeze"
-          (click)="usePowerup('freeze')"
-          title="Lock all opponents' guess input for 8 seconds"
-        >
-          <mat-icon class="powerup-icon">ac_unit</mat-icon>
-          <span class="powerup-name">Freeze Opponents</span>
-          <span class="powerup-badge" *ngIf="powerupsUsed.freeze">USED</span>
-        </button>
+          <button
+            class="powerup-btn peek-btn"
+            [class.used]="powerupsUsed.peek"
+            [disabled]="powerupsUsed.peek"
+            (click)="usePowerup('peek')"
+            title="Reveal one hidden column value from the answer"
+          >
+            <mat-icon class="powerup-icon">lightbulb</mat-icon>
+            <span class="powerup-name">Hint</span>
+            <span class="powerup-badge" *ngIf="powerupsUsed.peek">USED</span>
+          </button>
+
+          <button
+            class="powerup-btn freeze-btn"
+            [class.used]="powerupsUsed.freeze"
+            [disabled]="powerupsUsed.freeze"
+            (click)="usePowerup('freeze')"
+            title="Lock all opponents' guess input for 8 seconds"
+          >
+            <mat-icon class="powerup-icon">ac_unit</mat-icon>
+            <span class="powerup-name">Freeze Opponents</span>
+            <span class="powerup-badge" *ngIf="powerupsUsed.freeze">USED</span>
+          </button>
+        </div>
       </div>
 
       <!-- Freeze effect banner -->
@@ -267,6 +295,15 @@
       </div>
 
       <!-- ══ GUESS INPUT ══ -->
+      <app-game-onboarding-tour
+        *ngIf="answers.length && (!isMultiplayer || gameStarted) && !isSpectating"
+        [forStep]="1"
+        [arrowSide]="'down'"
+        [align]="'left'"
+        [guessCount]="submittedGuesses.length"
+        [gameReady]="!gameLoading && !gameError && answers.length > 0 && (!isMultiplayer || gameStarted)"
+        [isSpectating]="isSpectating"
+      ></app-game-onboarding-tour>
       <div
         class="guess-actions-card"
         *ngIf="answers.length && (!isMultiplayer || gameStarted) && !isSpectating"
@@ -318,13 +355,18 @@
               {{ singlePlayerHintUsed ? 'HINT USED' : 'HINT' }}
             </button>
             <button matButton="filled" class="rect-btn promp2-btn" (click)="saveGame()" [disabled]="!answers.length">SAVE</button>
+            <button
+              *ngIf="canShowShareButton"
+              matButton="filled"
+              class="rect-btn promp2-btn"
+              (click)="copyShareLink()"
+              [disabled]="!canUseShareButton"
+            >
+              {{ shareLoading ? 'PREPARING...' : shareCopied ? 'COPIED!' : 'SHARE' }}
+            </button>
             <button matButton="filled" class="rect-btn promp2-btn" (click)="restartGame()" [disabled]="!answers.length">RESTART</button>
             <span *ngIf="savedTimestamp" class="saved-status-inline">Saved: {{ savedTimestamp }}</span>
           </ng-container>
-        </div>
-        <div class="save-slot-notice" *ngIf="!isMultiplayer && answers.length">
-          <mat-icon class="save-slot-notice-icon">info</mat-icon>
-          <span>Only one game can be saved at a time{{ hasSavedGame ? ' — saving will replace your current save' : '' }}.</span>
         </div>
       </div>
 
@@ -448,36 +490,50 @@
       </div>
 
       <!-- ══ STANDARD GAME GRID ══ -->
+      <app-game-onboarding-tour
+        *ngIf="!isOneVsOne && !isSpectating && headers.length && submittedGuesses.length > 0"
+        [forStep]="2"
+        [arrowSide]="'down'"
+      ></app-game-onboarding-tour>
       <div
         class="game-grid-card"
         *ngIf="!isOneVsOne && !isSpectating && headers.length && (!isMultiplayer || gameStarted)"
         [@cardEnterDelayed]
       >
-        <div class="game-grid-meta">
-          <p class="game-grid-subtitle" *ngIf="submittedGuesses.length === 0">Submit a guess to start filling the grid.</p>
-          <p class="game-grid-subtitle" *ngIf="submittedGuesses.length > 0">{{ submittedGuesses.length }} guess{{ submittedGuesses.length === 1 ? '' : 'es' }} submitted.</p>
-        </div>
-
         <div class="game-grid-scroll">
-          <div class="game-grid">
-            <div class="column" *ngFor="let header of headers; let i = index">
-              <div class="header">{{ header }}</div>
-              <div
-                class="guess-cell"
-                *ngFor="let guess of displayedSubmittedGuesses"
-                [@cardEnter]
-                [style.background-color]="guess.colors[i]"
-              >
-                <div class="guess-cell-content">
-                  <span class="guess-cell-value">{{ guess.values[i] }}</span>
-                  <span
-                    *ngIf="guess.feedback[i]?.direction"
-                    class="guess-cell-arrow"
-                    [title]="guess.feedback[i].direction === 'up' ? 'Correct answer is higher' : 'Correct answer is lower'"
-                    aria-hidden="true"
-                  >
-                    {{ guess.feedback[i].direction === 'up' ? '↑' : '↓' }}
-                  </span>
+          <div class="game-grid-inner">
+            <div class="game-grid-meta">
+              <p class="game-grid-subtitle" *ngIf="submittedGuesses.length === 0">Submit a guess to start.</p>
+              <div class="game-grid-summary" *ngIf="submittedGuesses.length > 0">
+                <span class="game-grid-summary-label">Guesses</span>
+                <span class="game-grid-summary-value">{{ submittedGuesses.length }}</span>
+              </div>
+              <div class="grid-color-legend">
+                <span class="gcl-item"><span class="gcl-dot gcl-gray"></span>None</span>
+                <span class="gcl-item"><span class="gcl-dot gcl-yellow"></span>Close</span>
+                <span class="gcl-item"><span class="gcl-dot gcl-green"></span>Correct</span>
+              </div>
+            </div>
+            <div class="game-grid">
+              <div class="column" *ngFor="let header of headers; let i = index">
+                <div class="header">{{ header }}</div>
+                <div
+                  class="guess-cell"
+                  *ngFor="let guess of displayedSubmittedGuesses"
+                  [@cardEnter]
+                  [style.background-color]="guess.colors[i]"
+                >
+                  <div class="guess-cell-content">
+                    <span class="guess-cell-value">{{ guess.values[i] }}</span>
+                    <span
+                      *ngIf="guess.feedback[i]?.direction"
+                      class="guess-cell-arrow"
+                      [title]="guess.feedback[i].direction === 'up' ? 'Correct answer is higher' : 'Correct answer is lower'"
+                      aria-hidden="true"
+                    >
+                      {{ guess.feedback[i].direction === 'up' ? '↑' : '↓' }}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -500,6 +556,10 @@
   [guessCount]="submittedGuesses.length"
   [guessColors]="guessColors"
   [shareUrl]="shareUrl"
+  [showShareButton]="canShowShareButton"
+  [shareDisabled]="!canUseShareButton"
+  [shareLoading]="shareLoading"
+  [shareCopied]="shareCopied"
   [showFeedback]="showCustomGameFeedback"
   [feedbackChoice]="feedbackChoice"
   [feedbackSubmitting]="feedbackSubmitting"
@@ -509,6 +569,7 @@
   (playAgain)="restartGame()"
   (spectate)="startSpectating()"
   (viewGame)="viewCompletedGame()"
+  (share)="copyShareLink()"
   (likedGame)="submitCustomGameFeedback(true)"
   (dislikedGame)="submitCustomGameFeedback(false)"
 ></app-promptle-win-popup>

@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter, AfterViewChecked, OnChanges, ElementRef, ViewChild } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -8,7 +9,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 @Component({
   selector: 'app-promptle-game-card',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule, MatProgressBarModule],
+  imports: [CommonModule, FormsModule, MatButtonModule, MatIconModule, MatProgressBarModule],
   templateUrl: './promptle-game-card.html',
   styleUrls: ['./promptle-game-card.css'],
   animations: [
@@ -29,7 +30,9 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
     ])
   ]
 })
-export class PromptleGameCard {
+export class PromptleGameCard implements AfterViewChecked, OnChanges {
+  @ViewChild('chatScroll') private chatScrollRef?: ElementRef<HTMLDivElement>;
+
   @Input() loading = false;
   @Input() topic = '';
   @Input() isMultiplayer = false;
@@ -46,6 +49,8 @@ export class PromptleGameCard {
     finishTimeMs?: number;
     score?: number;
   }[] = [];
+  @Input() chatMessages: {senderName: string; text: string; isMe: boolean}[] = [];
+  @Output() chatSend = new EventEmitter<string>();
 
   get leaderId(): string | undefined {
     const winners = this.players
@@ -61,9 +66,32 @@ export class PromptleGameCard {
       .join(', ');
   }
 
-  leftPanelHidden = false;
+  chatOpen = false;
+  chatInput = '';
+  private chatNeedsScroll = false;
 
-  toggleLeftPanel(): void {
-    this.leftPanelHidden = !this.leftPanelHidden;
+  toggleChat(): void {
+    this.chatOpen = !this.chatOpen;
+  }
+
+  sendChat(): void {
+    const text = this.chatInput.trim();
+    if (!text) return;
+    this.chatInput = '';
+    this.chatSend.emit(text);
+  }
+
+  ngAfterViewChecked() {
+    if (this.chatNeedsScroll && this.chatScrollRef) {
+      const el = this.chatScrollRef.nativeElement;
+      el.scrollTop = el.scrollHeight;
+      this.chatNeedsScroll = false;
+    }
+  }
+
+  ngOnChanges() {
+    if (this.chatMessages.length) {
+      this.chatNeedsScroll = true;
+    }
   }
 }

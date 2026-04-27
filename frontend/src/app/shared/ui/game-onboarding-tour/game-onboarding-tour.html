@@ -1,0 +1,38 @@
+@if (visible) {
+  <div class="bubble-wrap" [class.arrow-up]="arrowSide === 'up'" [class.arrow-down]="arrowSide === 'down'" [class.align-left]="align === 'left'" [class.align-right]="align === 'right'" [@bubble]>
+
+    <!-- Step 1: guess input -->
+    @if (forStep === 1) {
+      <div class="bubble-row">
+        <mat-icon class="bubble-icon">search</mat-icon>
+        <span class="bubble-text">Select a guess and hit <strong>Submit</strong>.</span>
+        <button class="bubble-next" (click)="next()">Got it</button>
+        <button class="bubble-skip" (click)="skip()" aria-label="Skip tour">&times;</button>
+      </div>
+    }
+
+    <!-- Step 2: color legend -->
+    @if (forStep === 2) {
+      <div class="bubble-row">
+        <mat-icon class="bubble-icon">view_column</mat-icon>
+        <span class="bubble-text">Colors:
+          <span class="dot dot-gray"></span> None &nbsp;
+          <span class="dot dot-yellow"></span> Close &nbsp;
+          <span class="dot dot-green"></span> Correct
+        </span>
+        <button class="bubble-next" (click)="next()">Got it</button>
+        <button class="bubble-skip" (click)="skip()" aria-label="Dismiss">&times;</button>
+      </div>
+    }
+
+    <!-- Step 3: timer hint -->
+    @if (forStep === 3) {
+      <div class="bubble-row">
+        <mat-icon class="bubble-icon">timer</mat-icon>
+        <span class="bubble-text">Your time is being tracked — it'll appear on your results screen.</span>
+        <button class="bubble-skip" (click)="skip()" aria-label="Dismiss">&times;</button>
+      </div>
+    }
+
+  </div>
+}

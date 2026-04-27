@@ -16,6 +16,7 @@ let lastDbPingFailedAt = null;
 
 let cachedMultiplayerGamesCollection = null;
 let cachedDevSettingsCollection = null;
+let cachedSharedGamesCollection = null;
 const dbLogger = appLogger.child({ component: 'db' });
 
 function resetCachedCollections() {
@@ -27,6 +28,7 @@ function resetCachedCollections() {
   customGameSessionsCollection = null;
   cachedMultiplayerGamesCollection = null;
   cachedDevSettingsCollection = null;
+  cachedSharedGamesCollection = null;
 }
 
 function startDbPingMonitor() {
@@ -73,6 +75,13 @@ export function getDevSettingsCollection() {
     cachedDevSettingsCollection = db.collection('devSettings');
   }
   return cachedDevSettingsCollection;
+}
+
+export function getSharedGamesCollection() {
+  if (!cachedSharedGamesCollection) {
+    cachedSharedGamesCollection = db.collection('sharedGames');
+  }
+  return cachedSharedGamesCollection;
 }
 
 export async function connectDB() {

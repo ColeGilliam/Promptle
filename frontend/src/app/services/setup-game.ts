@@ -94,8 +94,18 @@ function stringifyValue(value: unknown): string {
   return String(value).trim();
 }
 
-function tokenizeDisplay(value: string): string[] {
+export function tokenizeDisplay(value: string): string[] {
   return stringifyValue(value).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+}
+
+function formatHeader(raw: string): string {
+  return raw
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, c => c.toUpperCase());
 }
 
 function normalizeCellKind(kind: unknown): GameCellKind | '' {
@@ -165,14 +175,11 @@ function formatNumberDisplay(display: string, numericParts: GameCellParts = {}):
   return `${trimmedDisplay} ${unit}`;
 }
 
-function normalizeDisplay(value: string): string {
-  return tokenizeDisplay(value).join(' ');
-}
 
 // Normalizes a single column definition, ensuring it has a header and optional kind/unit, with fallbacks to handle legacy formats
 function normalizeColumn(rawColumn: unknown, fallbackHeader = '', fallbackKind: GameCellKind | '' = ''): HydratedGameColumn | null {
   const rawObject = isPlainObject(rawColumn) ? rawColumn : null;
-  const header = stringifyValue(rawObject?.['header'] ?? rawObject?.['label'] ?? rawColumn ?? fallbackHeader);
+  const header = formatHeader(stringifyValue(rawObject?.['header'] ?? rawObject?.['label'] ?? rawColumn ?? fallbackHeader));
   if (!header) return null;
 
   const kind = normalizeCellKind(rawObject?.['kind'] ?? fallbackKind);
@@ -340,7 +347,7 @@ export function hydrateGameCell(rawCell: unknown, context: string | Partial<Game
 
   if (kind === 'set') {
     const items = inferredItems.length ? inferredItems : (display ? [display] : []);
-    return { display, kind, items };
+    return { display: display || items.join(', '), kind, items };
   }
 
   if (kind === 'number') {
@@ -412,17 +419,31 @@ export function hydrateGameAnswer(answer: Partial<GameAnswer> | undefined, colum
 }
 
 export function hydrateGameData(data: Partial<GameData> | undefined): HydratedGameData {
-  const columns = normalizeColumns(data?.columns, data?.headers);
+  const allColumns = normalizeColumns(data?.columns, data?.headers);
+  const restIndices = allColumns.map((_, i) => i).slice(1).sort(() => Math.random() - 0.5);
+  const selectedIndices = allColumns.length ? [0, ...restIndices.slice(0, 5)] : restIndices.slice(0, 6);
+  const columns = selectedIndices.map(i => allColumns[i]);
   const headers = columns.map(column => column.header);
+
+  function reorderAnswer(answer: Partial<GameAnswer> | undefined): Partial<GameAnswer> {
+    if (!answer) return {};
+    const rawCells = Array.isArray(answer.cells) ? answer.cells : [];
+    const rawValues = Array.isArray(answer.values) ? answer.values : [];
+    return {
+      ...answer,
+      cells: selectedIndices.map(i => rawCells[i]),
+      values: selectedIndices.map(i => rawValues[i]),
+    };
+  }
 
   return {
     topic: stringifyValue(data?.topic),
     headers,
     columns,
     answers: Array.isArray(data?.answers)
-      ? data.answers.map(answer => hydrateGameAnswer(answer, columns))
+      ? data.answers.map(answer => hydrateGameAnswer(reorderAnswer(answer), columns))
       : [],
-    correctAnswer: hydrateGameAnswer(data?.correctAnswer, columns),
+    correctAnswer: hydrateGameAnswer(reorderAnswer(data?.correctAnswer), columns),
     mode: stringifyValue(data?.mode) || undefined,
     dailyGame: data?.dailyGame && typeof data.dailyGame === 'object'
       ? {
@@ -441,19 +462,23 @@ export class DbGameService {
 
   constructor(private http: HttpClient) {}
 
-  // Database-backed game fetch (numeric topicId, optional answer seed)
-  fetchGameByTopic(topicId: number, answer?: string): Observable<GameData> {
-    const answerParam = answer ? `&answer=${encodeURIComponent(answer)}` : '';
+  // Database-backed game fetch (numeric topicId)
+  fetchGameByTopic(topicId: number): Observable<GameData> {
     return this.http.get<GameData>(
-      `${this.apiBaseUrl}/game/start?topicId=${topicId}${answerParam}`
+      `${this.apiBaseUrl}/game/start?topicId=${topicId}`
     );
   }
 
   // AI game generation (string topic) — dev account only
-  generateAiGame(topic: string, auth0Id: string, options?: { minCategories?: number; maxCategories?: number }): Observable<GameData> {
+  generateAiGame(
+    topic: string,
+    auth0Id: string,
+    options?: { minCategories?: number; maxCategories?: number; improvedGeneration?: boolean }
+  ): Observable<GameData> {
     const body: any = { topic: topic.trim(), auth0Id };
     if (options?.minCategories !== undefined) body.minCategories = options.minCategories;
     if (options?.maxCategories !== undefined) body.maxCategories = options.maxCategories;
+    if (options?.improvedGeneration) body.improvedGeneration = true;
 
     return this.http.post<GameData>(`${this.apiBaseUrl}/subjects`, body);
   }
@@ -479,8 +504,8 @@ export class DbGameService {
     topic?: string;
     topicId?: number;
     room?: string;
-    answer?: string;
     auth0Id?: string;
+    improvedGeneration?: boolean;
     dailyMode?: 'promptle' | 'connections' | 'crossword';
   }): Observable<GameData> {
     if (params.dailyMode) {
@@ -488,7 +513,9 @@ export class DbGameService {
     }
 
     if (params.topic && params.topic.trim()) {
-      return this.generateAiGame(params.topic.trim(), params.auth0Id || '');
+      return this.generateAiGame(params.topic.trim(), params.auth0Id || '', {
+        improvedGeneration: !!params.improvedGeneration,
+      });
     }
 
     if (params.room && params.room.trim()) {
@@ -496,7 +523,7 @@ export class DbGameService {
     }
 
     if (params.topicId !== undefined && Number.isFinite(params.topicId)) {
-      return this.fetchGameByTopic(params.topicId, params.answer);
+      return this.fetchGameByTopic(params.topicId);
     }
 
     return throwError(() => new Error('Missing valid topic, topicId, room, or daily mode'));

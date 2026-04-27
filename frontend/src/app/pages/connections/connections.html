@@ -24,6 +24,15 @@
         <p>
           Enter any topic and find four groups of four words. Heads up, the categories are meant to be tricky and overlap!
         </p>
+
+        <app-daily-game-cta
+          class="hero-daily-cta"
+          gameLabel="Connections"
+          [topic]="dailyGameSummary?.topic || ''"
+          [available]="!!dailyGameSummary?.available"
+          [loading]="loading"
+          (activated)="playDailyGame()"
+        ></app-daily-game-cta>
       </div>
 
       <div class="hero-dots" aria-hidden="true">
@@ -39,18 +48,9 @@
       <section class="panel-card panel-card--controls">
         <div class="panel-header">
           <div>
-            <span class="eyebrow">Generate</span>
             <h2>Topic Prompt</h2>
           </div>
         </div>
-
-        <app-daily-game-cta
-          gameLabel="Connections"
-          [topic]="dailyGameSummary?.topic || ''"
-          [available]="!!dailyGameSummary?.available"
-          [loading]="loading"
-          (activated)="playDailyGame()"
-        ></app-daily-game-cta>
 
         <ng-container *ngIf="canUseAI">
           <!-- The only required input for a generated board is a free-form topic string. -->
@@ -58,11 +58,38 @@
             <mat-label>Enter a topic</mat-label>
             <input
               matInput
-              placeholder="Greek mythology, NBA teams..."
+              placeholder="Type any topic"
               [(ngModel)]="topic"
+              (focus)="onTopicFocus()"
+              (blur)="onTopicBlur()"
               (keydown.enter)="generateGame()"
             >
           </mat-form-field>
+
+          <mat-checkbox
+            class="improved-generation-checkbox"
+            [(ngModel)]="improvedGeneration"
+          >
+            Improved generation
+          </mat-checkbox>
+
+          <p class="improved-generation-note" *ngIf="improvedGeneration">
+            Warning: Improved generation will take longer to load.
+          </p>
+
+          <div class="custom-topic-ideas" *ngIf="showTopicIdeas">
+            <p class="custom-topic-ideas-label">Need ideas?</p>
+            <div class="custom-topic-ideas-list">
+              <button
+                *ngFor="let item of topicIdeas"
+                matButton="outlined"
+                class="custom-topic-idea-chip"
+                (mousedown)="startRecommendedTopic(item)"
+              >
+                {{ item.topic }}
+              </button>
+            </div>
+          </div>
 
           <div class="control-actions">
             <!-- Button shares Promptle styling but kicks off a Connections-specific generation flow. -->
@@ -179,7 +206,7 @@
             <p class="solved-group-explanation" *ngIf="group.explanation">{{ group.explanation }}</p>
 
             <div class="solved-word-row">
-              <span class="solved-word-chip" *ngFor="let word of group.words">{{ word }}</span>
+              <span class="solved-word-chip" *ngFor="let word of group.words">{{ word | uppercase }}</span>
             </div>
           </article>
 
@@ -193,18 +220,18 @@
             [disabled]="loading || gameOver || isSelectionLocked(word.key) || isResolvingGuess"
             (click)="toggleWordSelection(word)"
           >
-            {{ word.label }}
+            {{ word.label | uppercase }}
           </button>
         </div>
       </section>
 
       <section class="panel-card panel-card--stats">
         <!-- Sidebar keeps meta state visible without competing with the puzzle grid itself. -->
-        <div class="stats-card-header">
-          <div>
-            <h2>{{ activeTopic || 'No board loaded' }}</h2>
-          </div>
+        <div class="stats-topic-row">
+          <h2>{{ activeTopic || 'No board loaded' }}</h2>
+        </div>
 
+        <div class="stats-action-row">
           <button
             matButton="outlined"
             class="rect-btn secondary-btn stats-new-topic-btn"
@@ -214,13 +241,25 @@
             <mat-icon>edit</mat-icon>
             New Topic
           </button>
+
+          <button
+            *ngIf="canShowShareButton"
+            matButton="outlined"
+            class="rect-btn secondary-btn stats-new-topic-btn"
+            type="button"
+            (click)="copyShareLink()"
+            [disabled]="!canUseShareButton"
+          >
+            <mat-icon>{{ shareCopied ? 'check' : 'share' }}</mat-icon>
+            {{ shareLoading ? 'Preparing...' : shareCopied ? 'Copied!' : 'Share Board' }}
+          </button>
         </div>
 
         <div class="stats-grid">
           <!-- Hearts reflect remaining mistakes rather than showing a raw numeric counter. -->
           <div class="stat-pill">
-            <span class="stat-label">Mistakes</span>
-            <div class="hearts-row" aria-label="Mistakes remaining">
+            <span class="stat-label">Lives</span>
+            <div class="hearts-row" aria-label="Lives remaining">
               <mat-icon
                 *ngFor="let hasHeart of mistakeHearts"
                 [class.heart-icon--spent]="!hasHeart"
@@ -230,20 +269,12 @@
               </mat-icon>
             </div>
           </div>
-          <div class="stat-pill">
-            <span class="stat-label">Solved groups</span>
-            <span class="stat-value">{{ solvedCount }}/4</span>
-          </div>
-          <div class="stat-pill">
-            <span class="stat-label">Selected</span>
-            <span class="stat-value">{{ selectedCount }}/4</span>
-          </div>
         </div>
 
         <div class="rules-copy">
           <!-- Keep the rules terse since this panel sits beside active gameplay. -->
           <p>Select four words that belong together, then submit the set.</p>
-          <p>You have 4 chances to find all the connections.</p>
+          <p>You have 4 lives to find all the connections.</p>
         </div>
 
       </section>
@@ -262,6 +293,10 @@
   viewLabel="View Board"
   playAgainLabel="Play Again"
   [shareText]="shareText"
+  [showShareButton]="canShowShareButton"
+  [shareDisabled]="!canUseShareButton"
+  [shareLoading]="shareLoading"
+  [shareCopied]="shareCopied"
   [showFeedback]="showGameFeedback"
   [feedbackChoice]="feedbackChoice"
   [feedbackSubmitting]="feedbackSubmitting"
@@ -269,6 +304,7 @@
   (returnHome)="returnHome()"
   (playAgain)="playAgain()"
   (viewGame)="viewCompletedBoard()"
+  (share)="copyShareLink()"
   (likedGame)="submitGameFeedback(true)"
   (dislikedGame)="submitGameFeedback(false)"
 ></app-game-end-popup>

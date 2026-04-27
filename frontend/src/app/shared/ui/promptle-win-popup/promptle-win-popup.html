@@ -12,7 +12,7 @@
     <div class="win-stats" *ngIf="guessCount > 0 || finishTimeMs !== null">
       <div class="win-stat" *ngIf="guessCount > 0">
         <mat-icon>quiz</mat-icon>
-        <span>{{ guessCount }} guess{{ guessCount === 1 ? '' : 'es' }}</span>
+        <span>Guesses: {{ guessCount }}</span>
       </div>
       <div class="win-stat" *ngIf="finishTimeMs !== null">
         <mat-icon>timer</mat-icon>
@@ -78,11 +78,12 @@
         <button
           matButton="filled"
           class="rect-btn share-btn"
-          (click)="copyShare()"
-          *ngIf="shareUrl"
+          [disabled]="shareDisabled"
+          (click)="onShare()"
+          *ngIf="showShareButton"
         >
-          <mat-icon>{{ copied ? 'check' : 'share' }}</mat-icon>
-          {{ copied ? 'Copied!' : 'Share' }}
+          <mat-icon>{{ shareCopied ? 'check' : 'share' }}</mat-icon>
+          {{ shareLoading ? 'Preparing...' : shareCopied ? 'Copied!' : 'Share' }}
         </button>
       </ng-container>
       <button

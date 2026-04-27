@@ -243,6 +243,10 @@
   gap: 12px;
 }
 
+.daily-game-card--wide {
+  grid-column: 1 / -1;
+}
+
 :host-context(.dark) .daily-game-card {
   background: rgba(15, 23, 42, 0.56);
   border-color: rgba(129, 140, 248, 0.2);
@@ -291,6 +295,84 @@
   gap: 6px;
 }
 
+.daily-topic-regenerate-btn {
+  align-self: flex-start;
+  gap: 6px;
+}
+
+.daily-preview-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(59, 130, 246, 0.16);
+  background: rgba(59, 130, 246, 0.06);
+  padding: 14px;
+}
+
+.daily-preview-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.daily-preview-card__header h4 {
+  margin: 0;
+  font-size: 0.92rem;
+  color: #1e293b;
+}
+
+.daily-preview-card__header p {
+  margin: 4px 0 0;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.daily-preview-table-wrap {
+  overflow: auto;
+  max-height: 360px;
+  border-radius: 10px;
+  border: 1px solid rgba(99, 102, 241, 0.14);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.daily-preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 520px;
+}
+
+.daily-preview-table th,
+.daily-preview-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+  font-size: 0.8rem;
+  vertical-align: top;
+}
+
+.daily-preview-table th {
+  position: sticky;
+  top: 0;
+  background: #eef2ff;
+  color: #312e81;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  z-index: 1;
+}
+
+.daily-preview-table td {
+  color: #334155;
+  line-height: 1.45;
+}
+
+.daily-preview-table tbody tr:nth-child(even) td {
+  background: rgba(99, 102, 241, 0.04);
+}
+
 .daily-topic-list {
   display: flex;
   flex-direction: column;
@@ -310,6 +392,38 @@
   color: #94a3b8;
   border-color: rgba(129, 140, 248, 0.28);
   background: rgba(15, 23, 42, 0.42);
+}
+
+:host-context(.dark) .daily-preview-card {
+  background: rgba(30, 41, 59, 0.5);
+  border-color: rgba(129, 140, 248, 0.2);
+}
+
+:host-context(.dark) .daily-preview-card__header h4 {
+  color: #e2e8f0;
+}
+
+:host-context(.dark) .daily-preview-card__header p {
+  color: #94a3b8;
+}
+
+:host-context(.dark) .daily-preview-table-wrap {
+  background: rgba(15, 23, 42, 0.82);
+  border-color: rgba(129, 140, 248, 0.18);
+}
+
+:host-context(.dark) .daily-preview-table th {
+  background: #312e81;
+  color: #e0e7ff;
+}
+
+:host-context(.dark) .daily-preview-table td {
+  color: #cbd5e1;
+  border-bottom-color: rgba(129, 140, 248, 0.1);
+}
+
+:host-context(.dark) .daily-preview-table tbody tr:nth-child(even) td {
+  background: rgba(99, 102, 241, 0.08);
 }
 
 .daily-topic-item {

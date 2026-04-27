@@ -328,16 +328,18 @@ export function setupSocket(server) {
       if (typeof data === 'string') {
         message = data;
       } else if (data && data.room && data.text) {
-        room = data.room.trim().toLowerCase();
+        room = data.room.trim();
         message = data.text.trim();
       }
       if (!message) return;
+      const senderName = playerNames.get(socket.id) || 'Unknown';
       socketLogger.debug('socket_chat_message', {
         roomId: room,
         socketId: socket.id,
+        senderName,
         message,
       });
-      io.to(room).emit('chat message', message);
+      io.to(room).emit('chat message', { senderName, text: message });
     });
 
     socket.on('leave-room', () => {

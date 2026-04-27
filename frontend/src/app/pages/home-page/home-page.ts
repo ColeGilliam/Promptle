@@ -19,6 +19,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 
 import { NavbarComponent } from '../../shared/components/navbar/navbar';
 import { MiniFooterComponent } from '../../shared/ui/minifooter/minifooter';
@@ -30,6 +31,7 @@ interface TopicValidationResponse {
   allowed?: boolean;
   topic?: string;
   error?: string;
+  code?: string;
 }
 
 @Component({
@@ -47,6 +49,7 @@ interface TopicValidationResponse {
     MatButtonModule,
     MatProgressSpinnerModule,
     MatIconModule,
+    MatCheckboxModule,
     RouterModule,
     NavbarComponent,
     MiniFooterComponent,
@@ -67,6 +70,7 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
   customTopic = '';
   customTopicError = '';
   matchedCustomTopic: TopicInfo | null = null;
+  improvedGeneration = false;
   recommendations: RecommendationItem[] = [];
   isCustomTopicFocused = false;
 
@@ -514,7 +518,6 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private rejectCustomTopic(message?: string) {
-    this.customTopic = '';
     this.matchedCustomTopic = null;
     this.customTopicError = message || 'That topic is not allowed. Please try a different topic.';
   }
@@ -562,11 +565,14 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private startGameFromPayload(payload: { topic?: string; id?: number }) {
+    const useImprovedGeneration = !!payload.topic && this.improvedGeneration;
+
     if (this.isMultiplayer) {
       const roomPayload = {
         ...payload,
         mode: this.multiplayerMode,
         auth0Id: this.myAuth0Id,
+        ...(useImprovedGeneration ? { improvedGeneration: true } : {}),
       };
 
       this.isCreatingRoom = true;
@@ -588,7 +594,12 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    const queryParams = payload.topic ? { topic: payload.topic } : { id: payload.id };
+    const queryParams = payload.topic
+      ? {
+          topic: payload.topic,
+          ...(useImprovedGeneration ? { improved: '1' } : {}),
+        }
+      : { id: payload.id };
     this.newGame();
     this.router.navigate(['/game'], { queryParams });
   }

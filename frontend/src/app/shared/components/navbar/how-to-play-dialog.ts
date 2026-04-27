@@ -26,22 +26,21 @@ const HOW_TO_PLAY_CONTENT: Record<HowToPlayMode, HowToPlayContent> = {
   connections: {
     title: 'How to Play Connections',
     steps: [
-      'Enter a topic to generate a custom board made of four hidden groups of four words.',
+      'Enter a topic to generate a custom board made of 16 words - with 4 groups of 4 words all relating to your topic.',
       'Select exactly four words that you think belong together, then submit the set.',
-      'A correct set locks into place as a solved row. A wrong set costs one of your four mistakes.',
-      'If you are one word away from a correct set, the board tells you.',
-      'Solve all four groups before you run out of mistakes.',
+      'A correct set locks into place as a solved row. A wrong set costs you one of your four lives. If you are one word away, the game notifies you.',
+      'Solve all four groups before you run out of lives to win.',
     ],
   },
   crossword: {
     title: 'How to Play Crossword',
     steps: [
-      'Enter a topic to generate a themed crossword, then click any square or clue to activate a word.',
-      'Type letters directly into the grid. Arrow keys move around the board, and space or enter flips between across and down.',
-      'Use Check Letter, Check Word, or Check Puzzle to verify what you have filled. Checked correct answers turn green and checked wrong clues turn red.',
-      'Use Save if you want to keep one crossword on this device and return to it later.',
-      'Reveal Letter and Reveal Word uncover the active answer. Reveal Puzzle asks for confirmation before filling the whole grid.',
-      'Fill every square correctly to finish the crossword and lock in your solve time.',
+      'Enter a topic to generate a custom crossword based around your topic.',
+      'Click any square or clue to select where you want to type and what clue you want to solve.',
+      'Type one character per square directly into the grid. Arrow keys move around the board, and space or enter flips between across and down.',
+      'You can use Check Character, Check Word, or Check Puzzle to check your selected square, clue, or board',
+      'Reveal Character, Reveal Word, and Reveal Puzzle uncover your selected square, word, or the whole puzzle.',
+      'Fill every square correctly to finish the crossword. If any squares are wrong the game will let you know and continue.',
     ],
   },
 };
