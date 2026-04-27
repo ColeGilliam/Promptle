@@ -31,6 +31,54 @@
         (chatSend)="onSendChat($event)"
       ></app-promptle-game-card>
 
+      <section
+        class="loading-project-placeholder"
+        *ngIf="gameLoading && !gameError"
+        [@cardEnter]
+        aria-label="Loading placeholder"
+      >
+        <div class="loading-project-placeholder__header">
+          <div class="loading-project-placeholder__badge">
+            Placeholder Ad Space
+          </div>
+          <p class="loading-project-placeholder__note">
+            In production sponsored content would be displayed here during game loading; but for now we want to use this time to say thank you and we hope you enjoy Promptle!
+          </p>
+        </div>
+
+        <div class="loading-project-placeholder__body">
+          <div class="loading-project-placeholder__intro">
+            <h1>Promptle</h1>
+            <p class="loading-project-placeholder__eyebrow">Computer Science Senior Project</p>
+            <p>
+              Promptle was developed in 2025/2026 in the Department of Computer Science and Engineering
+              at the University of Nevada, Reno.
+            </p>
+          </div>
+
+          <div class="loading-project-placeholder__details">
+            <div class="loading-project-placeholder__section">
+              <h3>Team Members</h3>
+              <ul>
+                <li>Cole Gilliam</li>
+                <li>Richard Nguyen</li>
+                <li>Jorge Cervacio</li>
+                <li>Cody Shrive</li>
+              </ul>
+            </div>
+
+            <div class="loading-project-placeholder__section">
+              <h3>Thank you to:</h3>
+              <ul>
+                <li>David Feil-Seifer, Vinh Le, Richie White, and Stosh Peterson for your teaching and guidance.</li>
+                <li>Erin Keith for advising the team.</li>
+                <li>Zach Estreito and University of Nevada, Reno for hosting the Promptle website.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <div
         class="dev-answer-preview-card"
         *ngIf="showDevAnswerPreview"
