@@ -12,7 +12,7 @@
     <div class="win-stats" *ngIf="guessCount > 0 || finishTimeMs !== null">
       <div class="win-stat" *ngIf="guessCount > 0">
         <mat-icon>quiz</mat-icon>
-        <span>{{ guessCount }} guess{{ guessCount === 1 ? '' : 'es' }}</span>
+        <span>Guesses: {{ guessCount }}</span>
       </div>
       <div class="win-stat" *ngIf="finishTimeMs !== null">
         <mat-icon>timer</mat-icon>

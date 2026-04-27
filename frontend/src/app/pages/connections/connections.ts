@@ -23,6 +23,7 @@ import { CustomGameSessionService } from '../../services/custom-game-session';
 import { SharedGameService } from '../../services/shared-game';
 import { GameEndPopup, GameEndPopupRecapRow, GameEndPopupStat } from '../../shared/ui/game-end-popup/game-end-popup';
 import { DailyGameCtaComponent } from '../../shared/ui/daily-game-cta/daily-game-cta';
+import { RecommendationItem, RecommendationsService } from '../../services/recommendations';
 
 const CONNECTIONS_GENERATION_ERROR = 'Sorry! The Connections failed to generate. Please try again.';
 
@@ -79,6 +80,8 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
   isDevAccount = false;
   allowAllAIGeneration = false;
   dailyGameSummary: { topic?: string; date?: string; available?: boolean } | null = null;
+  recommendations: RecommendationItem[] = [];
+  isTopicFocused = false;
 
   // Live board state for the current puzzle.
   selectedWordKeys: string[] = [];
@@ -120,7 +123,8 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
     private customGameSessionService: CustomGameSessionService,
     private router: Router,
     private route: ActivatedRoute,
-    private sharedGameService: SharedGameService
+    private sharedGameService: SharedGameService,
+    private recommendationsService: RecommendationsService
   ) {}
 
   ngOnInit(): void {
@@ -130,6 +134,11 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
     this.auth.user$.subscribe((user) => {
       this.isDevAccount = user?.email === 'promptle99@gmail.com';
       this.auth0Id = user?.sub ?? '';
+      if (this.auth0Id) {
+        this.loadRecommendations();
+      } else {
+        this.recommendations = [];
+      }
     });
 
     this.route.queryParamMap.subscribe((params) => {
@@ -149,6 +158,14 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
   get canUseAI(): boolean {
     // Dev account always has access; everyone else depends on the global setting.
     return this.isDevAccount || this.allowAllAIGeneration;
+  }
+
+  get topicIdeas(): RecommendationItem[] {
+    return this.recommendations.filter((item) => item.type === 'custom').slice(0, 3);
+  }
+
+  get showTopicIdeas(): boolean {
+    return this.canUseAI && !!this.auth0Id && this.isTopicFocused && this.topicIdeas.length > 0 && !this.loading;
   }
 
   get hasGame(): boolean {
@@ -208,7 +225,7 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
     return [
       { icon: 'connections_groups', label: `${this.solvedCount}/4 groups solved` },
       { icon: 'timer', label: this.formatTime(this.elapsedSeconds) },
-      { icon: 'favorite', label: `${this.mistakesLeft}/${this.maxMistakes} mistakes left` },
+      { icon: 'favorite', label: `${this.mistakesLeft}/${this.maxMistakes} lives left` },
     ];
   }
 
@@ -307,6 +324,21 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
         },
       });
     });
+  }
+
+  onTopicFocus(): void {
+    this.isTopicFocused = true;
+  }
+
+  onTopicBlur(): void {
+    window.setTimeout(() => {
+      this.isTopicFocused = false;
+    }, 120);
+  }
+
+  startRecommendedTopic(item: RecommendationItem): void {
+    this.topic = item.topic;
+    this.generateGame();
   }
 
   playDailyGame(): void {
@@ -439,6 +471,23 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
       error: () => {
         this.allowAllAIGeneration = false;
         this.dailyGameSummary = null;
+      },
+    });
+  }
+
+  private loadRecommendations(): void {
+    const auth0Id = this.auth0Id.trim();
+    if (!auth0Id) {
+      this.recommendations = [];
+      return;
+    }
+
+    this.recommendationsService.getRecommendations(auth0Id).subscribe({
+      next: ({ items }) => {
+        this.recommendations = items ?? [];
+      },
+      error: () => {
+        this.recommendations = [];
       },
     });
   }

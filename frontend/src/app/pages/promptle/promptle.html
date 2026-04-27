@@ -320,10 +320,6 @@
             <span *ngIf="savedTimestamp" class="saved-status-inline">Saved: {{ savedTimestamp }}</span>
           </ng-container>
         </div>
-        <div class="save-slot-notice" *ngIf="!isMultiplayer && answers.length">
-          <mat-icon class="save-slot-notice-icon">info</mat-icon>
-          <span>Only one game can be saved at a time{{ hasSavedGame ? ' — saving will replace your current save' : '' }}.</span>
-        </div>
       </div>
 
       <div class="powerup-hint-toast singleplayer-hint-toast" *ngIf="!isMultiplayer && singlePlayerHint">
@@ -460,7 +456,10 @@
           <div class="game-grid-inner">
             <div class="game-grid-meta">
               <p class="game-grid-subtitle" *ngIf="submittedGuesses.length === 0">Submit a guess to start.</p>
-              <p class="game-grid-subtitle" *ngIf="submittedGuesses.length > 0">{{ submittedGuesses.length }} guess{{ submittedGuesses.length === 1 ? '' : 'es' }} submitted.</p>
+              <div class="game-grid-summary" *ngIf="submittedGuesses.length > 0">
+                <span class="game-grid-summary-label">Guesses</span>
+                <span class="game-grid-summary-value">{{ submittedGuesses.length }}</span>
+              </div>
               <div class="grid-color-legend">
                 <span class="gcl-item"><span class="gcl-dot gcl-gray"></span>None</span>
                 <span class="gcl-item"><span class="gcl-dot gcl-yellow"></span>Close</span>
