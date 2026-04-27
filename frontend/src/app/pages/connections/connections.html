@@ -64,6 +64,17 @@
             >
           </mat-form-field>
 
+          <mat-checkbox
+            class="improved-generation-checkbox"
+            [(ngModel)]="improvedGeneration"
+          >
+            Improved generation
+          </mat-checkbox>
+
+          <p class="improved-generation-note" *ngIf="improvedGeneration">
+            Warning: Improved generation will take longer to load.
+          </p>
+
           <div class="control-actions">
             <!-- Button shares Promptle styling but kicks off a Connections-specific generation flow. -->
             <button

@@ -25,11 +25,12 @@ export interface ConnectionsGameData {
 export class ConnectionsGameService {
   constructor(private http: HttpClient) {}
 
-  generateGame(topic: string, auth0Id = ''): Observable<ConnectionsGameData> {
+  generateGame(topic: string, auth0Id = '', improvedGeneration = false): Observable<ConnectionsGameData> {
     // Thin wrapper so the component only deals with typed puzzle data, not raw HTTP details.
     return this.http.post<ConnectionsGameData>('/api/connections', {
       topic,
       auth0Id,
+      ...(improvedGeneration ? { improvedGeneration: true } : {}),
     });
   }
 

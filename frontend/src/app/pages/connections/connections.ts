@@ -3,6 +3,7 @@ import { HttpClient, HttpClientModule, HttpErrorResponse } from '@angular/common
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -47,6 +48,7 @@ interface ConnectionsGroupState extends ConnectionsGroup {
     FormsModule,
     HttpClientModule,
     MatButtonModule,
+    MatCheckboxModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
@@ -63,6 +65,7 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
 
   // Topic form + request lifecycle state.
   topic = '';
+  improvedGeneration = false;
   activeTopic = '';
   loading = false;
   error = '';
@@ -283,7 +286,11 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
 
     this.auth.user$.pipe(take(1)).subscribe((user) => {
       // Pull the current auth id once so the backend can apply the same dev-account access rules.
-      this.connectionsGameService.generateGame(normalizedTopic, user?.sub || '').subscribe({
+      this.connectionsGameService.generateGame(
+        normalizedTopic,
+        user?.sub || '',
+        this.improvedGeneration
+      ).subscribe({
         next: (game) => {
           this.applyGame(game);
           this.loading = false;
