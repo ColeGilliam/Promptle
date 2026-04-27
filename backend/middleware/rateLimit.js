@@ -1,6 +1,8 @@
 const DEFAULT_AI_GENERATION_WINDOW_MS = 60 * 1000;
 const DEFAULT_AI_GENERATION_MAX_REQUESTS = 6;
 const DEFAULT_MAX_TRACKED_KEYS = 10000;
+const DEFAULT_LIMIT_ERROR_MESSAGE = 'Too many generation requests. Please wait a moment and try again.';
+const DEFAULT_LIMIT_ERROR_CODE = 'too_many_generation_requests';
 
 function getRequestIp(req) {
   return req.ip || 'unknown';
@@ -23,6 +25,8 @@ export function createBurstRateLimiter({
   maxTrackedKeys = DEFAULT_MAX_TRACKED_KEYS,
   keyGenerator = getRequestIp,
   shouldLimit = () => true,
+  errorMessage = DEFAULT_LIMIT_ERROR_MESSAGE,
+  errorCode = DEFAULT_LIMIT_ERROR_CODE,
   now = () => Date.now(),
   store = new Map(),
 } = {}) {
@@ -47,8 +51,8 @@ export function createBurstRateLimiter({
       res.set('RateLimit-Reset', String(Math.ceil(resetMs / 1000)));
 
       return res.status(429).json({
-        error: 'Too many generation requests. Please wait a moment and try again.',
-        code: 'too_many_generation_requests',
+        error: errorMessage,
+        code: errorCode,
       });
     }
 
@@ -75,12 +79,35 @@ const aiGenerationRateLimitStore = new Map();
 
 export const aiGenerationBurstLimiter = createBurstRateLimiter({
   store: aiGenerationRateLimitStore,
+  errorMessage: 'Too many generation requests. Please wait a moment and try again.',
+  errorCode: 'too_many_generation_requests',
 });
 
 export const topicAiGenerationBurstLimiter = createBurstRateLimiter({
   store: aiGenerationRateLimitStore,
+  errorMessage: 'Too many generation requests. Please wait a moment and try again.',
+  errorCode: 'too_many_generation_requests',
   shouldLimit: (req) => {
     const topic = req.body?.topic;
     return typeof topic === 'string' && Boolean(topic.trim());
   },
+});
+
+const sharedGameRateLimitStore = new Map();
+
+export const sharedGameCreationBurstLimiter = createBurstRateLimiter({
+  store: sharedGameRateLimitStore,
+  windowMs: 60 * 1000,
+  maxRequests: 2,
+  keyGenerator: (req) => {
+    const auth0Id = typeof req.body?.auth0Id === 'string' ? req.body.auth0Id.trim() : '';
+    return auth0Id || getRequestIp(req);
+  },
+  shouldLimit: (req) => {
+    const gameType = req.body?.gameType;
+    const payload = req.body?.payload;
+    return typeof gameType === 'string' && Boolean(gameType.trim()) && !!payload;
+  },
+  errorMessage: 'Too many share links created. Please wait before creating another one.',
+  errorCode: 'too_many_share_links',
 });

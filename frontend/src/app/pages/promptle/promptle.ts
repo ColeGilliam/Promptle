@@ -14,7 +14,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { NavbarComponent } from '../../shared/components/navbar/navbar';
 import { AuthenticationService } from '../../services/authentication.service';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -166,7 +166,9 @@ export class PromptleComponent implements OnInit, OnDestroy {
   shareExpiresAt: string | null = null;
   shareLoading = false;
   shareCopied = false;
+  shareRateLimitedUntil = 0;
   private sharePayload: GameData | null = null;
+  private shareRateLimitTimeout: ReturnType<typeof window.setTimeout> | null = null;
   feedbackChoice: boolean | null = null;
   feedbackSubmitting = false;
   feedbackError = '';
@@ -241,9 +243,10 @@ export class PromptleComponent implements OnInit, OnDestroy {
 
   get canUseShareButton(): boolean {
     if (this.isMultiplayer || this.shareLoading) return false;
+    if (this.shareUrl) return true;
+    if (this.isShareRateLimited()) return false;
     if (!this.answers.length) return false;
-    if (!this.myAuth0Id) return true;
-    if (this.canSharePopularTopic()) return true;
+    if (!this.myAuth0Id) return false;
     return !!this.sharePayload;
   }
 
@@ -252,17 +255,22 @@ export class PromptleComponent implements OnInit, OnDestroy {
   }
 
   copyShareLink(): void {
-    if (!this.myAuth0Id && !this.canSharePopularTopic()) {
+    if (!this.myAuth0Id) {
       this.gameError = 'Sign in to share this game.';
       return;
     }
-
-    if (!this.canUseShareButton) return;
 
     if (this.shareUrl) {
       this.copyShareUrl();
       return;
     }
+
+    if (this.isShareRateLimited()) {
+      this.notifyShareRateLimit();
+      return;
+    }
+
+    if (!this.canUseShareButton) return;
 
     this.createShareLinkAndCopy();
   }
@@ -411,7 +419,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
       const topicId      = topicIdParam ? Number(topicIdParam) : NaN;
       const room         = params.get('room')?.trim();
       const sharedGameCode = params.get('share')?.trim();
-      const answerSeed = this.decodeShareAnswer(params.get('seed')?.trim()) || params.get('answer') || undefined;
 
       if (room && room.length > 0) {
         this.currentRoom  = room;
@@ -513,7 +520,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
         this.currentDailyGame = null;
         this.resetCustomGameFeedback();
         this.resetCustomGameSession();
-        this.loadGame({ topicId, fixedAnswer: answerSeed }); return;
+        this.loadGame({ topicId }); return;
       }
 
       this.currentSinglePlayerSource = '';
@@ -1070,7 +1077,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
     }
   }
 
-  private loadGame(params: { topic?: string; topicId?: number; room?: string; fixedAnswer?: string; auth0Id?: string; dailyMode?: 'promptle' | 'connections' | 'crossword' }) {
+  private loadGame(params: { topic?: string; topicId?: number; room?: string; auth0Id?: string; dailyMode?: 'promptle' | 'connections' | 'crossword' }) {
     this.gameLoading = true;
     this.gameError   = '';
     this.gameDataReady = false;
@@ -1474,6 +1481,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
   }
 
   private resetShareState() {
+    this.clearShareRateLimitCooldown();
     this.shareUrl = '';
     this.shareExpiresAt = null;
     this.shareLoading = false;
@@ -1482,14 +1490,6 @@ export class PromptleComponent implements OnInit, OnDestroy {
   }
 
   private createShareLink() {
-    if (this.canSharePopularTopic()) {
-      this.shareUrl = `${window.location.origin}/game?id=${encodeURIComponent(this.shareIdParam)}&seed=${encodeURIComponent(this.encodeShareAnswer(this.correctAnswer.name))}`;
-      this.shareExpiresAt = null;
-      this.shareLoading = false;
-      this.shareCopied = false;
-      return;
-    }
-
     if (this.isMultiplayer || !this.sharePayload || !this.myAuth0Id) {
       this.shareUrl = '';
       this.shareExpiresAt = null;
@@ -1506,21 +1506,16 @@ export class PromptleComponent implements OnInit, OnDestroy {
         this.shareExpiresAt = response.expiresAt;
         this.shareLoading = false;
       },
-      error: () => {
+      error: (error: HttpErrorResponse) => {
         this.shareUrl = '';
         this.shareExpiresAt = null;
         this.shareLoading = false;
+        if (this.handleShareRateLimit(error)) return;
       },
     });
   }
 
   private createShareLinkAndCopy() {
-    if (this.canSharePopularTopic()) {
-      this.createShareLink();
-      if (this.shareUrl) this.copyShareUrl();
-      return;
-    }
-
     if (this.isMultiplayer || !this.sharePayload || !this.myAuth0Id) return;
 
     this.shareLoading = true;
@@ -1532,41 +1527,54 @@ export class PromptleComponent implements OnInit, OnDestroy {
         this.shareLoading = false;
         this.copyShareUrl();
       },
-      error: () => {
+      error: (error: HttpErrorResponse) => {
         this.shareUrl = '';
         this.shareExpiresAt = null;
         this.shareLoading = false;
+        if (this.handleShareRateLimit(error)) return;
       },
     });
   }
 
-  private canSharePopularTopic(): boolean {
-    return this.currentSinglePlayerSource === 'popular'
-      && !!this.shareIdParam
-      && !!this.correctAnswer?.name;
+  private handleShareRateLimit(error: HttpErrorResponse): boolean {
+    if (error.status !== 429) return false;
+
+    const retryAfterSeconds = Number.parseInt(error.headers?.get('Retry-After') || '', 10);
+    const cooldownMs = Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0
+      ? retryAfterSeconds * 1000
+      : 60_000;
+    this.setShareRateLimitCooldown(cooldownMs);
+    this.notifyShareRateLimit();
+    return true;
   }
 
-  private encodeShareAnswer(answer: string): string {
-    try {
-      return btoa(answer)
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/g, '');
-    } catch {
-      return '';
-    }
+  private notifyShareRateLimit(): void {
+    this.gameError = `Please wait ${this.getShareRateLimitSecondsRemaining()}s before sharing again.`;
   }
 
-  private decodeShareAnswer(value: string | null | undefined): string | undefined {
-    if (!value) return undefined;
+  private isShareRateLimited(): boolean {
+    return this.shareRateLimitedUntil > Date.now();
+  }
 
-    try {
-      const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
-      const padded = normalized + '='.repeat((4 - normalized.length % 4) % 4);
-      return atob(padded) || undefined;
-    } catch {
-      return undefined;
+  private getShareRateLimitSecondsRemaining(): number {
+    return Math.max(1, Math.ceil((this.shareRateLimitedUntil - Date.now()) / 1000));
+  }
+
+  private setShareRateLimitCooldown(durationMs: number): void {
+    this.clearShareRateLimitCooldown();
+    this.shareRateLimitedUntil = Date.now() + durationMs;
+    this.shareRateLimitTimeout = window.setTimeout(() => {
+      this.shareRateLimitedUntil = 0;
+      this.shareRateLimitTimeout = null;
+    }, durationMs);
+  }
+
+  private clearShareRateLimitCooldown(): void {
+    if (this.shareRateLimitTimeout) {
+      clearTimeout(this.shareRateLimitTimeout);
+      this.shareRateLimitTimeout = null;
     }
+    this.shareRateLimitedUntil = 0;
   }
 
   private shouldTrackCustomSession(): boolean {
@@ -1839,6 +1847,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
     if (this.blackoutInterval) clearInterval(this.blackoutInterval);
     if (this.freezeInterval) clearInterval(this.freezeInterval);
     if (this.powerupHintTimeout) clearTimeout(this.powerupHintTimeout);
+    this.clearShareRateLimitCooldown();
     this.multiplayerService.leaveRoom();
   }
 }

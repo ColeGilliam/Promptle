@@ -509,6 +509,10 @@
   [guessCount]="submittedGuesses.length"
   [guessColors]="guessColors"
   [shareUrl]="shareUrl"
+  [showShareButton]="canShowShareButton"
+  [shareDisabled]="!canUseShareButton"
+  [shareLoading]="shareLoading"
+  [shareCopied]="shareCopied"
   [showFeedback]="showCustomGameFeedback"
   [feedbackChoice]="feedbackChoice"
   [feedbackSubmitting]="feedbackSubmitting"
@@ -518,6 +522,7 @@
   (playAgain)="restartGame()"
   (spectate)="startSpectating()"
   (viewGame)="viewCompletedGame()"
+  (share)="copyShareLink()"
   (likedGame)="submitCustomGameFeedback(true)"
   (dislikedGame)="submitCustomGameFeedback(false)"
 ></app-promptle-win-popup>
