@@ -28,6 +28,7 @@ import { CustomGameSessionService } from '../../services/custom-game-session';
 import { SharedGameService } from '../../services/shared-game';
 import { GameEndPopup, GameEndPopupStat } from '../../shared/ui/game-end-popup/game-end-popup';
 import { DailyGameCtaComponent } from '../../shared/ui/daily-game-cta/daily-game-cta';
+import { RecommendationItem, RecommendationsService } from '../../services/recommendations';
 
 type FeedbackTone = 'neutral' | 'success' | 'danger';
 const CROSSWORD_GENERATION_ERROR = 'Sorry! The crossword failed to generate. Please try again.';
@@ -96,6 +97,8 @@ export class CrosswordComponent implements OnInit, OnDestroy {
   isDevAccount = false;
   allowAllAIGeneration = false;
   dailyGameSummary: { topic?: string; date?: string; available?: boolean } | null = null;
+  recommendations: RecommendationItem[] = [];
+  isTopicFocused = false;
 
   activePuzzle: CrosswordPuzzle | null = null;
   activeGame: CrosswordGameData | null = null;
@@ -154,7 +157,8 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     private customGameSessionService: CustomGameSessionService,
     private router: Router,
     private route: ActivatedRoute,
-    private sharedGameService: SharedGameService
+    private sharedGameService: SharedGameService,
+    private recommendationsService: RecommendationsService
   ) {}
 
   ngOnInit(): void {
@@ -163,6 +167,11 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     this.auth.user$.subscribe((user) => {
       this.isDevAccount = user?.email === 'promptle99@gmail.com';
       this.auth0Id = user?.sub ?? '';
+      if (this.auth0Id) {
+        this.loadRecommendations();
+      } else {
+        this.recommendations = [];
+      }
     });
 
     this.refreshSavedGameMetadata();
@@ -183,6 +192,14 @@ export class CrosswordComponent implements OnInit, OnDestroy {
 
   get canUseAI(): boolean {
     return this.isDevAccount || this.allowAllAIGeneration;
+  }
+
+  get topicIdeas(): RecommendationItem[] {
+    return this.recommendations.filter((item) => item.type === 'custom').slice(0, 3);
+  }
+
+  get showTopicIdeas(): boolean {
+    return this.canUseAI && !!this.auth0Id && this.isTopicFocused && this.topicIdeas.length > 0 && !this.loading;
   }
 
   get hasPuzzle(): boolean {
@@ -284,10 +301,10 @@ export class CrosswordComponent implements OnInit, OnDestroy {
   get endPopupStats(): GameEndPopupStat[] {
     return [
       { icon: 'timer', label: this.formatTime(this.elapsedSeconds) },
-      { icon: 'check_circle', label: `${this.letterCheckCount} letter checks` },
+      { icon: 'check_circle', label: `${this.letterCheckCount} character checks` },
       { icon: 'spellcheck', label: `${this.wordCheckCount} word checks` },
       { icon: 'rule', label: `${this.puzzleCheckCount} puzzle checks` },
-      { icon: 'visibility', label: `${this.letterRevealCount} letter reveals` },
+      { icon: 'visibility', label: `${this.letterRevealCount} character reveals` },
       { icon: 'preview', label: `${this.wordRevealCount} word reveals` },
       { icon: 'visibility_off', label: `${this.puzzleRevealCount} puzzle reveals` },
     ];
@@ -302,8 +319,8 @@ export class CrosswordComponent implements OnInit, OnDestroy {
       `Crossword: ${topicName}`,
       `${status} · ${this.formatTime(this.elapsedSeconds)}`,
       `${this.totalClueCount} clues`,
-      `${this.letterCheckCount} letter checks · ${this.wordCheckCount} word checks · ${this.puzzleCheckCount} puzzle checks`,
-      `${this.letterRevealCount} letter reveals · ${this.wordRevealCount} word reveals · ${this.puzzleRevealCount} puzzle reveals`,
+      `${this.letterCheckCount} character checks · ${this.wordCheckCount} word checks · ${this.puzzleCheckCount} puzzle checks`,
+      `${this.letterRevealCount} character reveals · ${this.wordRevealCount} word reveals · ${this.puzzleRevealCount} puzzle reveals`,
     ];
     lines.push('', 'Play this same puzzle:', this.shareUrl);
     return lines.join('\n');
@@ -361,6 +378,21 @@ export class CrosswordComponent implements OnInit, OnDestroy {
         },
       });
     });
+  }
+
+  onTopicFocus(): void {
+    this.isTopicFocused = true;
+  }
+
+  onTopicBlur(): void {
+    window.setTimeout(() => {
+      this.isTopicFocused = false;
+    }, 120);
+  }
+
+  startRecommendedTopic(item: RecommendationItem): void {
+    this.topic = item.topic;
+    this.generateGame();
   }
 
   playDailyGame(): void {
@@ -563,7 +595,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
   resetPuzzle(): void {
     if (!this.activePuzzle || !this.activeGame) return;
 
-    const confirmed = window.confirm(`Reset "${this.activePuzzle.topic}"? All entered cells will be cleared.`);
+    const confirmed = window.confirm(`Reset "${this.activePuzzle.topic}"? All entered characters will be cleared.`);
     if (!confirmed) return;
 
     this.activateGame(this.activeGame, undefined, { trackSession: false });
@@ -624,7 +656,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
 
     const guess = this.guesses[cell.row]?.[cell.col];
     if (!guess) {
-      this.feedback = 'Fill the active cell before checking it.';
+      this.feedback = 'Fill the active character before checking it.';
       this.feedbackTone = 'neutral';
       return;
     }
@@ -637,12 +669,12 @@ export class CrosswordComponent implements OnInit, OnDestroy {
 
     if (guess === cell.solution) {
       this.checkedCorrectCellKeys.add(key);
-      this.feedback = 'That letter is correct.';
+      this.feedback = 'That character is correct.';
       this.feedbackTone = 'success';
       this.maybeCompletePuzzle();
     } else {
       this.wrongCellKeys.add(key);
-      this.feedback = 'That letter is incorrect.';
+      this.feedback = 'That character is incorrect.';
       this.feedbackTone = 'danger';
     }
 
@@ -657,7 +689,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
 
     const missingCell = clue.cells.find((cell) => !this.guesses[cell.row]?.[cell.col]);
     if (missingCell) {
-      this.feedback = 'Fill every cell in the active word before checking it.';
+      this.feedback = 'Fill the whole word before checking it.';
       this.feedbackTone = 'neutral';
       this.setActiveCell(missingCell.row, missingCell.col, true);
       return;
@@ -675,8 +707,8 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     } else {
       this.feedback =
         summary.wrongCells.length === 1
-          ? '1 cell needs a second look.'
-          : `${summary.wrongCells.length} cells need a second look.`;
+          ? '1 character needs a second look.'
+          : `${summary.wrongCells.length} characters need a second look.`;
       this.feedbackTone = 'danger';
       this.setActiveCell(summary.wrongCells[0].row, summary.wrongCells[0].col, true);
     }
@@ -716,14 +748,14 @@ export class CrosswordComponent implements OnInit, OnDestroy {
       if (this.filledCellCount === this.totalFillableCells) {
         this.maybeCompletePuzzle();
       } else {
-        this.feedback = `No issues so far. ${this.filledCellCount}/${this.totalFillableCells} cells filled.`;
+        this.feedback = `No issues so far. ${this.filledCellCount}/${this.totalFillableCells} characters filled.`;
         this.feedbackTone = 'success';
       }
     } else {
       const [firstWrongKey] = wrongCellKeys;
       const [row, col] = firstWrongKey.split(':').map((value) => Number(value));
       this.feedback =
-        wrongCellKeys.size === 1 ? '1 cell is off right now.' : `${wrongCellKeys.size} cells need attention.`;
+        wrongCellKeys.size === 1 ? '1 character is off right now.' : `${wrongCellKeys.size} characters need attention.`;
       this.feedbackTone = 'danger';
       this.setActiveCell(row, col, true);
     }
@@ -740,7 +772,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     this.letterRevealCount += 1;
     this.setGuess(cell.row, cell.col, cell.solution);
     this.checkedCorrectCellKeys.add(this.getCellKey(cell.row, cell.col));
-    this.feedback = 'Letter revealed.';
+    this.feedback = 'Character revealed.';
     this.feedbackTone = 'success';
     this.markDirty();
     this.maybeCompletePuzzle();
@@ -817,34 +849,30 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     if (!this.activePuzzle || this.completed) return;
 
     const input = event.target as HTMLInputElement;
-    const letters = input.value.toUpperCase().replace(NON_ALPHANUMERIC_CELL_VALUE, '');
+    const character = sanitizeCrosswordCellValue(input.value);
+    input.value = character;
 
-    if (!letters) {
-      this.markSessionInteracted();
+    this.markSessionInteracted();
+
+    if (!character) {
       this.setGuess(row, col, '');
       return;
     }
 
     const clue = this.resolveClueAtCell(row, col, this.activeDirection);
+    this.setGuess(row, col, character);
+    this.maybeCompletePuzzle();
     if (!clue) return;
 
     const startIndex = clue.cells.findIndex((cell) => cell.row === row && cell.col === col);
     if (startIndex < 0) return;
 
-    const clueLetters = letters.split('');
-    let lastWrittenIndex = startIndex;
-    this.markSessionInteracted();
+    const nextCell = clue.cells[Math.min(startIndex + 1, clue.cells.length - 1)];
+    if (nextCell.row === row && nextCell.col === col) {
+      this.focusCell(row, col, true);
+      return;
+    }
 
-    clueLetters.forEach((letter, offset) => {
-      const targetCell = clue.cells[startIndex + offset];
-      if (!targetCell) return;
-      this.setGuess(targetCell.row, targetCell.col, letter);
-      lastWrittenIndex = startIndex + offset;
-    });
-
-    this.maybeCompletePuzzle();
-
-    const nextCell = clue.cells[Math.min(lastWrittenIndex + 1, clue.cells.length - 1)];
     this.setActiveCell(nextCell.row, nextCell.col, true);
   }
 
@@ -954,6 +982,23 @@ export class CrosswordComponent implements OnInit, OnDestroy {
       error: () => {
         this.allowAllAIGeneration = false;
         this.dailyGameSummary = null;
+      },
+    });
+  }
+
+  private loadRecommendations(): void {
+    const auth0Id = this.auth0Id.trim();
+    if (!auth0Id) {
+      this.recommendations = [];
+      return;
+    }
+
+    this.recommendationsService.getRecommendations(auth0Id).subscribe({
+      next: ({ items }) => {
+        this.recommendations = items ?? [];
+      },
+      error: () => {
+        this.recommendations = [];
       },
     });
   }

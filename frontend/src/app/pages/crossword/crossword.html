@@ -20,36 +20,51 @@
       <div class="hero-copy">
         <h1>Build a custom crossword for any topic</h1>
         <p>
-          Enter a topic like cartoon characters, space, etc. The app then generates a custom crossword puzzle
+          Enter any topic you like. Promptle will generate you a custom crossword puzzle
           based on your topic.
         </p>
+
+        <app-daily-game-cta
+          class="hero-daily-cta"
+          gameLabel="Crossword"
+          [topic]="dailyGameSummary?.topic || ''"
+          [available]="!!dailyGameSummary?.available"
+          [loading]="loading"
+          (activated)="playDailyGame()"
+        ></app-daily-game-cta>
       </div>
 
-      <div class="hero-stats" *ngIf="activePuzzle">
-        <div class="hero-stat">
-          <span class="hero-stat-label">Filled</span>
-          <strong>{{ filledCellCount }}/{{ totalFillableCells }}</strong>
+      <div class="hero-side">
+        <div class="hero-crossword-art" aria-hidden="true">
+          <img class="hero-crossword-image" src="crossword-transparent.png" alt="">
         </div>
 
-        <div class="hero-stat">
-          <span class="hero-stat-label">Solved clues</span>
-          <strong>{{ solvedClueCount }}/{{ totalClueCount }}</strong>
-        </div>
+        <div class="hero-stats" *ngIf="activePuzzle">
+          <div class="hero-stat">
+            <span class="hero-stat-label">Characters</span>
+            <strong>{{ filledCellCount }}/{{ totalFillableCells }}</strong>
+          </div>
 
-        <div class="hero-stat">
-          <span class="hero-stat-label">Time</span>
-          <strong>{{ formatTime(elapsedSeconds) }}</strong>
-        </div>
+          <div class="hero-stat">
+            <span class="hero-stat-label">Solved clues</span>
+            <strong>{{ solvedClueCount }}/{{ totalClueCount }}</strong>
+          </div>
 
-        <button
-          matButton="outlined"
-          class="rect-btn secondary-btn hero-new-topic-btn"
-          type="button"
-          (click)="requestNewTopic()"
-        >
-          <mat-icon>edit</mat-icon>
-          New Topic
-        </button>
+          <div class="hero-stat">
+            <span class="hero-stat-label">Time</span>
+            <strong>{{ formatTime(elapsedSeconds) }}</strong>
+          </div>
+
+          <button
+            matButton="outlined"
+            class="rect-btn secondary-btn hero-new-topic-btn"
+            type="button"
+            (click)="requestNewTopic()"
+          >
+            <mat-icon>edit</mat-icon>
+            New Topic
+          </button>
+        </div>
       </div>
     </section>
 
@@ -57,18 +72,9 @@
       <section class="panel-card panel-card--controls">
         <div class="panel-header">
           <div>
-            <span class="eyebrow">Generate</span>
             <h2>Topic Prompt</h2>
           </div>
         </div>
-
-        <app-daily-game-cta
-          gameLabel="Crossword"
-          [topic]="dailyGameSummary?.topic || ''"
-          [available]="!!dailyGameSummary?.available"
-          [loading]="loading"
-          (activated)="playDailyGame()"
-        ></app-daily-game-cta>
 
         <ng-container *ngIf="canUseAI">
           <app-load-saved-game-card
@@ -84,11 +90,27 @@
             <mat-label>Enter a topic</mat-label>
             <input
               matInput
-              placeholder="Cartoon characters, space..."
+              placeholder="Type any topic"
               [(ngModel)]="topic"
+              (focus)="onTopicFocus()"
+              (blur)="onTopicBlur()"
               (keydown.enter)="generateGame()"
             >
           </mat-form-field>
+
+          <div class="custom-topic-ideas" *ngIf="showTopicIdeas">
+            <p class="custom-topic-ideas-label">Need ideas?</p>
+            <div class="custom-topic-ideas-list">
+              <button
+                *ngFor="let item of topicIdeas"
+                matButton="outlined"
+                class="custom-topic-idea-chip"
+                (mousedown)="startRecommendedTopic(item)"
+              >
+                {{ item.topic }}
+              </button>
+            </div>
+          </div>
 
           <div class="control-actions">
             <button
@@ -188,7 +210,7 @@
                 [disabled]="completed || !activeCell"
               >
                 <mat-icon>check_circle</mat-icon>
-                Check Letter
+                Check Character
               </button>
 
               <button
@@ -222,7 +244,7 @@
                 [disabled]="completed || !activeCell"
               >
                 <mat-icon>visibility</mat-icon>
-                Reveal Letter
+                Reveal Character
               </button>
 
               <button
@@ -309,6 +331,7 @@
                       class="cell-input"
                       type="text"
                       [value]="guesses[rowIndex][colIndex]"
+                      maxlength="1"
                       [attr.aria-label]="getCellAriaLabel(rowIndex, colIndex)"
                       [attr.data-crossword-cell]="rowIndex + '-' + colIndex"
                       autocomplete="off"

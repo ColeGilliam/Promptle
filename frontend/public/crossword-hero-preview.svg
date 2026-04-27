@@ -1,0 +1,61 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="border" x1="72" y1="92" x2="426" y2="426" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#47E7F5"/>
+      <stop offset="0.5" stop-color="#2F80FF"/>
+      <stop offset="1" stop-color="#D946EF"/>
+    </linearGradient>
+    <linearGradient id="fill" x1="104" y1="112" x2="404" y2="404" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0EA5E9" stop-opacity="0.32"/>
+      <stop offset="0.5" stop-color="#1D4ED8" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#A21CAF" stop-opacity="0.34"/>
+    </linearGradient>
+    <linearGradient id="grid" x1="152" y1="140" x2="372" y2="364" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6EE7F9"/>
+      <stop offset="0.5" stop-color="#60A5FA"/>
+      <stop offset="1" stop-color="#F472F8"/>
+    </linearGradient>
+    <filter id="glow" x="32" y="32" width="448" height="448" filterUnits="userSpaceOnUse">
+      <feGaussianBlur stdDeviation="34" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#glow)" opacity="0.8">
+    <rect x="108" y="84" width="296" height="344" rx="44" fill="url(#border)"/>
+  </g>
+
+  <rect x="96" y="72" width="320" height="368" rx="48" fill="url(#fill)" stroke="url(#border)" stroke-width="6"/>
+  <rect x="108" y="84" width="296" height="344" rx="38" stroke="url(#border)" stroke-width="3" opacity="0.9"/>
+
+  <g stroke="url(#grid)" stroke-width="4">
+    <rect x="244" y="126" width="40" height="56" rx="4"/>
+
+    <rect x="148" y="182" width="58" height="50" rx="4"/>
+    <rect x="208" y="182" width="58" height="50" rx="4"/>
+    <rect x="268" y="182" width="58" height="50" rx="4"/>
+    <rect x="328" y="182" width="58" height="50" rx="4"/>
+
+    <rect x="182" y="182" width="58" height="50" rx="4" opacity="0"/>
+    <rect x="388" y="182" width="58" height="50" rx="4" opacity="0"/>
+
+    <rect x="184" y="182" width="224" height="50" rx="6"/>
+
+    <rect x="184" y="232" width="50" height="50" rx="4"/>
+    <rect x="244" y="232" width="40" height="50" rx="4"/>
+
+    <rect x="184" y="282" width="50" height="50" rx="4"/>
+    <rect x="244" y="282" width="40" height="50" rx="4"/>
+
+    <rect x="244" y="182" width="40" height="198" rx="4"/>
+
+    <rect x="244" y="332" width="40" height="50" rx="4"/>
+    <rect x="244" y="382" width="40" height="50" rx="4"/>
+
+    <rect x="284" y="332" width="56" height="50" rx="4"/>
+    <rect x="340" y="332" width="56" height="50" rx="4"/>
+    <rect x="396" y="332" width="56" height="50" rx="4"/>
+
+    <rect x="244" y="132" width="40" height="50" rx="4" opacity="0"/>
+  </g>
+</svg>
