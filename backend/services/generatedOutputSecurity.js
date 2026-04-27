@@ -128,13 +128,21 @@ export function validatePromptleRawOutput(rawPayload, {
   const columns = Array.isArray(rawPayload.columns) ? rawPayload.columns : [];
   const headers = Array.isArray(rawPayload.headers) ? rawPayload.headers : [];
   const answers = Array.isArray(rawPayload.answers) ? rawPayload.answers : [];
+  const viable = typeof rawPayload.viable === 'boolean' ? rawPayload.viable : null;
 
   assertSafeText(rawPayload.topic, {
     context: 'promptle.topic',
     maxLength: OUTPUT_LIMITS.topic,
   });
+  if (viable === null) {
+    fail('invalid_viable_flag', 'promptle.viable');
+  }
+  assertSafeText(rawPayload.reason, {
+    context: 'promptle.reason',
+    maxLength: OUTPUT_LIMITS.promptleReason,
+  });
 
-  if (!columns.length && !headers.length) {
+  if (viable && !columns.length && !headers.length) {
     fail('missing_columns', 'promptle');
   }
   if (columns.length > maxColumns || headers.length > maxColumns) {

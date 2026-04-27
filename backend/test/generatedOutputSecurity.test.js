@@ -13,6 +13,8 @@ test('validatePromptleRawOutput rejects oversized answer arrays', () => {
   assert.throws(
     () => validatePromptleRawOutput({
       topic: 'Comics',
+      viable: true,
+      reason: '',
       columns: [
         { header: 'Subject' },
         { header: 'Publisher' },
@@ -30,6 +32,19 @@ test('validatePromptleRawOutput rejects oversized answer arrays', () => {
     }),
     { message: GENERATED_OUTPUT_SECURITY_ERROR }
   );
+});
+
+test('validatePromptleRawOutput allows non-viable Promptle responses with empty arrays', () => {
+  assert.doesNotThrow(() => validatePromptleRawOutput({
+    topic: 'Too Narrow',
+    viable: false,
+    reason: 'Too few reusable clue dimensions.',
+    columns: [],
+    answers: [],
+  }, {
+    maxAnswers: 100,
+    maxColumns: 6,
+  }));
 });
 
 test('validateCrosswordCandidatePool honors supplied candidate max', () => {

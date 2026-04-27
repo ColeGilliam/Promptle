@@ -58,6 +58,7 @@ export class DevSettingsComponent implements OnInit {
   isSaving = false;
   saveSuccess = false;
   errorMsg = '';
+  regeneratingModeKey = '';
 
   allowGuestsCreateRooms = false;
   allowAllAIGeneration = false;
@@ -67,6 +68,10 @@ export class DevSettingsComponent implements OnInit {
     currentSchedule: { topic: string; date: string } | null;
     generatedAt: string | null;
     hasGeneratedGame: boolean;
+    upcomingSchedule: { topic: string; date: string } | null;
+    upcomingGeneratedAt: string | null;
+    hasUpcomingGeneratedGame: boolean;
+    upcomingGeneratedPayload: any | null;
   }> = {};
   dailyGameQueues: Record<string, string[]> = {
     promptle: [],
@@ -151,6 +156,95 @@ export class DevSettingsComponent implements OnInit {
 
   getTopicLabel(index: number): string {
     return index === 0 ? 'Current Game' : `Queue ${index}`;
+  }
+
+  getQueuedScheduleLabel(modeKey: string): string {
+    const schedule = this.dailyGameAdmin[modeKey]?.upcomingSchedule;
+    if (!schedule?.topic) return 'No queued game to preview';
+    return `${schedule.topic} (${schedule.date})`;
+  }
+
+  getQueuedGenerationActionLabel(modeKey: string): string {
+    return this.dailyGameAdmin[modeKey]?.hasUpcomingGeneratedGame
+      ? 'Regenerate First Queued Game'
+      : 'Generate First Queued Game';
+  }
+
+  getQueuedGenerationStatusLabel(modeKey: string): string {
+    const state = this.dailyGameAdmin[modeKey];
+    if (!state?.upcomingSchedule?.topic) return 'Add another queued topic to preview tomorrow\'s game.';
+    if (!state.hasUpcomingGeneratedGame) return 'Queued preview is not ready yet.';
+    if (!state.upcomingGeneratedAt) return 'Queued preview generated.';
+    return `Queued preview generated ${new Date(state.upcomingGeneratedAt).toLocaleString()}`;
+  }
+
+  hasPromptleQueuedPreview(modeKey: string): boolean {
+    return modeKey === 'promptle'
+      && this.getPromptleQueuedPreviewHeaders(modeKey).length > 0
+      && this.getPromptleQueuedPreviewRows(modeKey).length > 0;
+  }
+
+  getPromptleQueuedPreviewHeaders(modeKey: string): string[] {
+    const payload = this.dailyGameAdmin[modeKey]?.upcomingGeneratedPayload;
+    if (Array.isArray(payload?.headers) && payload.headers.length) {
+      return payload.headers.map((header: unknown) => typeof header === 'string' ? header : '');
+    }
+
+    if (Array.isArray(payload?.columns) && payload.columns.length) {
+      return payload.columns
+        .map((column: any) => typeof column?.header === 'string' ? column.header : '')
+        .filter(Boolean);
+    }
+
+    return [];
+  }
+
+  getPromptleQueuedPreviewRows(modeKey: string): string[][] {
+    const payload = this.dailyGameAdmin[modeKey]?.upcomingGeneratedPayload;
+    const headers = this.getPromptleQueuedPreviewHeaders(modeKey);
+    const width = headers.length;
+    if (!width || !Array.isArray(payload?.answers)) return [];
+
+    return payload.answers.map((answer: any) => {
+      const values = Array.isArray(answer?.values)
+        ? answer.values.map((value: unknown) => typeof value === 'string' ? value : String(value ?? ''))
+        : [];
+      const cellDisplays = Array.isArray(answer?.cells)
+        ? answer.cells.map((cell: any) => typeof cell?.display === 'string' ? cell.display : '')
+        : [];
+      const source = values.length ? values : cellDisplays;
+
+      return Array.from({ length: width }, (_value, index) => source[index] ?? '');
+    });
+  }
+
+  getPromptleQueuedPreviewTopic(modeKey: string): string {
+    const payload = this.dailyGameAdmin[modeKey]?.upcomingGeneratedPayload;
+    return typeof payload?.topic === 'string' ? payload.topic : '';
+  }
+
+  regenerateDailyGame(modeKey: string): void {
+    if (!this.dailyGameAdmin[modeKey]?.upcomingSchedule?.topic || this.regeneratingModeKey) return;
+
+    this.regeneratingModeKey = modeKey;
+    this.errorMsg = '';
+    this.http.post<any>(`/api/dev-settings/daily-games/${encodeURIComponent(modeKey)}/regenerate`, {
+      auth0Id: this.myAuth0Id,
+    }).subscribe({
+      next: (response) => {
+        this.regeneratingModeKey = '';
+        this.dailyGameAdmin = response?.dailyGameAdmin ?? this.dailyGameAdmin;
+        this.hydrateDailyQueuesFromAdmin();
+      },
+      error: (err) => {
+        this.regeneratingModeKey = '';
+        this.errorMsg = err?.error?.error || 'Failed to regenerate the daily game.';
+      },
+    });
+  }
+
+  trackPreviewRow(index: number): number {
+    return index;
   }
 
   addTopic(modeKey: string): void {

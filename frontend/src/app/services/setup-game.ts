@@ -347,7 +347,7 @@ export function hydrateGameCell(rawCell: unknown, context: string | Partial<Game
 
   if (kind === 'set') {
     const items = inferredItems.length ? inferredItems : (display ? [display] : []);
-    return { display: items[0] ?? display, kind, items };
+    return { display: display || items.join(', '), kind, items };
   }
 
   if (kind === 'number') {
@@ -470,10 +470,15 @@ export class DbGameService {
   }
 
   // AI game generation (string topic) — dev account only
-  generateAiGame(topic: string, auth0Id: string, options?: { minCategories?: number; maxCategories?: number }): Observable<GameData> {
+  generateAiGame(
+    topic: string,
+    auth0Id: string,
+    options?: { minCategories?: number; maxCategories?: number; improvedGeneration?: boolean }
+  ): Observable<GameData> {
     const body: any = { topic: topic.trim(), auth0Id };
     if (options?.minCategories !== undefined) body.minCategories = options.minCategories;
     if (options?.maxCategories !== undefined) body.maxCategories = options.maxCategories;
+    if (options?.improvedGeneration) body.improvedGeneration = true;
 
     return this.http.post<GameData>(`${this.apiBaseUrl}/subjects`, body);
   }
@@ -500,6 +505,7 @@ export class DbGameService {
     topicId?: number;
     room?: string;
     auth0Id?: string;
+    improvedGeneration?: boolean;
     dailyMode?: 'promptle' | 'connections' | 'crossword';
   }): Observable<GameData> {
     if (params.dailyMode) {
@@ -507,7 +513,9 @@ export class DbGameService {
     }
 
     if (params.topic && params.topic.trim()) {
-      return this.generateAiGame(params.topic.trim(), params.auth0Id || '');
+      return this.generateAiGame(params.topic.trim(), params.auth0Id || '', {
+        improvedGeneration: !!params.improvedGeneration,
+      });
     }
 
     if (params.room && params.room.trim()) {

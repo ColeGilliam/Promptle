@@ -62,7 +62,11 @@
         </p>
 
         <div class="daily-game-grid">
-          <div class="daily-game-card" *ngFor="let mode of dailyGameModes">
+          <div
+            class="daily-game-card"
+            [class.daily-game-card--wide]="mode.key === 'promptle'"
+            *ngFor="let mode of dailyGameModes"
+          >
             <div class="daily-game-card__header">
               <div>
                 <h3>{{ mode.label }}</h3>
@@ -76,6 +80,45 @@
                 {{ dailyGameAdmin[mode.key]?.hasGeneratedGame ? 'Ready' : 'Pending' }}
               </span>
               <span class="setting-desc">{{ getGenerationStatusLabel(mode.key) }}</span>
+            </div>
+
+            <button
+              matButton="outlined"
+              type="button"
+              class="rect-btn daily-topic-regenerate-btn"
+              (click)="regenerateDailyGame(mode.key)"
+              [disabled]="!dailyGameAdmin[mode.key]?.upcomingSchedule?.topic || !!regeneratingModeKey"
+            >
+              <mat-icon>autorenew</mat-icon>
+              {{ regeneratingModeKey === mode.key ? 'Regenerating…' : getQueuedGenerationActionLabel(mode.key) }}
+            </button>
+
+            <span class="setting-desc">{{ getQueuedScheduleLabel(mode.key) }}</span>
+            <span class="setting-desc">{{ getQueuedGenerationStatusLabel(mode.key) }}</span>
+
+            <div class="daily-preview-card" *ngIf="hasPromptleQueuedPreview(mode.key)">
+              <div class="daily-preview-card__header">
+                <div>
+                  <h4>First Queued Promptle Preview</h4>
+                  <p>{{ getPromptleQueuedPreviewTopic(mode.key) }}</p>
+                </div>
+                <span class="status-pill status-on">{{ getPromptleQueuedPreviewRows(mode.key).length }} rows</span>
+              </div>
+
+              <div class="daily-preview-table-wrap">
+                <table class="daily-preview-table">
+                  <thead>
+                    <tr>
+                      <th *ngFor="let header of getPromptleQueuedPreviewHeaders(mode.key)">{{ header }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let row of getPromptleQueuedPreviewRows(mode.key); trackBy: trackPreviewRow">
+                      <td *ngFor="let value of row">{{ value }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             <div

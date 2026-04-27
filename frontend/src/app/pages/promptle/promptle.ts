@@ -414,11 +414,13 @@ export class PromptleComponent implements OnInit, OnDestroy {
       const loadSaved    = params.get('loadSaved');
       const restartSaved = params.get('restartSaved');
       const dailyGame    = params.get('daily');
+      const improvedFlag = params.get('improved');
       const aiTopic      = params.get('topic');
       const topicIdParam = params.get('id');
       const topicId      = topicIdParam ? Number(topicIdParam) : NaN;
       const room         = params.get('room')?.trim();
       const sharedGameCode = params.get('share')?.trim();
+      const improvedGeneration = improvedFlag === 'true' || improvedFlag === '1';
 
       if (room && room.length > 0) {
         this.currentRoom  = room;
@@ -509,7 +511,7 @@ export class PromptleComponent implements OnInit, OnDestroy {
         this.resetCustomGameFeedback();
         this.resetCustomGameSession();
         this.auth.user$.pipe(take(1)).subscribe(user => {
-          this.loadGame({ topic: aiTopic.trim(), auth0Id: user?.sub || '' });
+          this.loadGame({ topic: aiTopic.trim(), auth0Id: user?.sub || '', improvedGeneration });
         });
         return;
       }
@@ -1077,7 +1079,14 @@ export class PromptleComponent implements OnInit, OnDestroy {
     }
   }
 
-  private loadGame(params: { topic?: string; topicId?: number; room?: string; auth0Id?: string; dailyMode?: 'promptle' | 'connections' | 'crossword' }) {
+  private loadGame(params: {
+    topic?: string;
+    topicId?: number;
+    room?: string;
+    auth0Id?: string;
+    improvedGeneration?: boolean;
+    dailyMode?: 'promptle' | 'connections' | 'crossword'
+  }) {
     this.gameLoading = true;
     this.gameError   = '';
     this.gameDataReady = false;

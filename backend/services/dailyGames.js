@@ -218,16 +218,29 @@ export function buildPublicDailyGamesSummary(rawDailyGames, today = getDailyDate
   }, {});
 }
 
-// The admin summary includes the same info as the public summary, but also the full queue and timestamps for when games were generated.
+// The admin summary includes the same info as the public summary, plus the next queued
+// game's generated payload so the dev view can preview tomorrow's Promptle before it goes live.
 export function buildAdminDailyGamesSummary(rawDailyGames, today = getDailyDateKey()) {
   const effective = getEffectiveDailyGames(rawDailyGames, today);
   return DAILY_GAME_MODES.reduce((accumulator, mode) => {
     const state = effective[mode];
+    const upcomingTopic = getQueuedUpcomingTopic(state);
+    const upcomingDate = upcomingTopic ? getNextDailyDateKey(today) : '';
     accumulator[mode] = {
       queue: [...state.queue],
       currentSchedule: state.currentSchedule ? { ...state.currentSchedule } : null,
       generatedAt: state.generatedGame?.generatedAt || null,
       hasGeneratedGame: Boolean(state.generatedGame?.payload),
+      upcomingSchedule: upcomingTopic
+        ? { topic: upcomingTopic, date: upcomingDate }
+        : null,
+      upcomingGeneratedAt: state.upcomingGeneratedGame?.generatedAt || null,
+      hasUpcomingGeneratedGame: hasGeneratedGameForSchedule(
+        state.upcomingGeneratedGame,
+        upcomingTopic,
+        upcomingDate
+      ),
+      upcomingGeneratedPayload: state.upcomingGeneratedGame?.payload || null,
     };
     return accumulator;
   }, {});
@@ -319,6 +332,7 @@ export async function prepareDailyGamesForToday({
   requestId = null,
   logger = dailyGamesLogger,
   coll = getDevSettingsCollection(),
+  generateDailyPayloadFn = generateDailyPayload,
 } = {}) {
   const doc = await coll.findOne({ _id: SETTINGS_ID });
   const originalDailyGames = sanitizeDailyGames(doc?.dailyGames);
@@ -333,7 +347,7 @@ export async function prepareDailyGamesForToday({
     if (state.currentSchedule?.topic && !hasGeneratedGameForModeToday(state, today)) {
       try {
         // Daily games are pre-generated and cached so all players gets the same puzzle for the day.
-        const payload = await generateDailyPayload(mode, state.currentSchedule.topic, {
+        const payload = await generateDailyPayloadFn(mode, state.currentSchedule.topic, {
           requestId,
           auth0Id: null,
           logger,
@@ -385,7 +399,7 @@ export async function prepareDailyGamesForToday({
 
     try {
       // Keep tomorrow's queued game ready ahead of time so the daily switch at midnight is instant.
-      const payload = await generateDailyPayload(mode, upcomingTopic, {
+      const payload = await generateDailyPayloadFn(mode, upcomingTopic, {
         requestId,
         auth0Id: null,
         logger,
@@ -428,6 +442,66 @@ export async function prepareDailyGamesForToday({
       { upsert: true }
     );
   }
+
+  return dailyGames;
+}
+
+function createMissingUpcomingScheduleError() {
+  const error = new Error('No queued daily game is available to preview yet.');
+  error.statusCode = 404;
+  return error;
+}
+
+// Regenerating the next queued daily game lets the dev account inspect and reroll
+// tomorrow's payload without touching the live game for today.
+export async function regenerateUpcomingDailyGame({
+  mode,
+  requestId = null,
+  logger = dailyGamesLogger,
+  coll = getDevSettingsCollection(),
+  generateDailyPayloadFn = generateDailyPayload,
+} = {}) {
+  if (!DAILY_GAME_MODES.includes(mode)) {
+    throw createUnknownModeError();
+  }
+
+  const doc = await coll.findOne({ _id: SETTINGS_ID });
+  const today = getDailyDateKey();
+  const tomorrow = getNextDailyDateKey(today);
+  const dailyGames = getEffectiveDailyGames(doc?.dailyGames, today);
+  const state = dailyGames[mode];
+  const upcomingTopic = getQueuedUpcomingTopic(state);
+
+  if (!upcomingTopic) {
+    throw createMissingUpcomingScheduleError();
+  }
+
+  const payload = await generateDailyPayloadFn(mode, upcomingTopic, {
+    requestId,
+    auth0Id: null,
+    logger,
+  });
+
+  state.upcomingGeneratedGame = {
+    topic: upcomingTopic,
+    date: tomorrow,
+    generatedAt: new Date().toISOString(),
+    payload,
+  };
+
+  await coll.updateOne(
+    { _id: SETTINGS_ID },
+    { $set: { dailyGames } },
+    { upsert: true }
+  );
+
+  logger.info('daily_game_regenerated', {
+    requestId,
+    mode,
+    topic: upcomingTopic,
+    date: tomorrow,
+    generationSlot: 'upcoming',
+  });
 
   return dailyGames;
 }

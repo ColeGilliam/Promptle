@@ -234,6 +234,17 @@
               >
             </mat-form-field>
 
+            <mat-checkbox
+              class="improved-generation-checkbox"
+              [(ngModel)]="improvedGeneration"
+            >
+              Improved generation
+            </mat-checkbox>
+
+            <p class="improved-generation-note" *ngIf="improvedGeneration">
+              Warning: Improved generation will take longer to load.
+            </p>
+
             <p class="custom-topic-error" *ngIf="customTopicError">{{ customTopicError }}</p>
 
             <div class="custom-topic-ideas" *ngIf="showCustomTopicIdeas">

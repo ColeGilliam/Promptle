@@ -2,6 +2,7 @@
 // import these values so gameplay constraints and safety bounds do not drift apart.
 export const OUTPUT_LIMITS = {
   topic: 60,
+  promptleReason: 160,
   promptleHeader: 60,
   promptleSubjectName: 80,
   promptleCellDisplay: 160,
@@ -21,11 +22,24 @@ export const OUTPUT_LIMITS = {
 export const PROMPTLE_GENERATION_CONFIG = {
   minCategories: 5,
   maxCategories: 6,
+  generatedColumns: 6,
   minSubjects: 12,
   maxSubjects: 100,
+  // The standard custom-topic flow keeps the roster target modest for faster turnaround.
   targetSubjects: 20,
-  promptTargetSubjects: 15,
+  // Improved custom generation and daily Promptles both ask for a deeper roster so cleanup
+  // has more material to work with and the final puzzle is less likely to feel thin.
+  improvedTargetSubjects: 40,
   maxCompletionTokens: 20000,
+  // These heuristics drive the deterministic cleanup step after the model returns one full draft.
+  method: {
+    analysisMinRows: 8,
+    packedTextRatioThreshold: 0.5,
+    highUniquenessThreshold: 0.85,
+    lowSharedCoverageThreshold: 0.25,
+    highDominanceThreshold: 0.8,
+    lowVariationMaxDistinctValues: 3,
+  },
 };
 
 export const CONNECTIONS_GENERATION_CONFIG = {

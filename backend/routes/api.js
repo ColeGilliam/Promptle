@@ -8,7 +8,7 @@ import { startGame, createMultiplayerGame, listRooms, deleteRoom } from '../cont
 import { authUser, deleteUserAccount, incrementWin } from '../controllers/authController.js';
 import { getProfile, updateProfile } from '../controllers/userController.js';
 import { saveGame, loadGame, deleteSavedGame } from '../controllers/saveController.js';
-import { getDevSettings, updateDevSettings } from '../controllers/devSettingsController.js';
+import { getDevSettings, updateDevSettings, regenerateDailyGame } from '../controllers/devSettingsController.js';
 import { getDevAuthSession } from '../controllers/devAuthController.js';
 import { saveGameFeedback } from '../controllers/gameFeedbackController.js';
 import { getDailyGame } from '../controllers/dailyGameController.js';
@@ -60,5 +60,6 @@ router.get('/api/game/rooms', listRooms);
 router.delete('/api/game/rooms/:roomId', deleteRoom);
 router.get('/api/dev-settings', getDevSettings);
 router.put('/api/dev-settings', updateDevSettings);
+router.post('/api/dev-settings/daily-games/:mode/regenerate', regenerateDailyGame);
 
 export default router;
