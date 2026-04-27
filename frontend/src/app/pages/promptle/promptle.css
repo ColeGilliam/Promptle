@@ -682,6 +682,7 @@
   background: rgba(129, 140, 248, 0.1);
   border-color: rgba(129, 140, 248, 0.25);
   color: #a5b4fc;
+}
 :host-context(.dark) .gcl-item {
   color: #6b82a8;
 }

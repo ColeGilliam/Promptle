@@ -85,7 +85,7 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  padding: 2px 0;
+  padding: 2px 0 10px;
 }
 
 :host-context(.dark) .win-title {
