@@ -43,7 +43,7 @@ function getMultiplayerGamesColl() {
 // ────────────────────────────────────────────────
 // Shared logic: build full game data from a topic
 // ────────────────────────────────────────────────
-async function buildGameData(topicIdentifier, isNumericId = true, fixedAnswer = null) {
+async function buildGameData(topicIdentifier, isNumericId = true) {
   const topicColl = getTopicColl();
   const guessesColl = getGuessesColl();
 
@@ -88,11 +88,7 @@ async function buildGameData(topicIdentifier, isNumericId = true, fixedAnswer = 
     return normalizeGameAnswer({ name: doc.name, cells }, columns);
   });
 
-  // Pick correct answer — use override if provided (share link seeding), else random
-  const selectedAnswer = fixedAnswer
-    ? answers.find(a => a.name === fixedAnswer)
-    : null;
-  const correctAnswer = selectedAnswer ?? answers[Math.floor(Math.random() * answers.length)];
+  const correctAnswer = answers[Math.floor(Math.random() * answers.length)];
 
   return normalizeGamePayload({
     topic: topicName,
@@ -122,7 +118,7 @@ async function roomExists(roomId) {
 // ────────────────────────────────────────────────
 export async function startGame(req, res) {
   try {
-    const { topicId, room, answer: fixedAnswer } = req.query;
+    const { topicId, room } = req.query;
 
     let gameData;
 
@@ -148,8 +144,7 @@ export async function startGame(req, res) {
       gameData = normalizeGamePayload(gameData);
 
     } else if (topicId) {
-      // Single-player classic mode (answer param seeds a specific correct answer)
-      gameData = await buildGameData(topicId, true, fixedAnswer || null);
+      gameData = await buildGameData(topicId, true);
     } else {
       return res.status(400).json({ error: 'Missing topicId or room' });
     }
@@ -160,7 +155,6 @@ export async function startGame(req, res) {
       requestId: req.id || null,
       topicId: req.query?.topicId || null,
       room: req.query?.room || null,
-      fixedAnswer: req.query?.answer || null,
       error: err,
     });
     res.status(500).json({ error: err.message || 'Server error' });

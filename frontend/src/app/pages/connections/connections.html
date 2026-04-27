@@ -266,6 +266,10 @@
   viewLabel="View Board"
   playAgainLabel="Play Again"
   [shareText]="shareText"
+  [showShareButton]="canShowShareButton"
+  [shareDisabled]="!canUseShareButton"
+  [shareLoading]="shareLoading"
+  [shareCopied]="shareCopied"
   [showFeedback]="showGameFeedback"
   [feedbackChoice]="feedbackChoice"
   [feedbackSubmitting]="feedbackSubmitting"
@@ -273,6 +277,7 @@
   (returnHome)="returnHome()"
   (playAgain)="playAgain()"
   (viewGame)="viewCompletedBoard()"
+  (share)="copyShareLink()"
   (likedGame)="submitGameFeedback(true)"
   (dislikedGame)="submitGameFeedback(false)"
 ></app-game-end-popup>

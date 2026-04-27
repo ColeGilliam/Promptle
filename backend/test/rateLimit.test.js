@@ -82,3 +82,43 @@ test('burst limiter can skip requests that do not trigger AI generation', () => 
   assert.equal(blockedGenerationRes.statusCode, 429);
   assert.equal(nextCalls, 2);
 });
+
+test('burst limiter supports custom error payloads and custom keys', () => {
+  let currentTime = 5000;
+  let nextCalls = 0;
+  const limiter = createBurstRateLimiter({
+    windowMs: 60_000,
+    maxRequests: 1,
+    keyGenerator: (req) => req.body?.auth0Id,
+    errorMessage: 'Too many share links created. Please wait before creating another one.',
+    errorCode: 'too_many_share_links',
+    now: () => currentTime,
+  });
+
+  const req = {
+    body: {
+      auth0Id: 'auth0|player-1',
+      gameType: 'promptle',
+      payload: { topic: 'Space Movies' },
+    },
+  };
+
+  const firstRes = createMockRes();
+  limiter(req, firstRes, () => { nextCalls += 1; });
+  assert.equal(firstRes.statusCode, 200);
+
+  const blockedRes = createMockRes();
+  limiter(req, blockedRes, () => { nextCalls += 1; });
+  assert.equal(blockedRes.statusCode, 429);
+  assert.deepEqual(blockedRes.body, {
+    error: 'Too many share links created. Please wait before creating another one.',
+    code: 'too_many_share_links',
+  });
+  assert.equal(nextCalls, 1);
+
+  currentTime += 60_001;
+  const laterRes = createMockRes();
+  limiter(req, laterRes, () => { nextCalls += 1; });
+  assert.equal(laterRes.statusCode, 200);
+  assert.equal(nextCalls, 2);
+});

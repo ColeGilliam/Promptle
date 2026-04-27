@@ -21,6 +21,7 @@ import {
 import { getRecommendations } from '../controllers/recommendationController.js';
 import {
   aiGenerationBurstLimiter,
+  sharedGameCreationBurstLimiter,
   topicAiGenerationBurstLimiter,
 } from '../middleware/rateLimit.js';
 
@@ -46,7 +47,7 @@ router.put('/api/update-profile', updateProfile);
 router.post('/api/increment-win', incrementWin);
 router.post('/api/save-game', saveGame);
 router.post('/api/game-feedback', saveGameFeedback);
-router.post('/api/shared-games', createSharedGame);
+router.post('/api/shared-games', sharedGameCreationBurstLimiter, createSharedGame);
 router.get('/api/shared-games/:shareCode', loadSharedGame);
 router.post('/api/custom-game-session/start', startCustomGameSession);
 router.post('/api/custom-game-session/interacted', markCustomGameSessionInteracted);

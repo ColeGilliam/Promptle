@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { HttpClient, HttpClientModule, HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -130,7 +130,9 @@ export class CrosswordComponent implements OnInit, OnDestroy {
   shareExpiresAt: string | null = null;
   shareLoading = false;
   shareCopied = false;
+  shareRateLimitedUntil = 0;
   private shareSnapshot: CrosswordGameData | null = null;
+  private shareRateLimitTimeout: ReturnType<typeof window.setTimeout> | null = null;
   private isSharedGame = false;
   private sessionInteracted = false;
   private sessionFinalized = false;
@@ -176,6 +178,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     // If the player leaves a custom crossword mid-solve after typing, count it as abandonment.
     this.finalizeCurrentSession('abandoned', { keepalive: true });
     this.stopTimer();
+    this.clearShareRateLimitCooldown();
   }
 
   get canUseAI(): boolean {
@@ -308,6 +311,8 @@ export class CrosswordComponent implements OnInit, OnDestroy {
 
   get canUseShareButton(): boolean {
     if (this.shareLoading) return false;
+    if (this.shareUrl) return true;
+    if (this.isShareRateLimited()) return false;
     if (!this.activeGame) return false;
     if (!this.auth0Id) return true;
     return !!this.shareSnapshot;
@@ -403,12 +408,17 @@ export class CrosswordComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (!this.canUseShareButton) return;
-
     if (this.shareUrl) {
       this.copyShareUrl();
       return;
     }
+
+    if (this.isShareRateLimited()) {
+      this.notifyShareRateLimit();
+      return;
+    }
+
+    if (!this.canUseShareButton) return;
 
     this.createShareLinkAndCopy();
   }
@@ -416,8 +426,6 @@ export class CrosswordComponent implements OnInit, OnDestroy {
   private copyShareUrl(): void {
     navigator.clipboard.writeText(this.shareUrl).then(() => {
       this.shareCopied = true;
-      this.feedback = 'Share link copied.';
-      this.feedbackTone = 'success';
       setTimeout(() => {
         this.shareCopied = false;
       }, 2500);
@@ -1124,6 +1132,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
   }
 
   private resetShareState(): void {
+    this.clearShareRateLimitCooldown();
     this.shareUrl = '';
     this.shareExpiresAt = null;
     this.shareLoading = false;
@@ -1149,10 +1158,11 @@ export class CrosswordComponent implements OnInit, OnDestroy {
         this.shareExpiresAt = response.expiresAt;
         this.shareLoading = false;
       },
-      error: () => {
+      error: (error: HttpErrorResponse) => {
         this.shareUrl = '';
         this.shareExpiresAt = null;
         this.shareLoading = false;
+        if (this.handleShareRateLimit(error)) return;
       },
     });
   }
@@ -1169,12 +1179,55 @@ export class CrosswordComponent implements OnInit, OnDestroy {
         this.shareLoading = false;
         this.copyShareUrl();
       },
-      error: () => {
+      error: (error: HttpErrorResponse) => {
         this.shareUrl = '';
         this.shareExpiresAt = null;
         this.shareLoading = false;
+        if (this.handleShareRateLimit(error)) return;
       },
     });
+  }
+
+  private handleShareRateLimit(error: HttpErrorResponse): boolean {
+    if (error.status !== 429) return false;
+
+    const retryAfterSeconds = Number.parseInt(error.headers?.get('Retry-After') || '', 10);
+    const cooldownMs = Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0
+      ? retryAfterSeconds * 1000
+      : 60_000;
+    this.setShareRateLimitCooldown(cooldownMs);
+    this.notifyShareRateLimit();
+    return true;
+  }
+
+  private notifyShareRateLimit(): void {
+    this.feedback = `Please wait ${this.getShareRateLimitSecondsRemaining()}s before sharing again.`;
+    this.feedbackTone = 'neutral';
+  }
+
+  private isShareRateLimited(): boolean {
+    return this.shareRateLimitedUntil > Date.now();
+  }
+
+  private getShareRateLimitSecondsRemaining(): number {
+    return Math.max(1, Math.ceil((this.shareRateLimitedUntil - Date.now()) / 1000));
+  }
+
+  private setShareRateLimitCooldown(durationMs: number): void {
+    this.clearShareRateLimitCooldown();
+    this.shareRateLimitedUntil = Date.now() + durationMs;
+    this.shareRateLimitTimeout = window.setTimeout(() => {
+      this.shareRateLimitedUntil = 0;
+      this.shareRateLimitTimeout = null;
+    }, durationMs);
+  }
+
+  private clearShareRateLimitCooldown(): void {
+    if (this.shareRateLimitTimeout) {
+      clearTimeout(this.shareRateLimitTimeout);
+      this.shareRateLimitTimeout = null;
+    }
+    this.shareRateLimitedUntil = 0;
   }
 
   private cloneSharedSnapshot(game: CrosswordGameData): CrosswordGameData {

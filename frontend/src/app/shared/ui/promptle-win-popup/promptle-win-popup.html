@@ -78,11 +78,12 @@
         <button
           matButton="filled"
           class="rect-btn share-btn"
-          (click)="copyShare()"
-          *ngIf="shareUrl"
+          [disabled]="shareDisabled"
+          (click)="onShare()"
+          *ngIf="showShareButton"
         >
-          <mat-icon>{{ copied ? 'check' : 'share' }}</mat-icon>
-          {{ copied ? 'Copied!' : 'Share' }}
+          <mat-icon>{{ shareCopied ? 'check' : 'share' }}</mat-icon>
+          {{ shareLoading ? 'Preparing...' : shareCopied ? 'Copied!' : 'Share' }}
         </button>
       </ng-container>
       <button

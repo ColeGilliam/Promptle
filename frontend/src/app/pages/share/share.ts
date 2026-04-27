@@ -34,10 +34,8 @@ export class ShareComponent implements OnInit {
 
       const id     = params.get('id');
       const topic  = params.get('topic');
-      const answer = params.get('answer');
       if (id) {
-        const answerParam = answer ? `&answer=${encodeURIComponent(answer)}` : '';
-        this.playLink = `/game?id=${id}${answerParam}`;
+        this.playLink = `/game?id=${id}`;
       } else if (topic) {
         this.playLink = `/game?topic=${encodeURIComponent(topic)}`;
       } else {
