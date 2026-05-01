@@ -322,14 +322,6 @@ export function createGenerateCrosswordHandler({
     }
     const normalizedTopic = topicValidation.topic;
 
-    const isDevUser = await isDevAccountFn(auth0Id);
-    if (!isDevUser) {
-      const settings = await fetchDevSettingsFn();
-      if (!settings.allowAllAIGeneration) {
-        return res.status(403).json({ error: 'AI game generation is restricted to the dev account.' });
-      }
-    }
-
     if (!openaiClient || !apiKey) {
       logger.error('crossword_generation_missing_api_key', {
         requestId: req.id || null,

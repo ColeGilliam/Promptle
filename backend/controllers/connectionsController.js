@@ -458,15 +458,6 @@ export function createGenerateConnectionsHandler({
     }
     const normalizedTopic = topicValidation.topic;
 
-    const isDevUser = await isDevAccountFn(auth0Id);
-    if (!isDevUser) {
-      // Non-dev users can only generate boards when the dev toggle explicitly opens generation up.
-      const settings = await fetchDevSettingsFn();
-      if (!settings.allowAllAIGeneration) {
-        return res.status(403).json({ error: 'AI game generation is restricted to the dev account.' });
-      }
-    }
-
     if (!openaiClient || !apiKey) {
       logger.error('connections_generation_missing_api_key', {
         requestId: req.id || null,

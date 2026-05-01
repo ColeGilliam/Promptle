@@ -156,8 +156,7 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
   }
 
   get canUseAI(): boolean {
-    // Dev account always has access; everyone else depends on the global setting.
-    return this.isDevAccount || this.allowAllAIGeneration;
+    return true;
   }
 
   get topicIdeas(): RecommendationItem[] {

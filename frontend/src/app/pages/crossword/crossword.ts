@@ -191,7 +191,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
   }
 
   get canUseAI(): boolean {
-    return this.isDevAccount || this.allowAllAIGeneration;
+    return true;
   }
 
   get topicIdeas(): RecommendationItem[] {
