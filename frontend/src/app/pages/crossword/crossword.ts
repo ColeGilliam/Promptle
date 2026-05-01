@@ -29,6 +29,8 @@ import { SharedGameService } from '../../services/shared-game';
 import { GameEndPopup, GameEndPopupStat } from '../../shared/ui/game-end-popup/game-end-popup';
 import { DailyGameCtaComponent } from '../../shared/ui/daily-game-cta/daily-game-cta';
 import { RecommendationItem, RecommendationsService } from '../../services/recommendations';
+import { SettingsService } from '../../services/settings.service';
+import { MiniFooterComponent } from '../../shared/ui/minifooter/minifooter';
 
 type FeedbackTone = 'neutral' | 'success' | 'danger';
 const CROSSWORD_GENERATION_ERROR = 'Sorry! The crossword failed to generate. Please try again.';
@@ -83,6 +85,7 @@ interface ClueCheckSummary {
     LoadSavedGameCard,
     GameEndPopup,
     DailyGameCtaComponent,
+    MiniFooterComponent,
   ],
   templateUrl: './crossword.html',
   styleUrls: ['./crossword.css'],
@@ -158,7 +161,8 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     private router: Router,
     private route: ActivatedRoute,
     private sharedGameService: SharedGameService,
-    private recommendationsService: RecommendationsService
+    private recommendationsService: RecommendationsService,
+    protected settings: SettingsService
   ) {}
 
   ngOnInit(): void {

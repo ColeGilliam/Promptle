@@ -157,6 +157,33 @@ body.high-contrast {
   --feedback-yellow-text: #ffffff;
   --feedback-gray: #3a3a3c;
   --feedback-gray-text: #ffffff;
+  --connections-yellow: #d97706;
+  --connections-yellow-soft: #fef3c7;
+  --connections-green: #059669;
+  --connections-green-soft: #d1fae5;
+  --connections-blue: #1d4ed8;
+  --connections-blue-soft: #dbeafe;
+  --connections-purple: #7c3aed;
+  --connections-purple-soft: #ede9fe;
+  --crossword-correct-bg: rgba(0, 200, 83, 0.18);
+  --crossword-correct-border: #00c853;
+  --crossword-wrong-bg: rgba(245, 121, 58, 0.18);
+  --crossword-wrong-border: #f5793a;
+}
+
+body.dark.high-contrast {
+  --connections-yellow: #fbbf24;
+  --connections-yellow-soft: rgba(120, 53, 15, 0.88);
+  --connections-green: #34d399;
+  --connections-green-soft: rgba(5, 46, 22, 0.88);
+  --connections-blue: #60a5fa;
+  --connections-blue-soft: rgba(29, 78, 216, 0.88);
+  --connections-purple: #c084fc;
+  --connections-purple-soft: rgba(76, 29, 149, 0.88);
+  --crossword-correct-bg: rgba(0, 200, 83, 0.28);
+  --crossword-correct-border: rgba(0, 200, 83, 0.55);
+  --crossword-wrong-bg: rgba(245, 121, 58, 0.28);
+  --crossword-wrong-border: rgba(245, 121, 58, 0.55);
 }
 
 /* High contrast + colorblind combined — colorblind-safe hues at high contrast brightness */
@@ -364,6 +391,57 @@ body[class*="colorblind-"] .clue-button--checked-correct {
 
 body[class*="colorblind-"] .crossword-cell--wrong,
 body[class*="colorblind-"] .clue-button--checked-wrong {
+  background: var(--crossword-wrong-bg) !important;
+  border-color: var(--crossword-wrong-border) !important;
+}
+
+/* High-contrast overrides for connections solved groups */
+body.high-contrast .solved-group--yellow {
+  background: linear-gradient(90deg, var(--connections-yellow), var(--connections-yellow-soft)) !important;
+}
+
+body.high-contrast .solved-group--green {
+  background: linear-gradient(90deg, var(--connections-green), var(--connections-green-soft)) !important;
+}
+
+body.high-contrast .solved-group--blue {
+  background: linear-gradient(90deg, var(--connections-blue), var(--connections-blue-soft)) !important;
+}
+
+body.high-contrast .solved-group--purple {
+  background: linear-gradient(90deg, var(--connections-purple), var(--connections-purple-soft)) !important;
+}
+
+/* High-contrast overrides for connections dots and end-screen cells */
+body.high-contrast .connections-dot--yellow,
+body.high-contrast .end-cell.cell-yellow {
+  background: var(--connections-yellow) !important;
+}
+
+body.high-contrast .connections-dot--green,
+body.high-contrast .end-cell.cell-green {
+  background: var(--connections-green) !important;
+}
+
+body.high-contrast .connections-dot--blue,
+body.high-contrast .end-cell.cell-blue {
+  background: var(--connections-blue) !important;
+}
+
+body.high-contrast .connections-dot--purple,
+body.high-contrast .end-cell.cell-purple {
+  background: var(--connections-purple) !important;
+}
+
+/* High-contrast overrides for crossword checked cells */
+body.high-contrast .crossword-cell--checked-correct,
+body.high-contrast .clue-button--checked-correct {
+  background: var(--crossword-correct-bg) !important;
+  border-color: var(--crossword-correct-border) !important;
+}
+
+body.high-contrast .crossword-cell--wrong,
+body.high-contrast .clue-button--checked-wrong {
   background: var(--crossword-wrong-bg) !important;
   border-color: var(--crossword-wrong-border) !important;
 }

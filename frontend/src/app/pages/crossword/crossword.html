@@ -36,7 +36,7 @@
 
       <div class="hero-side">
         <div class="hero-crossword-art" aria-hidden="true">
-          <img class="hero-crossword-image" src="crossword-transparent.png" alt="">
+          <img class="hero-crossword-image" [src]="(settings.isDarkTheme$ | async) ? 'crossword-dark.webp' : 'crossword-transparent.png'" alt="">
         </div>
 
         <div class="hero-stats" *ngIf="activePuzzle">
@@ -474,3 +474,5 @@
     </button>
   </div>
 </div>
+
+<app-mini-footer></app-mini-footer>

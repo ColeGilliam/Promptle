@@ -24,6 +24,7 @@ import { SharedGameService } from '../../services/shared-game';
 import { GameEndPopup, GameEndPopupRecapRow, GameEndPopupStat } from '../../shared/ui/game-end-popup/game-end-popup';
 import { DailyGameCtaComponent } from '../../shared/ui/daily-game-cta/daily-game-cta';
 import { RecommendationItem, RecommendationsService } from '../../services/recommendations';
+import { MiniFooterComponent } from '../../shared/ui/minifooter/minifooter';
 
 const CONNECTIONS_GENERATION_ERROR = 'Sorry! The Connections failed to generate. Please try again.';
 
@@ -57,6 +58,7 @@ interface ConnectionsGroupState extends ConnectionsGroup {
     NavbarComponent,
     GameEndPopup,
     DailyGameCtaComponent,
+    MiniFooterComponent,
   ],
   templateUrl: './connections.html',
   styleUrls: ['./connections.css'],
