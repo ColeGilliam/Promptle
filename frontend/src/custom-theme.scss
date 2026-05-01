@@ -34,6 +34,13 @@
   --promp3-disabled-bg-top: rgba(248, 250, 252, 0.82);
   --promp3-disabled-bg-bottom: rgba(241, 245, 249, 0.82);
   --promp3-disabled-fg: rgba(71, 85, 105, 0.62);
+  --promp5-bg: #dc2626;
+  --promp5-hover-bg: #b91c1c;
+  --promp5-fg: #ffffff;
+  --promp5-border: #7f1d1d;
+  --promp5-disabled-bg: #fca5a5;
+  --promp5-disabled-fg: rgba(127, 29, 29, 0.58);
+  --promp5-disabled-border: rgba(127, 29, 29, 0.3);
   --game-topic-card-bg: rgba(255, 255, 255, 0.7);
   --game-topic-card-border: rgba(99, 102, 241, 0.22);
   --game-topic-card-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.06), 0 0.25rem 1.5rem rgba(60, 145, 241, 0.18);
@@ -176,6 +183,13 @@ body.dark {
   --promp3-disabled-bg-top: rgba(15, 23, 42, 0.64);
   --promp3-disabled-bg-bottom: rgba(30, 41, 59, 0.64);
   --promp3-disabled-fg: rgba(203, 213, 225, 0.55);
+  --promp5-bg: #ef4444;
+  --promp5-hover-bg: #f87171;
+  --promp5-fg: #fff7ed;
+  --promp5-border: #fecaca;
+  --promp5-disabled-bg: #5f2933;
+  --promp5-disabled-fg: rgba(254, 226, 226, 0.58);
+  --promp5-disabled-border: rgba(254, 202, 202, 0.28);
   --game-topic-card-bg: rgba(15, 23, 42, 0.72);
   --game-topic-card-border: rgba(129, 140, 248, 0.3);
   --game-topic-card-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.1), 0 0.25rem 1.5rem rgba(0, 0, 0, 0.35);
@@ -406,6 +420,62 @@ body.dark .promp3-btn.mat-mdc-button:focus-visible {
     linear-gradient(180deg, var(--promp3-disabled-bg-top), var(--promp3-disabled-bg-bottom)) padding-box,
     linear-gradient(90deg, var(--promp3-disabled-from), var(--promp3-disabled-to)) border-box !important;
   border: 1px solid transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* Promptle button skin: destructive/attention action */
+.promp5-btn.mat-mdc-raised-button,
+.promp5-btn.mat-mdc-unelevated-button,
+.promp5-btn.mat-mdc-outlined-button,
+.promp5-btn.mat-mdc-button,
+.prompt-btn5.mat-mdc-raised-button,
+.prompt-btn5.mat-mdc-unelevated-button,
+.prompt-btn5.mat-mdc-outlined-button,
+.prompt-btn5.mat-mdc-button {
+  color: var(--promp5-fg) !important;
+  background: var(--promp5-bg) !important;
+  border: 1px solid var(--promp5-border) !important;
+  transition: transform 0.12s ease, box-shadow 0.15s ease, background 0.2s ease;
+}
+
+.promp5-btn.mat-mdc-raised-button:hover:not(:disabled),
+.promp5-btn.mat-mdc-unelevated-button:hover:not(:disabled),
+.promp5-btn.mat-mdc-outlined-button:hover:not(:disabled),
+.promp5-btn.mat-mdc-button:hover:not(:disabled),
+.prompt-btn5.mat-mdc-raised-button:hover:not(:disabled),
+.prompt-btn5.mat-mdc-unelevated-button:hover:not(:disabled),
+.prompt-btn5.mat-mdc-outlined-button:hover:not(:disabled),
+.prompt-btn5.mat-mdc-button:hover:not(:disabled) {
+  background: var(--promp5-hover-bg) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(220, 38, 38, 0.22);
+}
+
+body.dark .promp5-btn.mat-mdc-raised-button:hover:not(:disabled),
+body.dark .promp5-btn.mat-mdc-unelevated-button:hover:not(:disabled),
+body.dark .promp5-btn.mat-mdc-outlined-button:hover:not(:disabled),
+body.dark .promp5-btn.mat-mdc-button:hover:not(:disabled),
+body.dark .prompt-btn5.mat-mdc-raised-button:hover:not(:disabled),
+body.dark .prompt-btn5.mat-mdc-unelevated-button:hover:not(:disabled),
+body.dark .prompt-btn5.mat-mdc-outlined-button:hover:not(:disabled),
+body.dark .prompt-btn5.mat-mdc-button:hover:not(:disabled) {
+  box-shadow: 0 8px 22px rgba(248, 113, 113, 0.18);
+}
+
+.promp5-btn.mat-mdc-raised-button:disabled,
+.promp5-btn.mat-mdc-unelevated-button:disabled,
+.promp5-btn.mat-mdc-outlined-button:disabled,
+.promp5-btn.mat-mdc-button:disabled,
+.promp5-btn.mat-mdc-button-disabled,
+.prompt-btn5.mat-mdc-raised-button:disabled,
+.prompt-btn5.mat-mdc-unelevated-button:disabled,
+.prompt-btn5.mat-mdc-outlined-button:disabled,
+.prompt-btn5.mat-mdc-button:disabled,
+.prompt-btn5.mat-mdc-button-disabled {
+  color: var(--promp5-disabled-fg) !important;
+  background: var(--promp5-disabled-bg) !important;
+  border-color: var(--promp5-disabled-border) !important;
   box-shadow: none !important;
   transform: none !important;
 }

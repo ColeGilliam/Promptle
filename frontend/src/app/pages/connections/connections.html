@@ -83,7 +83,7 @@
               <button
                 *ngFor="let item of topicIdeas"
                 matButton="outlined"
-                class="custom-topic-idea-chip"
+                class="rect-btn promp3-btn custom-topic-idea-chip"
                 (mousedown)="startRecommendedTopic(item)"
               >
                 {{ item.topic }}
@@ -135,7 +135,7 @@
           <div class="board-actions">
             <button
               matButton="outlined"
-              class="rect-btn secondary-btn"
+              class="rect-btn promp3-btn secondary-btn"
               type="button"
               (click)="clearSelection()"
               [disabled]="selectedCount === 0 || loading || isResolvingGuess"
@@ -146,7 +146,7 @@
 
             <button
               matButton="outlined"
-              class="rect-btn secondary-btn"
+              class="rect-btn promp3-btn secondary-btn"
               type="button"
               (click)="shuffleBoard()"
               [disabled]="!canShuffleBoard"
@@ -234,7 +234,7 @@
         <div class="stats-action-row">
           <button
             matButton="outlined"
-            class="rect-btn secondary-btn stats-new-topic-btn"
+            class="rect-btn promp3-btn secondary-btn stats-new-topic-btn"
             type="button"
             (click)="requestNewTopic()"
           >
@@ -245,7 +245,7 @@
           <button
             *ngIf="canShowShareButton"
             matButton="outlined"
-            class="rect-btn secondary-btn stats-new-topic-btn"
+            class="rect-btn promp3-btn secondary-btn stats-new-topic-btn"
             type="button"
             (click)="copyShareLink()"
             [disabled]="!canUseShareButton"

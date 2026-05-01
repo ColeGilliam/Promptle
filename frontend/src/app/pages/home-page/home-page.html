@@ -253,7 +253,7 @@
                 <button
                   *ngFor="let item of customTopicIdeas"
                   matButton="outlined"
-                  class="custom-topic-idea-chip"
+                  class="rect-btn promp3-btn custom-topic-idea-chip"
                   (mousedown)="startRecommendedCustomTopic(item)"
                 >
                   {{ item.topic }}
@@ -278,7 +278,7 @@
 
                 <button
                   matButton="outlined"
-                  class="rect-btn play-start-btn play-start-btn-alt"
+                  class="rect-btn promp3-btn play-start-btn play-start-btn-alt"
                   [disabled]="!customTopic.trim() || isCreatingRoom || isValidatingCustomTopic"
                   (click)="startCustomGeneratedGame()"
                 >

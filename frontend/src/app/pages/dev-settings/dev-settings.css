@@ -529,7 +529,7 @@
 
 /* ── Shared button style (must match rest of app) ── */
 .rect-btn {
-  border-radius: 10px !important;
+  border-radius: var(--rect-btn-radius, 8px) !important;
   font-weight: 700 !important;
   letter-spacing: 0.04em !important;
   text-transform: uppercase !important;

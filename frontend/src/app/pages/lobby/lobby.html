@@ -82,7 +82,7 @@
             Updated {{ timeAgo(lastRefreshed.toISOString()) }} · auto-refreshes every 10s
           </p>
         </div>
-        <button matButton class="rect-btn refresh-btn" (click)="fetchRooms()">
+        <button matButton class="rect-btn promp3-btn refresh-btn" (click)="fetchRooms()">
           <mat-icon>refresh</mat-icon>
           Refresh
         </button>
@@ -169,7 +169,7 @@
             <button
               *ngIf="isDevAccount"
               matButton
-              class="rect-btn delete-room-btn"
+              class="rect-btn promp5-btn delete-room-btn"
               (click)="deleteRoom(room.roomId, $event)"
               aria-label="Delete room"
             >

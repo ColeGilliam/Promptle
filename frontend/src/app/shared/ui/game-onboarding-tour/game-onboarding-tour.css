@@ -89,7 +89,7 @@
   background: #6366f1;
   color: #fff;
   border: none;
-  border-radius: 5px;
+  border-radius: var(--rect-btn-radius, 8px);
   padding: 3px 10px;
   font-size: 0.78rem;
   font-weight: 600;

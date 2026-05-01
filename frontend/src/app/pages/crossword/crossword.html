@@ -36,7 +36,7 @@
 
       <div class="hero-side">
         <div class="hero-crossword-art" aria-hidden="true">
-          <img class="hero-crossword-image" [src]="(settings.isDarkTheme$ | async) ? 'crossword-dark.webp' : 'crossword-transparent.png'" alt="">
+          <img class="hero-crossword-image" [src]="(settings.isDarkTheme$ | async) ? 'crossword-transparent-dark2.webp' : 'crossword-transparent1.webp'" alt="">
         </div>
 
         <div class="hero-stats" *ngIf="activePuzzle">
@@ -57,7 +57,7 @@
 
           <button
             matButton="outlined"
-            class="rect-btn secondary-btn hero-new-topic-btn"
+            class="rect-btn promp3-btn secondary-btn hero-new-topic-btn"
             type="button"
             (click)="requestNewTopic()"
           >
@@ -104,7 +104,7 @@
               <button
                 *ngFor="let item of topicIdeas"
                 matButton="outlined"
-                class="custom-topic-idea-chip"
+                class="rect-btn promp3-btn custom-topic-idea-chip"
                 (mousedown)="startRecommendedTopic(item)"
               >
                 {{ item.topic }}
@@ -204,7 +204,7 @@
             <div class="board-action-row">
               <button
                 matButton="outlined"
-                class="rect-btn secondary-btn"
+                class="rect-btn promp3-btn secondary-btn"
                 type="button"
                 (click)="checkActiveLetter()"
                 [disabled]="completed || !activeCell"
@@ -215,7 +215,7 @@
 
               <button
                 matButton="outlined"
-                class="rect-btn secondary-btn"
+                class="rect-btn promp3-btn secondary-btn"
                 type="button"
                 (click)="checkActiveClue()"
                 [disabled]="completed"
@@ -238,7 +238,7 @@
             <div class="board-action-row">
               <button
                 matButton="outlined"
-                class="rect-btn secondary-btn"
+                class="rect-btn promp3-btn secondary-btn"
                 type="button"
                 (click)="revealActiveCell()"
                 [disabled]="completed || !activeCell"
@@ -249,7 +249,7 @@
 
               <button
                 matButton="outlined"
-                class="rect-btn secondary-btn"
+                class="rect-btn promp3-btn secondary-btn"
                 type="button"
                 (click)="revealActiveClue()"
                 [disabled]="completed || !activeClue"
@@ -271,14 +271,14 @@
             </div>
 
             <div class="board-action-row">
-              <button matButton="outlined" class="rect-btn secondary-btn" type="button" (click)="toggleDirection()">
+              <button matButton="outlined" class="rect-btn promp3-btn secondary-btn" type="button" (click)="toggleDirection()">
                 <mat-icon>swap_horiz</mat-icon>
                 {{ activeDirection === 'across' ? 'Switch to Down' : 'Switch to Across' }}
               </button>
 
               <button
                 matButton="outlined"
-                class="rect-btn secondary-btn"
+                class="rect-btn promp3-btn secondary-btn"
                 type="button"
                 (click)="clearActiveClue()"
                 [disabled]="completed"
@@ -449,6 +449,18 @@
   (likedGame)="submitGameFeedback(true)"
   (dislikedGame)="submitGameFeedback(false)"
 ></app-game-end-popup>
+
+<app-confirmation-toast
+  *ngIf="confirmationToast as confirmation"
+  [title]="confirmation.title"
+  [message]="confirmation.message"
+  [confirmLabel]="confirmation.confirmLabel"
+  [cancelLabel]="confirmation.cancelLabel"
+  [icon]="confirmation.icon"
+  [tone]="confirmation.tone"
+  (confirmed)="resolveConfirmation(true)"
+  (cancelled)="resolveConfirmation(false)"
+></app-confirmation-toast>
 
 <div
   class="incorrect-completion-overlay"

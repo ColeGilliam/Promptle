@@ -671,7 +671,7 @@
   padding: 0 10px;
   color: #ef4444;
   border: 1.5px solid rgba(239, 68, 68, 0.3);
-  border-radius: 10px;
+  border-radius: var(--rect-btn-radius, 8px);
   background: rgba(239, 68, 68, 0.06);
 }
 

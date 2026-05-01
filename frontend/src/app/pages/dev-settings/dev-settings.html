@@ -85,7 +85,7 @@
             <button
               matButton="outlined"
               type="button"
-              class="rect-btn daily-topic-regenerate-btn"
+              class="rect-btn promp3-btn daily-topic-regenerate-btn"
               (click)="regenerateDailyGame(mode.key)"
               [disabled]="!dailyGameAdmin[mode.key]?.upcomingSchedule?.topic || !!regeneratingModeKey"
             >
@@ -175,7 +175,7 @@
             <button
               matButton="outlined"
               type="button"
-              class="rect-btn daily-topic-add-btn"
+              class="rect-btn promp3-btn daily-topic-add-btn"
               (click)="addTopic(mode.key)"
             >
               <mat-icon>add</mat-icon>

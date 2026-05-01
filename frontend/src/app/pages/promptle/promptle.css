@@ -907,7 +907,7 @@
   letter-spacing: 0.04em;
   color: #ef4444;
   border: 1.5px solid rgba(239, 68, 68, 0.3) !important;
-  border-radius: 10px !important;
+  border-radius: var(--rect-btn-radius, 8px) !important;
   background: rgba(239, 68, 68, 0.06) !important;
 }
 

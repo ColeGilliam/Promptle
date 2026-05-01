@@ -110,7 +110,7 @@
         </div>
         <button
           matButton
-          class="rect-btn error-return-btn"
+          class="rect-btn promp3-btn error-return-btn"
           (click)="quitGame()"
         >
           Return Home
@@ -146,7 +146,7 @@
             <button
               *ngIf="isDevAccount"
               matButton
-              class="rect-btn delete-room-btn"
+              class="rect-btn promp5-btn delete-room-btn"
               (click)="deleteCurrentRoom()"
             >
               <mat-icon>delete</mat-icon>
@@ -171,7 +171,7 @@
 
       <!-- Delete room (dev only, in-game) -->
       <div class="dev-delete-bar" *ngIf="isDevAccount && isMultiplayer && gameStarted">
-        <button matButton class="rect-btn delete-room-btn" (click)="deleteCurrentRoom()">
+        <button matButton class="rect-btn promp5-btn delete-room-btn" (click)="deleteCurrentRoom()">
           <mat-icon>delete</mat-icon>
           DELETE ROOM
         </button>
@@ -438,7 +438,7 @@
           <button
             *ngIf="isGameOver"
             matButton="outlined"
-            class="rect-btn spectate-back-btn"
+            class="rect-btn promp3-btn spectate-back-btn"
             (click)="stopSpectating()"
           >
             <mat-icon>emoji_events</mat-icon>

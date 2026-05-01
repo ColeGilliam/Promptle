@@ -257,7 +257,7 @@
   align-items: center;
   gap: 0.375rem;
   padding: 0.35rem clamp(0.625rem, 1vw, 0.75rem) 0.35rem clamp(0.55rem, 0.9vw, 0.65rem);
-  border-radius: 999rem;
+  border-radius: var(--rect-btn-radius, 8px);
   border: 0.09375rem solid var(--about-accent-border);
   background: var(--about-accent-soft);
   font-size: clamp(0.79rem, 0.76rem + 0.14vw, 0.86rem);
