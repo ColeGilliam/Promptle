@@ -52,81 +52,81 @@
           </div>
         </div>
 
-        <ng-container *ngIf="canUseAI">
-          <app-ai-upgrade-notice
-            *ngIf="!hasAIAccess && upgradeNoticeVisible"
-            (dismissed)="upgradeNoticeVisible = false"
-          ></app-ai-upgrade-notice>
+        <!-- Topic form — always shown; guests get a sign-in overlay -->
+        <div class="ai-form-wrap">
 
-          <!-- The only required input for a generated board is a free-form topic string. -->
-          <mat-form-field appearance="fill" class="topic-field" subscriptSizing="dynamic">
-            <mat-label>Enter a topic</mat-label>
-            <input
-              matInput
-              placeholder="Type any topic"
-              [(ngModel)]="topic"
-              [disabled]="aiInputDisabled"
-              (focus)="onTopicFocus()"
-              (blur)="onTopicBlur()"
-              (keydown.enter)="generateGame()"
-            >
-          </mat-form-field>
-
-          <mat-checkbox
-            class="improved-generation-checkbox"
-            [(ngModel)]="improvedGeneration"
-          >
-            Improved generation
-          </mat-checkbox>
-
-          <p class="improved-generation-note" *ngIf="improvedGeneration">
-            Warning: Improved generation will take longer to load.
-          </p>
-
-          <div class="custom-topic-ideas" *ngIf="showTopicIdeas">
-            <p class="custom-topic-ideas-label">Need ideas?</p>
-            <div class="custom-topic-ideas-list">
-              <button
-                *ngFor="let item of topicIdeas"
-                matButton="outlined"
-                class="custom-topic-idea-chip"
-                (mousedown)="startRecommendedTopic(item)"
-              >
-                {{ item.topic }}
+          @if (!auth0Id) {
+            <div class="ai-guest-overlay">
+              <button class="ai-guest-sign-in-btn" (click)="auth.login()">
+                <mat-icon>login</mat-icon>
+                Sign In to Unlock
               </button>
             </div>
+          }
+
+          <div [class.ai-section--guest]="!auth0Id" (click)="onLockedInputClick()">
+
+              <mat-form-field appearance="fill" class="topic-field" subscriptSizing="dynamic">
+                <mat-label>Enter a topic</mat-label>
+                <input
+                  matInput
+                  placeholder="Type any topic"
+                  [(ngModel)]="topic"
+                  [disabled]="!auth0Id || aiInputDisabled"
+                  (focus)="onTopicFocus()"
+                  (blur)="onTopicBlur()"
+                  (keydown.enter)="generateGame()"
+                >
+              </mat-form-field>
+
+              <mat-checkbox
+                class="improved-generation-checkbox"
+                [(ngModel)]="improvedGeneration"
+                [disabled]="!auth0Id || aiInputDisabled"
+              >
+                Improved generation
+              </mat-checkbox>
+
+              <p class="improved-generation-note" *ngIf="improvedGeneration">
+                Warning: Improved generation will take longer to load.
+              </p>
+
+              <div class="custom-topic-ideas" *ngIf="showTopicIdeas">
+                <p class="custom-topic-ideas-label">Need ideas?</p>
+                <div class="custom-topic-ideas-list">
+                  <button
+                    *ngFor="let item of topicIdeas"
+                    matButton="outlined"
+                    class="custom-topic-idea-chip"
+                    (mousedown)="startRecommendedTopic(item)"
+                  >
+                    {{ item.topic }}
+                  </button>
+                </div>
+              </div>
+
+              <div class="control-actions">
+                <button
+                  matButton="filled"
+                  class="rect-btn promp1-btn generate-btn"
+                  type="button"
+                  (click)="generateGame()"
+                  [disabled]="!auth0Id || aiInputDisabled || !topic.trim() || loading"
+                >
+                  <mat-spinner *ngIf="loading" diameter="18"></mat-spinner>
+                  <mat-icon *ngIf="!loading">auto_awesome</mat-icon>
+                  Generate Board
+                </button>
+              </div>
+
+              <p class="control-error" *ngIf="error">{{ error }}</p>
           </div>
 
-          <div class="control-actions">
-            <!-- Button shares Promptle styling but kicks off a Connections-specific generation flow. -->
-            <button
-              matButton="filled"
-              class="rect-btn promp1-btn generate-btn"
-              type="button"
-              (click)="generateGame()"
-              [disabled]="aiInputDisabled || !topic.trim() || loading"
-            >
-              <mat-spinner *ngIf="loading" diameter="18"></mat-spinner>
-              <mat-icon *ngIf="!loading">auto_awesome</mat-icon>
-              Generate Board
-            </button>
+          <div class="upgrade-notice-slot" *ngIf="auth0Id && !hasAIAccess && upgradeNoticeVisible">
+            <app-ai-upgrade-notice (dismissed)="onUpgradeDismissed()"></app-ai-upgrade-notice>
           </div>
 
-          <p class="control-error" *ngIf="error">{{ error }}</p>
-        </ng-container>
-
-        <ng-container *ngIf="!canUseAI">
-          <!-- Non-dev users see this instead of the topic form when AI generation is globally disabled. -->
-          <div class="connections-disabled">
-            <div class="connections-disabled__icon">
-              <mat-icon>block</mat-icon>
-            </div>
-            <div class="connections-disabled__copy">
-              <span class="eyebrow">Unavailable</span>
-              <h2>Sorry! Connections is currently disabled, please try again later..</h2>
-            </div>
-          </div>
-        </ng-container>
+        </div>
       </section>
     </section>
 

@@ -12,6 +12,7 @@ import { MatButtonModule } from '@angular/material/button';
 })
 export class AiUpgradeNoticeComponent {
   @Output() dismissed = new EventEmitter<void>();
+  dismissing = false;
 
   constructor(private router: Router) {}
 
@@ -20,6 +21,7 @@ export class AiUpgradeNoticeComponent {
   }
 
   dismiss() {
-    this.dismissed.emit();
+    this.dismissing = true;
+    setTimeout(() => this.dismissed.emit(), 180);
   }
 }

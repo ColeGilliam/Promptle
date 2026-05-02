@@ -114,13 +114,14 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
   hasAIAccess = false;
   upgradeNoticeVisible = true;
 
-  get canUseAI(): boolean {
-    return this.isLoggedIn;
-  }
+  get canUseAI(): boolean { return true; }
+  get aiInputDisabled(): boolean { return !this.hasAIAccess; }
+  get isGuest(): boolean { return !this.isLoggedIn; }
 
-  get aiInputDisabled(): boolean {
-    return !this.hasAIAccess;
-  }
+  login() { this.auth.login(); }
+
+  onUpgradeDismissed() { this.upgradeNoticeVisible = false; }
+  onLockedInputClick() { if (!this.hasAIAccess) this.upgradeNoticeVisible = true; }
 
   get promptleDailyGame(): { topic?: string; date?: string; available?: boolean } | null {
     return this.dailyGames['promptle'] || null;

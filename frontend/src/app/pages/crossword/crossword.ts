@@ -129,7 +129,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
   wordRevealCount = 0;
   puzzleRevealCount = 0;
   private hasShownIncorrectCompletionPopup = false;
-  private auth0Id = '';
+  auth0Id = '';
   private currentPlayId = '';
   private currentDailyGame: DailyGameMeta | null = null;
   shareUrl = '';
@@ -153,7 +153,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
   private readonly saveStorageKey = 'promptle_crossword_saved_game';
 
   constructor(
-    private auth: AuthenticationService,
+    public auth: AuthenticationService,
     private crosswordGameService: CrosswordGameService,
     private http: HttpClient,
     private gameFeedbackService: GameFeedbackService,
@@ -205,9 +205,11 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     return !!this.auth0Id;
   }
 
-  get aiInputDisabled(): boolean {
-    return !this.hasAIAccess;
-  }
+  get aiInputDisabled(): boolean { return !this.hasAIAccess; }
+
+  login() { this.auth.login(); }
+  onUpgradeDismissed() { this.upgradeNoticeVisible = false; }
+  onLockedInputClick() { if (!this.hasAIAccess) this.upgradeNoticeVisible = true; }
 
   get topicIdeas(): RecommendationItem[] {
     return this.recommendations.filter((item) => item.type === 'custom').slice(0, 3);
