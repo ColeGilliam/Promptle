@@ -573,6 +573,13 @@
   color: #818cf8;
 }
 
+.auth-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 120px 24px;
+}
+
 .not-logged-in {
   display: flex;
   flex-direction: column;

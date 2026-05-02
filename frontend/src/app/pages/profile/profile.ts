@@ -5,6 +5,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthenticationService } from '../../services/authentication.service';
 import { ProfileService } from '../../services/profile.service';
 import { BillingService, BillingStatus } from '../../services/billing.service';
@@ -25,6 +26,7 @@ import { MiniFooterComponent } from '../../shared/ui/minifooter/minifooter';
     MatInputModule,
     MatButtonModule,
     MatIconModule,
+    MatProgressSpinnerModule,
     FormsModule,
     NavbarComponent,
     MiniFooterComponent,
@@ -33,6 +35,7 @@ import { MiniFooterComponent } from '../../shared/ui/minifooter/minifooter';
   styleUrls: ['./profile.css'],
 })
 export class ProfileComponent implements OnInit {
+  authChecking = true;
   isLoggedIn = false;
   isDarkTheme = false;
   dbUsername: string = '';
@@ -87,11 +90,11 @@ export class ProfileComponent implements OnInit {
       this.router.navigate([], { queryParams: {}, replaceUrl: true });
     }
 
-    this.auth.isAuthenticated$.subscribe((status) => {
-      this.isLoggedIn = status;
-    });
-
     this.auth.user$.subscribe((user) => {
+      if (user === undefined) return; // Auth0 still initializing — wait
+      this.authChecking = false;
+      this.isLoggedIn = !!user;
+
       if (user) {
         this.registerUser(user);
       }

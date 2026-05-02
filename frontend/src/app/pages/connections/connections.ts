@@ -114,6 +114,8 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
   private sessionInteracted = false;
   private sessionFinalized = false;
 
+  private readonly saveStorageKey = 'promptle_connections_saved_game';
+
   // Hold onto the shake timer so a reset/new generation can cancel stale animations cleanly.
   private shakeTimeout: ReturnType<typeof setTimeout> | null = null;
   private timerHandle: ReturnType<typeof window.setInterval> | null = null;
@@ -134,6 +136,7 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     // Frontend mirrors the same AI-generation gate the backend enforces.
     this.loadDevSettings();
+    this.tryRestoreSavedGame();
 
     this.auth.user$.subscribe((user) => {
       this.isDevAccount = user?.email === 'promptle99@gmail.com';
@@ -541,9 +544,11 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
         this.viewingEndedBoard = false;
         this.stopTimer();
         this.finalizeCurrentSession('completed');
+        this.clearSavedGame();
       } else {
         this.feedback = `Solved: ${matchedGroup.category}`;
         this.feedbackTone = 'success';
+        this.saveGame();
       }
       return;
     }
@@ -575,6 +580,9 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
         this.feedbackTone = 'danger';
         this.viewingEndedBoard = false;
         this.stopTimer();
+        this.clearSavedGame();
+      } else {
+        this.saveGame();
       }
     }, 430);
   }
@@ -661,6 +669,7 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
   }
 
   private applyGame(game: ConnectionsGameData, options: { isShared?: boolean } = {}): void {
+    this.clearSavedGame();
     this.clearPendingShake();
     this.currentDailyGame = game.dailyGame ?? null;
     this.isSharedGame = !!options.isShared;
@@ -1011,6 +1020,57 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
         this.sessionFinalized = false;
       },
     });
+  }
+
+  private saveGame(): void {
+    if (!this.hasGame || this.gameOver) return;
+    try {
+      const state = {
+        activeTopic: this.activeTopic,
+        boardWords: this.boardWords,
+        solvedGroups: this.solvedGroups,
+        remainingGroups: this.remainingGroups,
+        allGroups: this.allGroups,
+        mistakesLeft: this.mistakesLeft,
+        gameOver: this.gameOver,
+        gameWon: this.gameWon,
+        guessRecapRows: this.guessRecapRows,
+        elapsedSeconds: this.elapsedSeconds,
+      };
+      localStorage.setItem(this.saveStorageKey, JSON.stringify(state));
+    } catch { /* storage unavailable — ignore */ }
+  }
+
+  private clearSavedGame(): void {
+    try { localStorage.removeItem(this.saveStorageKey); } catch { /* ignore */ }
+  }
+
+  private tryRestoreSavedGame(): boolean {
+    try {
+      const raw = localStorage.getItem(this.saveStorageKey);
+      if (!raw) return false;
+      const state = JSON.parse(raw);
+      if (!state?.activeTopic || !Array.isArray(state.boardWords) || !Array.isArray(state.remainingGroups)) return false;
+
+      this.activeTopic = state.activeTopic;
+      this.boardWords = state.boardWords;
+      this.solvedGroups = state.solvedGroups ?? [];
+      this.remainingGroups = state.remainingGroups;
+      this.allGroups = state.allGroups ?? [];
+      this.mistakesLeft = state.mistakesLeft ?? this.maxMistakes;
+      this.gameOver = state.gameOver ?? false;
+      this.gameWon = state.gameWon ?? false;
+      this.guessRecapRows = state.guessRecapRows ?? [];
+      this.elapsedSeconds = state.elapsedSeconds ?? 0;
+      this.showTopicPrompt = false;
+      this.feedback = 'Welcome back! Pick up where you left off.';
+      this.feedbackTone = 'neutral';
+      if (!this.gameOver) this.startTimer();
+      return true;
+    } catch {
+      this.clearSavedGame();
+      return false;
+    }
   }
 
   // Fisher-Yates shuffle for client-side tile order randomization.

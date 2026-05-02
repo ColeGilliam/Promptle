@@ -32,7 +32,11 @@
   }
 
   <div class="page-layout">
-    @if (isLoggedIn) {
+    @if (authChecking) {
+      <div class="auth-loading">
+        <mat-spinner diameter="36"></mat-spinner>
+      </div>
+    } @else if (isLoggedIn) {
       <!-- Profile content -->
       <div class="profile-container">
 
