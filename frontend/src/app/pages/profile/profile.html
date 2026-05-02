@@ -35,6 +35,82 @@
     @if (isLoggedIn) {
       <!-- Profile content -->
       <div class="profile-container">
+
+        @if (billingBanner) {
+          <div class="billing-banner" [class.billing-banner--success]="billingBanner.type === 'success'" [class.billing-banner--cancel]="billingBanner.type === 'cancel'">
+            <mat-icon>{{ billingBanner.type === 'success' ? 'check_circle' : 'info' }}</mat-icon>
+            <span>{{ billingBanner.message }}</span>
+            <button class="billing-banner-close" (click)="billingBanner = null">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+        }
+
+        <!-- Billing card — full width -->
+        <mat-card class="billing-card">
+          <mat-card-content>
+            <h2 class="card-section-title">Subscription &amp; Tokens</h2>
+
+            @if (billingLoading) {
+              <p class="billing-loading">Loading…</p>
+            } @else if (billingStatus?.isDev) {
+              <div class="billing-tier billing-tier--dev">
+                <mat-icon class="billing-tier-icon">star</mat-icon>
+                <div>
+                  <div class="billing-tier-label">Dev Account</div>
+                  <div class="billing-tier-sub">Full access, no charge</div>
+                </div>
+              </div>
+            } @else if (billingStatus?.subscription?.status === 'active') {
+              <div class="billing-tier billing-tier--active">
+                <mat-icon class="billing-tier-icon">check_circle</mat-icon>
+                <div>
+                  <div class="billing-tier-label">Monthly Subscription</div>
+                  <div class="billing-tier-sub">Renews {{ subscriptionPeriodEnd }}</div>
+                </div>
+              </div>
+              <p class="billing-tokens-row">
+                <mat-icon class="token-icon">toll</mat-icon>
+                <span>{{ billingStatus?.tokenBalance ?? 0 }} tokens also available</span>
+              </p>
+              <button mat-stroked-button class="billing-portal-btn" (click)="openBillingPortal()">
+                <mat-icon>manage_accounts</mat-icon> Manage Subscription
+              </button>
+            } @else {
+              <div class="billing-tier billing-tier--free">
+                <mat-icon class="billing-tier-icon">lock_open</mat-icon>
+                <div>
+                  <div class="billing-tier-label">Free Plan</div>
+                  <div class="billing-tier-sub">Daily puzzles &amp; database games</div>
+                </div>
+              </div>
+
+              @if ((billingStatus?.tokenBalance ?? 0) > 0) {
+                <p class="billing-tokens-row">
+                  <mat-icon class="token-icon">toll</mat-icon>
+                  <span><strong>{{ billingStatus?.tokenBalance }}</strong> AI generation tokens</span>
+                </p>
+              }
+
+              <div class="billing-upgrade">
+                <p class="billing-upgrade-label">Unlock custom AI game creation:</p>
+                <div class="billing-upgrade-options">
+                  <button mat-flat-button class="billing-sub-btn" (click)="subscribe('subscription')">
+                    <mat-icon>autorenew</mat-icon>
+                    $3 / month
+                  </button>
+                  <button mat-stroked-button class="billing-token-btn" (click)="subscribe('tokens')">
+                    <mat-icon>toll</mat-icon>
+                    150 tokens for $5
+                  </button>
+                </div>
+                <p class="billing-upgrade-hint">Tokens never expire &bull; 1 token = 1 AI game</p>
+              </div>
+            }
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Two-column row: profile + stats -->
         <div class="profile-content">
           <!-- LEFT: Profile card -->
           <mat-card class="profile-card">
@@ -58,15 +134,15 @@
               <p class="field-error" *ngIf="saveError">{{ saveError }}</p>
             </mat-card-content>
 
-          <mat-card-actions class="actions">
-            <button matButton="filled" class="promp1-btn rect-btn save-btn" (click)="saveProfile()">
-              <mat-icon>save</mat-icon> Save Changes
-            </button>
-            <button matButton="outlined" class="danger-btn rect-btn" (click)="deleteAccount()">
-              <mat-icon>delete_forever</mat-icon> Delete Account
-            </button>
-          </mat-card-actions>
-        </mat-card>
+            <mat-card-actions class="actions">
+              <button matButton="filled" class="promp1-btn rect-btn save-btn" (click)="saveProfile()">
+                <mat-icon>save</mat-icon> Save Changes
+              </button>
+              <button matButton="outlined" class="danger-btn rect-btn" (click)="deleteAccount()">
+                <mat-icon>delete_forever</mat-icon> Delete Account
+              </button>
+            </mat-card-actions>
+          </mat-card>
 
           <!-- Right: Stats card -->
           <mat-card class="stats-card">

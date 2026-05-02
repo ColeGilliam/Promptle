@@ -24,6 +24,7 @@ import {
   sharedGameCreationBurstLimiter,
   topicAiGenerationBurstLimiter,
 } from '../middleware/rateLimit.js';
+import { createCheckout, stripeWebhook, billingStatus, billingPortal } from '../controllers/billingController.js';
 
 
 const router = express.Router();
@@ -61,5 +62,10 @@ router.delete('/api/game/rooms/:roomId', deleteRoom);
 router.get('/api/dev-settings', getDevSettings);
 router.put('/api/dev-settings', updateDevSettings);
 router.post('/api/dev-settings/daily-games/:mode/regenerate', regenerateDailyGame);
+
+router.post('/api/billing/checkout', createCheckout);
+router.post('/api/billing/webhook', stripeWebhook);
+router.get('/api/billing/status/:auth0Id', billingStatus);
+router.post('/api/billing/portal', billingPortal);
 
 export default router;

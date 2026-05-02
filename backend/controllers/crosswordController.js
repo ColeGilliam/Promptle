@@ -30,6 +30,7 @@ import {
   summarizeRawAiOutput,
 } from '../services/aiSecurityLogging.js';
 import { validateTopicInput } from '../services/topicInputValidation.js';
+import { checkAIAccess, consumeToken } from '../services/billingService.js';
 import { appLogger } from '../lib/logger.js';
 
 const DEV_EMAIL = 'promptle99@gmail.com';
@@ -321,6 +322,17 @@ export function createGenerateCrosswordHandler({
       });
     }
     const normalizedTopic = topicValidation.topic;
+
+    const access = await checkAIAccess(auth0Id);
+    if (!access.allowed) {
+      return res.status(403).json({ error: 'AI game creation requires a subscription or tokens.', code: access.code });
+    }
+    if (access.type === 'tokens') {
+      const deducted = await consumeToken(auth0Id);
+      if (!deducted) {
+        return res.status(403).json({ error: 'AI game creation requires a subscription or tokens.', code: 'payment_required' });
+      }
+    }
 
     if (!openaiClient || !apiKey) {
       logger.error('crossword_generation_missing_api_key', {

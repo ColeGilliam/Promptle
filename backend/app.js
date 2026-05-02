@@ -10,6 +10,8 @@ const httpLogger = appLogger.child({ component: 'http' });
 const aiGenerationRoutes = ['/api/subjects', '/api/connections', '/api/crossword', '/api/game/multiplayer'];
 
 app.use(attachRequestContext(httpLogger));
+// Stripe webhook must receive the raw body for signature verification
+app.use('/api/billing/webhook', express.raw({ type: 'application/json' }));
 app.use(aiGenerationRoutes, express.json({ limit: '8kb' }));
 app.use(aiGenerationRoutes, express.urlencoded({ limit: '8kb', extended: true }));
 app.use('/api/update-profile', express.json({ limit: '4mb' }));
