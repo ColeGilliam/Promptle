@@ -47,6 +47,8 @@ export async function authUser(req, res) {
       tokenBalance: 0,
       subscription: null,
       stripeCustomerId: null,
+      lastFreeGenerationDate: null,
+      freeGenerationsUsedToday: 0,
     });
 
     res.json({ status: 'new-user-created' });

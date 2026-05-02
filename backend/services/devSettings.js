@@ -6,6 +6,7 @@ const DEFAULT_SETTINGS = {
   allowGuestsCreateRooms: false,
   allowAllAIGeneration: false,
   showPromptleAnswerAtTop: false,
+  dailyFreeGenerations: 1,
 };
 
 export async function fetchDevSettings() {

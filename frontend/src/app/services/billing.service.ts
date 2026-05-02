@@ -11,6 +11,9 @@ export interface BillingStatus {
   tokenBalance: number;
   hasAccess: boolean;
   isDev: boolean;
+  dailyFreeLimit: number;
+  freeGenerationsUsedToday: number;
+  freeGenerationsRemaining: number;
 }
 
 @Injectable({ providedIn: 'root' })

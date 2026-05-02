@@ -31,7 +31,7 @@ import {
   summarizeRawAiOutput,
 } from '../services/aiSecurityLogging.js';
 import { validateTopicInput } from '../services/topicInputValidation.js';
-import { checkAIAccess, consumeToken } from '../services/billingService.js';
+import { checkAIAccess, consumeToken, consumeDailyFreeToken } from '../services/billingService.js';
 import { appLogger } from '../lib/logger.js';
 
 const DEV_EMAIL = 'promptle99@gmail.com';
@@ -1123,6 +1123,12 @@ export function createGenerateSubjectsHandler({
       const deducted = await consumeToken(auth0Id);
       if (!deducted) {
         return res.status(403).json({ error: 'AI game creation requires a subscription or tokens.', code: 'payment_required' });
+      }
+    }
+    if (access.type === 'daily_free') {
+      const deducted = await consumeDailyFreeToken(auth0Id);
+      if (!deducted) {
+        return res.status(403).json({ error: 'Daily free limit reached.', code: 'payment_required' });
       }
     }
 

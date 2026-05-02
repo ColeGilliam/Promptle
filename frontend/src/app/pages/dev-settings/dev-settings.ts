@@ -63,6 +63,7 @@ export class DevSettingsComponent implements OnInit {
   allowGuestsCreateRooms = false;
   allowAllAIGeneration = false;
   showPromptleAnswerAtTop = false;
+  dailyFreeGenerations = 1;
   dailyGameAdmin: Record<string, {
     queue: string[];
     currentSchedule: { topic: string; date: string } | null;
@@ -104,6 +105,7 @@ export class DevSettingsComponent implements OnInit {
         this.allowGuestsCreateRooms = data.allowGuestsCreateRooms ?? false;
         this.allowAllAIGeneration = data.allowAllAIGeneration ?? false;
         this.showPromptleAnswerAtTop = data.showPromptleAnswerAtTop ?? false;
+        this.dailyFreeGenerations = data.dailyFreeGenerations ?? 1;
         this.dailyGameAdmin = data.dailyGameAdmin ?? {};
         this.hydrateDailyQueuesFromAdmin();
         this.isLoading = false;
@@ -124,6 +126,7 @@ export class DevSettingsComponent implements OnInit {
       allowGuestsCreateRooms: this.allowGuestsCreateRooms,
       allowAllAIGeneration: this.allowAllAIGeneration,
       showPromptleAnswerAtTop: this.showPromptleAnswerAtTop,
+      dailyFreeGenerations: this.dailyFreeGenerations,
       dailyGameQueues: this.buildDailyGameQueuesPayload(),
     }).subscribe({
       next: (response) => {
@@ -274,6 +277,9 @@ export class DevSettingsComponent implements OnInit {
       return accumulator;
     }, {});
   }
+
+  decrementDailyFree() { if (this.dailyFreeGenerations > 0) this.dailyFreeGenerations--; }
+  incrementDailyFree() { this.dailyFreeGenerations++; }
 
   private sanitizeQueue(value: string[] = []): string[] {
     return value

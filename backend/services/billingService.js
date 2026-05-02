@@ -8,6 +8,7 @@ import {
   CLIENT_URL,
 } from '../config/config.js';
 import { appLogger } from '../lib/logger.js';
+import { fetchDevSettings } from './devSettings.js';
 
 const billingLogger = appLogger.child({ component: 'billing' });
 
@@ -140,6 +141,10 @@ export async function handleWebhookEvent(rawBody, signature) {
   return event;
 }
 
+function todayUTC() {
+  return new Date().toISOString().split('T')[0];
+}
+
 export async function checkAIAccess(auth0Id) {
   if (!auth0Id) return { allowed: false, code: 'not_authenticated' };
 
@@ -151,11 +156,23 @@ export async function checkAIAccess(auth0Id) {
   }
 
   if (!user) return { allowed: false, code: 'not_authenticated' };
-
   if (user.email === DEV_EMAIL) return { allowed: true, type: 'dev' };
 
   if (user.subscription?.status === 'active') {
     return { allowed: true, type: 'subscription' };
+  }
+
+  // Daily free tokens — checked before paid tokens so paid balance isn't consumed unnecessarily
+  const settings = await fetchDevSettings();
+  const dailyLimit = settings.dailyFreeGenerations ?? 1;
+  if (dailyLimit > 0) {
+    const today = todayUTC();
+    const usedToday = user.lastFreeGenerationDate === today
+      ? (user.freeGenerationsUsedToday ?? 0)
+      : 0;
+    if (usedToday < dailyLimit) {
+      return { allowed: true, type: 'daily_free', remaining: dailyLimit - usedToday };
+    }
   }
 
   if ((user.tokenBalance ?? 0) > 0) {
@@ -165,7 +182,7 @@ export async function checkAIAccess(auth0Id) {
   return { allowed: false, code: 'payment_required' };
 }
 
-// Atomically deduct 1 token. Returns true if successful (user had balance >= 1).
+// Atomically deduct 1 paid token. Returns true if successful.
 export async function consumeToken(auth0Id) {
   const result = await getUsersCollection().findOneAndUpdate(
     { auth0Id, tokenBalance: { $gte: 1 } },
@@ -175,19 +192,70 @@ export async function consumeToken(auth0Id) {
   return result !== null;
 }
 
+// Atomically consume one daily free generation. Returns true if successful.
+export async function consumeDailyFreeToken(auth0Id) {
+  const settings = await fetchDevSettings();
+  const dailyLimit = settings.dailyFreeGenerations ?? 1;
+  if (dailyLimit === 0) return false;
+
+  const today = todayUTC();
+  const result = await getUsersCollection().findOneAndUpdate(
+    {
+      auth0Id,
+      $or: [
+        { lastFreeGenerationDate: { $ne: today } },
+        { lastFreeGenerationDate: today, freeGenerationsUsedToday: { $lt: dailyLimit } },
+      ],
+    },
+    [{
+      $set: {
+        freeGenerationsUsedToday: {
+          $cond: {
+            if: { $eq: ['$lastFreeGenerationDate', today] },
+            then: { $add: [{ $ifNull: ['$freeGenerationsUsedToday', 0] }, 1] },
+            else: 1,
+          },
+        },
+        lastFreeGenerationDate: today,
+      },
+    }],
+    { returnDocument: 'after' }
+  );
+  return result !== null;
+}
+
 export async function getBillingStatus(auth0Id) {
   const user = await getUsersCollection().findOne(
     { auth0Id },
-    { projection: { subscription: 1, tokenBalance: 1, stripeCustomerId: 1, email: 1 } }
+    {
+      projection: {
+        subscription: 1, tokenBalance: 1, stripeCustomerId: 1, email: 1,
+        lastFreeGenerationDate: 1, freeGenerationsUsedToday: 1,
+      },
+    }
   );
   if (!user) return null;
+
+  const settings = await fetchDevSettings();
+  const dailyFreeLimit = settings.dailyFreeGenerations ?? 1;
+  const today = todayUTC();
+  const usedToday = user.lastFreeGenerationDate === today
+    ? (user.freeGenerationsUsedToday ?? 0)
+    : 0;
+  const freeGenerationsRemaining = Math.max(0, dailyFreeLimit - usedToday);
+
   const isActive = user.subscription?.status === 'active';
   const tokenBalance = user.tokenBalance ?? 0;
+  const isDev = user.email === DEV_EMAIL;
+
   return {
     subscription: user.subscription ?? null,
     tokenBalance,
-    hasAccess: isActive || tokenBalance > 0 || user.email === DEV_EMAIL,
-    isDev: user.email === DEV_EMAIL,
+    isDev,
+    dailyFreeLimit,
+    freeGenerationsUsedToday: usedToday,
+    freeGenerationsRemaining,
+    hasAccess: isDev || isActive || freeGenerationsRemaining > 0 || tokenBalance > 0,
   };
 }
 
