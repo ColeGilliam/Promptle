@@ -1,0 +1,100 @@
+:host { display: block; }
+:host, :host * { box-sizing: border-box; }
+
+.legal-view {
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
+
+.legal-main {
+  flex: 1;
+  width: min(780px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 36px 0 56px;
+}
+
+.legal-card {
+  background: var(--mat-sys-surface-container-low, #f8fafc);
+  border: 1px solid var(--mat-sys-outline-variant, rgba(0,0,0,0.08));
+  border-radius: 16px;
+  padding: 40px 48px;
+}
+
+:host-context(.dark) .legal-card {
+  background: rgba(255,255,255,0.03);
+  border-color: rgba(255,255,255,0.08);
+}
+
+.legal-header {
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--mat-sys-outline-variant, rgba(0,0,0,0.08));
+}
+
+:host-context(.dark) .legal-header { border-color: rgba(255,255,255,0.08); }
+
+.legal-header h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0 0 6px;
+  color: var(--mat-sys-on-surface, #1e293b);
+}
+
+:host-context(.dark) .legal-header h1 { color: #f1f5f9; }
+
+.legal-meta {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.legal-section {
+  margin-bottom: 28px;
+}
+
+.legal-section h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--mat-sys-on-surface, #1e293b);
+  margin: 0 0 10px;
+}
+
+:host-context(.dark) .legal-section h2 { color: #e2e8f0; }
+
+.legal-section h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--mat-sys-on-surface, #334155);
+  margin: 16px 0 6px;
+}
+
+:host-context(.dark) .legal-section h3 { color: #cbd5e1; }
+
+.legal-section p, .legal-section li {
+  font-size: 0.93rem;
+  line-height: 1.75;
+  color: #475569;
+  margin: 0 0 8px;
+}
+
+:host-context(.dark) .legal-section p,
+:host-context(.dark) .legal-section li { color: #94a3b8; }
+
+.legal-section ul {
+  padding-left: 20px;
+  margin: 8px 0;
+}
+
+.legal-section a {
+  color: #3b82f6;
+  text-decoration: none;
+}
+
+.legal-section a:hover { text-decoration: underline; }
+
+@media (max-width: 600px) {
+  .legal-card { padding: 24px 20px; }
+  .legal-header h1 { font-size: 1.5rem; }
+}
