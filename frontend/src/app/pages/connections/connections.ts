@@ -24,6 +24,8 @@ import { SharedGameService } from '../../services/shared-game';
 import { GameEndPopup, GameEndPopupRecapRow, GameEndPopupStat } from '../../shared/ui/game-end-popup/game-end-popup';
 import { DailyGameCtaComponent } from '../../shared/ui/daily-game-cta/daily-game-cta';
 import { RecommendationItem, RecommendationsService } from '../../services/recommendations';
+import { BillingService } from '../../services/billing.service';
+import { AiUpgradeNoticeComponent } from '../../shared/ui/ai-upgrade-notice/ai-upgrade-notice';
 
 const CONNECTIONS_GENERATION_ERROR = 'Sorry! The Connections failed to generate. Please try again.';
 
@@ -57,6 +59,7 @@ interface ConnectionsGroupState extends ConnectionsGroup {
     NavbarComponent,
     GameEndPopup,
     DailyGameCtaComponent,
+    AiUpgradeNoticeComponent,
   ],
   templateUrl: './connections.html',
   styleUrls: ['./connections.css'],
@@ -124,7 +127,8 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
     private router: Router,
     private route: ActivatedRoute,
     private sharedGameService: SharedGameService,
-    private recommendationsService: RecommendationsService
+    private recommendationsService: RecommendationsService,
+    private billingService: BillingService,
   ) {}
 
   ngOnInit(): void {
@@ -136,8 +140,12 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
       this.auth0Id = user?.sub ?? '';
       if (this.auth0Id) {
         this.loadRecommendations();
+        this.billingService.getStatus(this.auth0Id).subscribe(s => {
+          this.hasAIAccess = s?.hasAccess ?? false;
+        });
       } else {
         this.recommendations = [];
+        this.hasAIAccess = false;
       }
     });
 
@@ -155,8 +163,15 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
     this.clearShareRateLimitCooldown();
   }
 
+  hasAIAccess = false;
+  upgradeNoticeVisible = true;
+
   get canUseAI(): boolean {
-    return true;
+    return !!this.auth0Id;
+  }
+
+  get aiInputDisabled(): boolean {
+    return !this.hasAIAccess;
   }
 
   get topicIdeas(): RecommendationItem[] {

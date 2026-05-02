@@ -77,6 +77,11 @@
         </div>
 
         <ng-container *ngIf="canUseAI">
+          <app-ai-upgrade-notice
+            *ngIf="!hasAIAccess && upgradeNoticeVisible"
+            (dismissed)="upgradeNoticeVisible = false"
+          ></app-ai-upgrade-notice>
+
           <app-load-saved-game-card
             *ngIf="showSavedGamePrompt"
             [topic]="savedGameTopic"
@@ -92,6 +97,7 @@
               matInput
               placeholder="Type any topic"
               [(ngModel)]="topic"
+              [disabled]="aiInputDisabled"
               (focus)="onTopicFocus()"
               (blur)="onTopicBlur()"
               (keydown.enter)="generateGame()"
@@ -118,7 +124,7 @@
               class="rect-btn promp1-btn generate-btn"
               type="button"
               (click)="generateGame()"
-              [disabled]="!topic.trim() || loading"
+              [disabled]="aiInputDisabled || !topic.trim() || loading"
             >
               <mat-spinner *ngIf="loading" diameter="18"></mat-spinner>
               <mat-icon *ngIf="!loading">auto_awesome</mat-icon>

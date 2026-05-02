@@ -1,0 +1,88 @@
+.upgrade-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.07), rgba(59, 130, 246, 0.07));
+  border: 1px solid rgba(99, 102, 241, 0.22);
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.upgrade-notice__icon {
+  color: #6366f1;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.upgrade-notice__icon mat-icon {
+  font-size: 1.1rem;
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.upgrade-notice__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.upgrade-notice__title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--mat-sys-on-surface, #1e293b);
+}
+
+.upgrade-notice__sub {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.upgrade-notice__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(135deg, #6366f1, #3b82f6);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+}
+
+.upgrade-notice__cta:hover { opacity: 0.88; }
+
+.upgrade-notice__cta mat-icon {
+  font-size: 0.9rem;
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.upgrade-notice__close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  color: #94a3b8;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+
+.upgrade-notice__close:hover { color: #475569; }
+
+.upgrade-notice__close mat-icon {
+  font-size: 1rem;
+  width: 1rem;
+  height: 1rem;
+}

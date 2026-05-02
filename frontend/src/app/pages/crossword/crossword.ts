@@ -29,6 +29,8 @@ import { SharedGameService } from '../../services/shared-game';
 import { GameEndPopup, GameEndPopupStat } from '../../shared/ui/game-end-popup/game-end-popup';
 import { DailyGameCtaComponent } from '../../shared/ui/daily-game-cta/daily-game-cta';
 import { RecommendationItem, RecommendationsService } from '../../services/recommendations';
+import { BillingService } from '../../services/billing.service';
+import { AiUpgradeNoticeComponent } from '../../shared/ui/ai-upgrade-notice/ai-upgrade-notice';
 
 type FeedbackTone = 'neutral' | 'success' | 'danger';
 const CROSSWORD_GENERATION_ERROR = 'Sorry! The crossword failed to generate. Please try again.';
@@ -83,6 +85,7 @@ interface ClueCheckSummary {
     LoadSavedGameCard,
     GameEndPopup,
     DailyGameCtaComponent,
+    AiUpgradeNoticeComponent,
   ],
   templateUrl: './crossword.html',
   styleUrls: ['./crossword.css'],
@@ -158,7 +161,8 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     private router: Router,
     private route: ActivatedRoute,
     private sharedGameService: SharedGameService,
-    private recommendationsService: RecommendationsService
+    private recommendationsService: RecommendationsService,
+    private billingService: BillingService,
   ) {}
 
   ngOnInit(): void {
@@ -169,8 +173,12 @@ export class CrosswordComponent implements OnInit, OnDestroy {
       this.auth0Id = user?.sub ?? '';
       if (this.auth0Id) {
         this.loadRecommendations();
+        this.billingService.getStatus(this.auth0Id).subscribe(s => {
+          this.hasAIAccess = s?.hasAccess ?? false;
+        });
       } else {
         this.recommendations = [];
+        this.hasAIAccess = false;
       }
     });
 
@@ -190,8 +198,15 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     this.clearShareRateLimitCooldown();
   }
 
+  hasAIAccess = false;
+  upgradeNoticeVisible = true;
+
   get canUseAI(): boolean {
-    return true;
+    return !!this.auth0Id;
+  }
+
+  get aiInputDisabled(): boolean {
+    return !this.hasAIAccess;
   }
 
   get topicIdeas(): RecommendationItem[] {

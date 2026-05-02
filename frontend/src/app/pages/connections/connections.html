@@ -53,6 +53,11 @@
         </div>
 
         <ng-container *ngIf="canUseAI">
+          <app-ai-upgrade-notice
+            *ngIf="!hasAIAccess && upgradeNoticeVisible"
+            (dismissed)="upgradeNoticeVisible = false"
+          ></app-ai-upgrade-notice>
+
           <!-- The only required input for a generated board is a free-form topic string. -->
           <mat-form-field appearance="fill" class="topic-field" subscriptSizing="dynamic">
             <mat-label>Enter a topic</mat-label>
@@ -60,6 +65,7 @@
               matInput
               placeholder="Type any topic"
               [(ngModel)]="topic"
+              [disabled]="aiInputDisabled"
               (focus)="onTopicFocus()"
               (blur)="onTopicBlur()"
               (keydown.enter)="generateGame()"
@@ -98,7 +104,7 @@
               class="rect-btn promp1-btn generate-btn"
               type="button"
               (click)="generateGame()"
-              [disabled]="!topic.trim() || loading"
+              [disabled]="aiInputDisabled || !topic.trim() || loading"
             >
               <mat-spinner *ngIf="loading" diameter="18"></mat-spinner>
               <mat-icon *ngIf="!loading">auto_awesome</mat-icon>

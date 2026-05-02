@@ -210,7 +210,7 @@
         </mat-card-content>
       </mat-card>
 
-      <!-- AI / Custom topic card (only when dev account or AI gen enabled) -->
+      <!-- AI / Custom topic card -->
       <mat-card class="play-card reveal" style="--delay: 100ms" *ngIf="canUseAI">
         <mat-card-content>
           <div class="play-card-header">
@@ -222,12 +222,18 @@
           <p class="play-card-desc">Enter any topic and AI generates a brand-new Promptle on the fly.</p>
 
           <div class="play-card-form">
+            <app-ai-upgrade-notice
+              *ngIf="!hasAIAccess && upgradeNoticeVisible"
+              (dismissed)="upgradeNoticeVisible = false"
+            ></app-ai-upgrade-notice>
+
             <mat-form-field appearance="fill" class="topic-field" subscriptSizing="dynamic">
               <mat-label>Enter a custom topic</mat-label>
               <input
                 matInput
                 placeholder="e.g. Marvel Characters, Sitcoms..."
                 [(ngModel)]="customTopic"
+                [disabled]="aiInputDisabled"
                 (ngModelChange)="onCustomTopicChange($event)"
                 (focus)="onCustomTopicFocus()"
                 (blur)="onCustomTopicBlur()"
@@ -270,7 +276,7 @@
                 <button
                   matButton="filled"
                   class="rect-btn promp2-btn play-start-btn"
-                  [disabled]="!customTopic.trim() || isCreatingRoom || isValidatingCustomTopic"
+                  [disabled]="aiInputDisabled || !customTopic.trim() || isCreatingRoom || isValidatingCustomTopic"
                   (click)="startMatchedCustomGame()"
                 >
                   {{ matchedTopicActionLabel }}
@@ -279,7 +285,7 @@
                 <button
                   matButton="outlined"
                   class="rect-btn play-start-btn play-start-btn-alt"
-                  [disabled]="!customTopic.trim() || isCreatingRoom || isValidatingCustomTopic"
+                  [disabled]="aiInputDisabled || !customTopic.trim() || isCreatingRoom || isValidatingCustomTopic"
                   (click)="startCustomGeneratedGame()"
                 >
                   {{ customGeneratedActionLabel }}
@@ -291,7 +297,7 @@
               <button
                 matButton="filled"
                 class="rect-btn promp2-btn play-start-btn"
-                [disabled]="!customTopic.trim() || isCreatingRoom || isValidatingCustomTopic"
+                [disabled]="aiInputDisabled || !customTopic.trim() || isCreatingRoom || isValidatingCustomTopic"
                 (click)="startAiGame()"
               >
                 {{ customTopicActionLabel }}
