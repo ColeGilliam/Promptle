@@ -1420,9 +1420,9 @@ export class PromptleComponent implements OnInit, OnDestroy {
     if (!guessedCell || !correctCell) return false;
     if (guessedCell.kind === 'number' || correctCell.kind === 'number') return false;
 
-    const guessedTokens = this.getComparableTokens(guessedCell);
-    const correctTokens = this.getComparableTokens(correctCell);
-    return this.countOverlap(guessedTokens, correctTokens) >= 2;
+    const guessedTokens = this.getComparableTokens(guessedCell).filter(t => t.length >= 3);
+    const correctTokens = this.getComparableTokens(correctCell).filter(t => t.length >= 3);
+    return this.countOverlap(guessedTokens, correctTokens) >= 1;
   }
 
   private getComparableItems(cell?: GameCell): string[] {
