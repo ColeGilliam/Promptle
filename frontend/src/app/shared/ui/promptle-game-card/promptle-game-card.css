@@ -60,17 +60,23 @@
   padding-right: 48px;
 }
 
-.game-topic-left-shell.left-hidden .game-topic-left {
-  pointer-events: none;
-}
-
 .left-pane-toggle {
   position: absolute;
   top: 4px;
   right: 4px;
   z-index: 2;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
   --mat-fab-small-container-elevation-shadow: none;
   box-shadow: none !important;
+}
+
+.left-pane-toggle mat-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+  line-height: 18px;
 }
 
 .left-pane-toggle.left-pane-toggle-enabled {
@@ -83,6 +89,7 @@
   --mat-fab-small-container-color: var(--game-topic-toggle-off-bg);
   --mat-fab-small-foreground-color: var(--game-topic-toggle-off-fg);
   --mat-fab-small-state-layer-color: var(--game-topic-toggle-off-state);
+  right: 12px;
 }
 
 /* ── Logo ── */
@@ -158,6 +165,14 @@
   flex-direction: column;
   gap: 8px;
   padding-right: 8px;
+  box-sizing: border-box;
+}
+
+.chat-panel-frame {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-width: 0;
 }
 
 .chat-messages {
@@ -427,7 +442,6 @@
   .split-topic-card {
     display: flex;
     flex-direction: column;
-    gap: 0;
   }
 
   .game-topic-right {

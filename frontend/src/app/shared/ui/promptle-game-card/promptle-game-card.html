@@ -4,16 +4,15 @@
     <!-- Left: Logo + Topic  OR  Chat (toggled by button) -->
     <div class="game-topic-left-shell">
       <button
-        *ngIf="isMultiplayer"
+        *ngIf="isMultiplayer && !chatOpen"
         matMiniFab
         type="button"
         class="left-pane-toggle"
-        [class.left-pane-toggle-enabled]="chatOpen"
-        [class.left-pane-toggle-disabled]="!chatOpen"
+        [class.left-pane-toggle-disabled]="true"
         (click)="toggleChat()"
-        [attr.aria-label]="chatOpen ? 'Back to topic' : 'Open chat'"
+        aria-label="Open chat"
       >
-        <mat-icon>{{ chatOpen ? 'close' : 'chat' }}</mat-icon>
+        <mat-icon>chat</mat-icon>
       </button>
 
       <!-- Topic view (default) -->
@@ -39,7 +38,18 @@
 
       <!-- Chat view (when toggled) -->
       <div class="game-topic-chat" *ngIf="isMultiplayer && chatOpen">
-        <div class="chat-messages" #chatScroll>
+        <div class="chat-panel-frame">
+          <button
+            matMiniFab
+            type="button"
+            class="left-pane-toggle left-pane-toggle-enabled"
+            (click)="toggleChat()"
+            aria-label="Back to topic"
+          >
+            <mat-icon>close</mat-icon>
+          </button>
+          <div class="chat-messages" #chatScroll>
+
           <p class="chat-empty" *ngIf="chatMessages.length === 0">No messages yet — say hello!</p>
           <div
             *ngFor="let msg of chatMessages"
@@ -48,6 +58,7 @@
           >
             <span class="chat-sender">{{ msg.senderName }}</span>
             <span class="chat-text">{{ msg.text }}</span>
+          </div>
           </div>
         </div>
         <div class="chat-input-row">
