@@ -514,7 +514,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 24px;
-  align-items: stretch;
+  align-items: start;
 }
 
 /* Play cards */
@@ -525,6 +525,7 @@
   transition: transform 0.25s ease, box-shadow 0.25s ease !important;
   display: flex !important;
   flex-direction: column !important;
+  min-height: 318px;
 }
 
 .play-card:hover {
@@ -584,6 +585,10 @@
   line-height: 1.5;
 }
 
+.play-card mat-card-content > .play-card-desc {
+  min-height: 42px;
+}
+
 /* Topic input field */
 .topic-field {
   width: 100%;
@@ -606,7 +611,6 @@
 /* Wrapper that holds the form + notice side-by-side */
 .play-card-form-wrap {
   position: relative;
-  margin-top: auto;
 }
 
 /* Guest overlay — faint frosted glass over the form area */
@@ -1134,7 +1138,7 @@
     0 8px 18px rgba(15, 23, 42, 0.18);
 }
 
-.conn-row-yellow { background: linear-gradient(90deg, rgba(245, 158, 11, 0.78), rgba(254, 249, 195, 0.96)); }
+.conn-row-yellow { background: linear-gradient(90deg, rgba(250, 204, 21, 0.9), rgba(254, 240, 138, 0.98)); }
 .conn-row-green  { background: linear-gradient(90deg, rgba(22, 163, 74, 0.78), rgba(220, 252, 231, 0.96)); }
 .conn-row-blue   { background: linear-gradient(90deg, rgba(37, 99, 235, 0.8), rgba(219, 234, 254, 0.96)); }
 .conn-row-purple { background: linear-gradient(90deg, rgba(147, 51, 234, 0.78), rgba(243, 232, 255, 0.96)); }
@@ -1147,7 +1151,7 @@
     0 12px 24px rgba(2, 6, 23, 0.32);
 }
 
-:host-context(.dark) .conn-row-yellow { background: linear-gradient(135deg, rgba(113, 63, 18, 0.82), rgba(217, 119, 6, 0.68)); }
+:host-context(.dark) .conn-row-yellow { background: linear-gradient(135deg, rgba(250, 204, 21, 0.9), rgba(255, 234, 0, 0.74)); }
 :host-context(.dark) .conn-row-green  { background: linear-gradient(135deg, rgba(20, 83, 45, 0.82), rgba(22, 163, 74, 0.68)); }
 :host-context(.dark) .conn-row-blue   { background: linear-gradient(135deg, rgba(30, 64, 175, 0.82), rgba(37, 99, 235, 0.68)); }
 :host-context(.dark) .conn-row-purple { background: linear-gradient(135deg, rgba(88, 28, 135, 0.84), rgba(147, 51, 234, 0.68)); }
@@ -1195,8 +1199,8 @@
 }
 
 .game-icon-connections {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  color: #fff;
+  background: linear-gradient(135deg, #fde047, #facc15);
+  color: #111827;
 }
 
 .game-icon-crossword {

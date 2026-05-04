@@ -26,6 +26,25 @@ body.dark ::selection {
 :root {
   --rect-btn-radius: 8px; /* change once to control all rectangular buttons */
   --navbar-height: 62px;
+  --connections-yellow: #facc15;
+  --connections-yellow-text: #111827;
+  --connections-green: #86efac;
+  --connections-green-text: #052e16;
+  --connections-blue: #93c5fd;
+  --connections-blue-text: #172554;
+  --connections-purple: #d8b4fe;
+  --connections-purple-text: #2e1065;
+}
+
+body.dark {
+  --connections-yellow: #facc15;
+  --connections-yellow-text: #111827;
+  --connections-green: #166534;
+  --connections-green-text: #dcfce7;
+  --connections-blue: #1d4ed8;
+  --connections-blue-text: #dbeafe;
+  --connections-purple: #7e22ce;
+  --connections-purple-text: #f3e8ff;
 }
 
 /* Reserve space for the fixed navbar so content doesn't hide under it */
@@ -216,8 +235,8 @@ body.colorblind-deuteranopia,
 body.colorblind-protanopia {
   --feedback-green: #2563eb;
   --feedback-green-text: #ffffff;
-  --feedback-yellow: #f97316;
-  --feedback-yellow-text: #ffffff;
+  --feedback-yellow: #facc15;
+  --feedback-yellow-text: #111827;
   --feedback-gray: #9ca3af;
   --feedback-gray-text: #ffffff;
 }
@@ -225,8 +244,8 @@ body.colorblind-protanopia {
 body.colorblind-tritanopia {
   --feedback-green: #0f766e;
   --feedback-green-text: #ffffff;
-  --feedback-yellow: #db2777;
-  --feedback-yellow-text: #ffffff;
+  --feedback-yellow: #facc15;
+  --feedback-yellow-text: #111827;
   --feedback-gray: #94a3b8;
   --feedback-gray-text: #ffffff;
 }
@@ -234,8 +253,8 @@ body.colorblind-tritanopia {
 body.colorblind-achromatopsia {
   --feedback-green: #111827;
   --feedback-green-text: #ffffff;
-  --feedback-yellow: #6b7280;
-  --feedback-yellow-text: #ffffff;
+  --feedback-yellow: #facc15;
+  --feedback-yellow-text: #111827;
   --feedback-gray: #d1d5db;
   --feedback-gray-text: #111827;
 }
@@ -243,18 +262,22 @@ body.colorblind-achromatopsia {
 body.high-contrast {
   --feedback-green: #00c853;
   --feedback-green-text: #ffffff;
-  --feedback-yellow: #f5793a;
-  --feedback-yellow-text: #ffffff;
+  --feedback-yellow: #ffea00;
+  --feedback-yellow-text: #111827;
   --feedback-gray: #3a3a3c;
   --feedback-gray-text: #ffffff;
-  --connections-yellow: #d97706;
-  --connections-yellow-soft: #fef3c7;
+  --connections-yellow: #ffea00;
+  --connections-yellow-soft: #fff7a8;
+  --connections-yellow-text: #111827;
   --connections-green: #059669;
   --connections-green-soft: #d1fae5;
+  --connections-green-text: #ffffff;
   --connections-blue: #1d4ed8;
   --connections-blue-soft: #dbeafe;
+  --connections-blue-text: #ffffff;
   --connections-purple: #7c3aed;
   --connections-purple-soft: #ede9fe;
+  --connections-purple-text: #ffffff;
   --crossword-correct-bg: rgba(0, 200, 83, 0.18);
   --crossword-correct-border: #00c853;
   --crossword-wrong-bg: rgba(245, 121, 58, 0.18);
@@ -262,14 +285,18 @@ body.high-contrast {
 }
 
 body.dark.high-contrast {
-  --connections-yellow: #fbbf24;
-  --connections-yellow-soft: rgba(120, 53, 15, 0.88);
-  --connections-green: #34d399;
+  --connections-yellow: #ffea00;
+  --connections-yellow-soft: #fff7a8;
+  --connections-yellow-text: #111827;
+  --connections-green: #00e676;
   --connections-green-soft: rgba(5, 46, 22, 0.88);
-  --connections-blue: #60a5fa;
+  --connections-green-text: #052e16;
+  --connections-blue: #00b0ff;
   --connections-blue-soft: rgba(29, 78, 216, 0.88);
-  --connections-purple: #c084fc;
+  --connections-blue-text: #0f172a;
+  --connections-purple: #d946ef;
   --connections-purple-soft: rgba(76, 29, 149, 0.88);
+  --connections-purple-text: #2e1065;
   --crossword-correct-bg: rgba(0, 200, 83, 0.28);
   --crossword-correct-border: rgba(0, 200, 83, 0.55);
   --crossword-wrong-bg: rgba(245, 121, 58, 0.28);
@@ -281,8 +308,8 @@ body.high-contrast.colorblind-deuteranopia,
 body.high-contrast.colorblind-protanopia {
   --feedback-green: #1d4ed8;
   --feedback-green-text: #ffffff;
-  --feedback-yellow: #c2410c;
-  --feedback-yellow-text: #ffffff;
+  --feedback-yellow: #ffea00;
+  --feedback-yellow-text: #111827;
   --feedback-gray: #1f2937;
   --feedback-gray-text: #ffffff;
 }
@@ -290,8 +317,8 @@ body.high-contrast.colorblind-protanopia {
 body.high-contrast.colorblind-tritanopia {
   --feedback-green: #065f46;
   --feedback-green-text: #ffffff;
-  --feedback-yellow: #9d174d;
-  --feedback-yellow-text: #ffffff;
+  --feedback-yellow: #ffea00;
+  --feedback-yellow-text: #111827;
   --feedback-gray: #1f2937;
   --feedback-gray-text: #ffffff;
 }
@@ -299,8 +326,8 @@ body.high-contrast.colorblind-tritanopia {
 body.high-contrast.colorblind-achromatopsia {
   --feedback-green: #000000;
   --feedback-green-text: #ffffff;
-  --feedback-yellow: #4b5563;
-  --feedback-yellow-text: #ffffff;
+  --feedback-yellow: #ffea00;
+  --feedback-yellow-text: #111827;
   --feedback-gray: #e5e7eb;
   --feedback-gray-text: #000000;
 }
@@ -347,14 +374,18 @@ body.high-contrast .color-dot[style*="gray"] {
 
 body.colorblind-deuteranopia,
 body.colorblind-protanopia {
-  --connections-yellow: #f97316;
-  --connections-yellow-soft: #ffedd5;
+  --connections-yellow: #facc15;
+  --connections-yellow-soft: #fef9c3;
+  --connections-yellow-text: #111827;
   --connections-green: #2563eb;
   --connections-green-soft: #dbeafe;
+  --connections-green-text: #ffffff;
   --connections-blue: #0f766e;
   --connections-blue-soft: #ccfbf1;
+  --connections-blue-text: #ffffff;
   --connections-purple: #9333ea;
   --connections-purple-soft: #ede9fe;
+  --connections-purple-text: #ffffff;
   --crossword-correct-bg: rgba(37, 99, 235, 0.14);
   --crossword-correct-border: rgba(37, 99, 235, 0.3);
   --crossword-wrong-bg: rgba(249, 115, 22, 0.16);
@@ -363,14 +394,18 @@ body.colorblind-protanopia {
 
 body.dark.colorblind-deuteranopia,
 body.dark.colorblind-protanopia {
-  --connections-yellow: #fb923c;
-  --connections-yellow-soft: rgba(194, 65, 12, 0.76);
+  --connections-yellow: #facc15;
+  --connections-yellow-soft: #fef9c3;
+  --connections-yellow-text: #111827;
   --connections-green: #60a5fa;
   --connections-green-soft: rgba(29, 78, 216, 0.72);
+  --connections-green-text: #0f172a;
   --connections-blue: #2dd4bf;
   --connections-blue-soft: rgba(15, 118, 110, 0.76);
+  --connections-blue-text: #042f2e;
   --connections-purple: #c084fc;
   --connections-purple-soft: rgba(109, 40, 217, 0.76);
+  --connections-purple-text: #2e1065;
   --crossword-correct-bg: rgba(37, 99, 235, 0.34);
   --crossword-correct-border: rgba(96, 165, 250, 0.4);
   --crossword-wrong-bg: rgba(194, 65, 12, 0.4);
@@ -378,14 +413,18 @@ body.dark.colorblind-protanopia {
 }
 
 body.colorblind-tritanopia {
-  --connections-yellow: #dc2626;
-  --connections-yellow-soft: #fee2e2;
+  --connections-yellow: #facc15;
+  --connections-yellow-soft: #fef9c3;
+  --connections-yellow-text: #111827;
   --connections-green: #059669;
   --connections-green-soft: #d1fae5;
+  --connections-green-text: #ffffff;
   --connections-blue: #9333ea;
   --connections-blue-soft: #ede9fe;
+  --connections-blue-text: #ffffff;
   --connections-purple: #2563eb;
   --connections-purple-soft: #dbeafe;
+  --connections-purple-text: #ffffff;
   --crossword-correct-bg: rgba(5, 150, 105, 0.14);
   --crossword-correct-border: rgba(5, 150, 105, 0.28);
   --crossword-wrong-bg: rgba(220, 38, 38, 0.14);
@@ -393,14 +432,18 @@ body.colorblind-tritanopia {
 }
 
 body.dark.colorblind-tritanopia {
-  --connections-yellow: #f87171;
-  --connections-yellow-soft: rgba(153, 27, 27, 0.78);
+  --connections-yellow: #facc15;
+  --connections-yellow-soft: #fef9c3;
+  --connections-yellow-text: #111827;
   --connections-green: #34d399;
   --connections-green-soft: rgba(6, 95, 70, 0.78);
+  --connections-green-text: #052e16;
   --connections-blue: #c084fc;
   --connections-blue-soft: rgba(91, 33, 182, 0.78);
+  --connections-blue-text: #2e1065;
   --connections-purple: #60a5fa;
   --connections-purple-soft: rgba(29, 78, 216, 0.76);
+  --connections-purple-text: #0f172a;
   --crossword-correct-bg: rgba(6, 95, 70, 0.42);
   --crossword-correct-border: rgba(52, 211, 153, 0.34);
   --crossword-wrong-bg: rgba(127, 29, 29, 0.42);
@@ -408,14 +451,18 @@ body.dark.colorblind-tritanopia {
 }
 
 body.colorblind-achromatopsia {
-  --connections-yellow: #f8fafc;
-  --connections-yellow-soft: #e2e8f0;
+  --connections-yellow: #facc15;
+  --connections-yellow-soft: #fef9c3;
+  --connections-yellow-text: #111827;
   --connections-green: #e5e7eb;
   --connections-green-soft: #d1d5db;
+  --connections-green-text: #111827;
   --connections-blue: #d1d5db;
   --connections-blue-soft: #cbd5e1;
+  --connections-blue-text: #111827;
   --connections-purple: #cbd5e1;
   --connections-purple-soft: #94a3b8;
+  --connections-purple-text: #111827;
   --crossword-correct-bg: rgba(203, 213, 225, 0.58);
   --crossword-correct-border: rgba(100, 116, 139, 0.34);
   --crossword-wrong-bg: rgba(156, 163, 175, 0.46);
@@ -423,34 +470,106 @@ body.colorblind-achromatopsia {
 }
 
 body.dark.colorblind-achromatopsia {
-  --connections-yellow: #1f2937;
-  --connections-yellow-soft: #111827;
+  --connections-yellow: #facc15;
+  --connections-yellow-soft: #fef9c3;
+  --connections-yellow-text: #111827;
   --connections-green: #334155;
   --connections-green-soft: #1f2937;
+  --connections-green-text: #f8fafc;
   --connections-blue: #475569;
   --connections-blue-soft: #334155;
+  --connections-blue-text: #f8fafc;
   --connections-purple: #64748b;
   --connections-purple-soft: #475569;
+  --connections-purple-text: #111827;
   --crossword-correct-bg: rgba(71, 85, 105, 0.56);
   --crossword-correct-border: rgba(203, 213, 225, 0.2);
   --crossword-wrong-bg: rgba(51, 65, 85, 0.56);
   --crossword-wrong-border: rgba(148, 163, 184, 0.2);
 }
 
+body.high-contrast.colorblind-deuteranopia,
+body.high-contrast.colorblind-protanopia {
+  --connections-yellow: #ffea00;
+  --connections-yellow-text: #111827;
+  --connections-green: #1d4ed8;
+  --connections-green-text: #ffffff;
+  --connections-blue: #0f766e;
+  --connections-blue-text: #ffffff;
+  --connections-purple: #9333ea;
+  --connections-purple-text: #ffffff;
+}
+
+body.dark.high-contrast.colorblind-deuteranopia,
+body.dark.high-contrast.colorblind-protanopia {
+  --connections-yellow: #ffea00;
+  --connections-yellow-text: #111827;
+  --connections-green: #60a5fa;
+  --connections-green-text: #0f172a;
+  --connections-blue: #2dd4bf;
+  --connections-blue-text: #042f2e;
+  --connections-purple: #c084fc;
+  --connections-purple-text: #2e1065;
+}
+
+body.high-contrast.colorblind-tritanopia {
+  --connections-yellow: #ffea00;
+  --connections-yellow-text: #111827;
+  --connections-green: #065f46;
+  --connections-green-text: #ffffff;
+  --connections-blue: #7e22ce;
+  --connections-blue-text: #ffffff;
+  --connections-purple: #1d4ed8;
+  --connections-purple-text: #ffffff;
+}
+
+body.dark.high-contrast.colorblind-tritanopia {
+  --connections-yellow: #ffea00;
+  --connections-yellow-text: #111827;
+  --connections-green: #34d399;
+  --connections-green-text: #052e16;
+  --connections-blue: #c084fc;
+  --connections-blue-text: #2e1065;
+  --connections-purple: #60a5fa;
+  --connections-purple-text: #0f172a;
+}
+
+body.high-contrast.colorblind-achromatopsia {
+  --connections-yellow: #ffea00;
+  --connections-yellow-text: #111827;
+  --connections-green: #374151;
+  --connections-green-text: #ffffff;
+  --connections-blue: #6b7280;
+  --connections-blue-text: #ffffff;
+  --connections-purple: #d1d5db;
+  --connections-purple-text: #111827;
+}
+
+body.dark.high-contrast.colorblind-achromatopsia {
+  --connections-yellow: #ffea00;
+  --connections-yellow-text: #111827;
+  --connections-green: #cbd5e1;
+  --connections-green-text: #111827;
+  --connections-blue: #64748b;
+  --connections-blue-text: #ffffff;
+  --connections-purple: #111827;
+  --connections-purple-text: #ffffff;
+}
+
 body[class*="colorblind-"] .solved-group--yellow {
-  background: linear-gradient(90deg, var(--connections-yellow), var(--connections-yellow-soft)) !important;
+  background: var(--connections-yellow) !important;
 }
 
 body[class*="colorblind-"] .solved-group--green {
-  background: linear-gradient(90deg, var(--connections-green), var(--connections-green-soft)) !important;
+  background: var(--connections-green) !important;
 }
 
 body[class*="colorblind-"] .solved-group--blue {
-  background: linear-gradient(90deg, var(--connections-blue), var(--connections-blue-soft)) !important;
+  background: var(--connections-blue) !important;
 }
 
 body[class*="colorblind-"] .solved-group--purple {
-  background: linear-gradient(90deg, var(--connections-purple), var(--connections-purple-soft)) !important;
+  background: var(--connections-purple) !important;
 }
 
 body[class*="colorblind-"] .connections-dot--yellow,
@@ -487,19 +606,41 @@ body[class*="colorblind-"] .clue-button--checked-wrong {
 
 /* High-contrast overrides for connections solved groups */
 body.high-contrast .solved-group--yellow {
-  background: linear-gradient(90deg, var(--connections-yellow), var(--connections-yellow-soft)) !important;
+  background: var(--connections-yellow) !important;
 }
 
 body.high-contrast .solved-group--green {
-  background: linear-gradient(90deg, var(--connections-green), var(--connections-green-soft)) !important;
+  background: var(--connections-green) !important;
 }
 
 body.high-contrast .solved-group--blue {
-  background: linear-gradient(90deg, var(--connections-blue), var(--connections-blue-soft)) !important;
+  background: var(--connections-blue) !important;
 }
 
 body.high-contrast .solved-group--purple {
-  background: linear-gradient(90deg, var(--connections-purple), var(--connections-purple-soft)) !important;
+  background: var(--connections-purple) !important;
+}
+
+body.high-contrast:not(.dark) app-connections .solved-group--green,
+body.high-contrast:not(.dark) app-connections .solved-group--blue,
+body.high-contrast:not(.dark):not(.colorblind-achromatopsia) app-connections .solved-group--purple {
+  --solved-chip-bg: rgba(0, 0, 0, 0.3);
+  --solved-chip-border: rgba(255, 255, 255, 0.48);
+}
+
+body.high-contrast:not(.dark) app-connections .solved-group--yellow,
+body.high-contrast.colorblind-achromatopsia:not(.dark) app-connections .solved-group--purple {
+  --solved-chip-bg: rgba(255, 255, 255, 0.64);
+  --solved-chip-border: rgba(17, 24, 39, 0.34);
+}
+
+body.dark.high-contrast app-connections .board-group-row {
+  --solved-chip-bg: rgba(255, 255, 255, 0.68);
+  --solved-chip-border: rgba(0, 0, 0, 0.36);
+}
+
+body.dark.high-contrast app-connections .board-group-row .solved-word-chip {
+  color: #000000 !important;
 }
 
 /* High-contrast overrides for connections dots and end-screen cells */

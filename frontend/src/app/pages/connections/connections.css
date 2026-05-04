@@ -518,7 +518,7 @@
 .board-feedback--one-away {
   background: rgba(255, 251, 235, 0.92);
   border-color: rgba(245, 158, 11, 0.24);
-  color: #92400e;
+  color: #111827;
 }
 
 .board-feedback--danger {
@@ -609,13 +609,21 @@
 
 /* Solved groups stay on the board as compact rows above the remaining tiles. */
 .board-group-row {
+  --solved-group-bg: rgba(241, 245, 249, 0.88);
+  --solved-group-text: #10213d;
+  --solved-chip-bg: rgba(255, 255, 255, 0.72);
+  --solved-chip-border: transparent;
   grid-column: 1 / -1;
   padding: 12px 14px;
   border-radius: 20px;
+  background: var(--solved-group-bg);
+  color: var(--solved-group-text);
   box-shadow: 0 12px 24px rgba(61, 95, 167, 0.1);
 }
 
 :host-context(.dark) .board-group-row {
+  --solved-chip-bg: rgba(255, 255, 255, 0.08);
+  --solved-chip-border: transparent;
   border-color: rgba(255, 255, 255, 0.06);
   box-shadow: 0 14px 28px rgba(0, 0, 0, 0.26);
 }
@@ -658,7 +666,8 @@
 .solved-word-chip {
   padding: 7px 10px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.72);
+  background: var(--solved-chip-bg);
+  border: 1px solid var(--solved-chip-border);
   font-weight: 700;
   font-size: 0.84rem;
   color: #10213d;
@@ -666,7 +675,8 @@
 }
 
 :host-context(.dark) .solved-word-chip {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--solved-chip-bg);
+  border-color: var(--solved-chip-border);
   color: #eff6ff;
 }
 
@@ -675,15 +685,32 @@
 }
 
 /* Solved rows keep the standard difficulty color sequence visible on the board. */
-.solved-group--yellow { background: linear-gradient(90deg, #f59e0b, #fef3c7); }
-.solved-group--green { background: linear-gradient(90deg, #16a34a, #dcfce7); }
-.solved-group--blue { background: linear-gradient(90deg, #2563eb, #dbeafe); }
-.solved-group--purple { background: linear-gradient(90deg, #9333ea, #f3e8ff); }
+.solved-group--yellow {
+  --solved-group-bg: var(--connections-yellow);
+  --solved-group-text: var(--connections-yellow-text);
+}
 
-:host-context(.dark) .solved-group--yellow { background: linear-gradient(135deg, rgba(101, 79, 0, 0.85), rgba(202, 158, 4, 0.85)); }
-:host-context(.dark) .solved-group--green { background: linear-gradient(135deg, rgba(20, 83, 45, 0.82), rgba(22, 163, 74, 0.82)); }
-:host-context(.dark) .solved-group--blue { background: linear-gradient(135deg, rgba(30, 64, 175, 0.82), rgba(37, 99, 235, 0.82)); }
-:host-context(.dark) .solved-group--purple { background: linear-gradient(135deg, rgba(88, 28, 135, 0.84), rgba(147, 51, 234, 0.84)); }
+.solved-group--green {
+  --solved-group-bg: var(--connections-green);
+  --solved-group-text: var(--connections-green-text);
+}
+
+.solved-group--blue {
+  --solved-group-bg: var(--connections-blue);
+  --solved-group-text: var(--connections-blue-text);
+}
+
+.solved-group--purple {
+  --solved-group-bg: var(--connections-purple);
+  --solved-group-text: var(--connections-purple-text);
+}
+
+.board-group-row h3,
+.board-group-row .difficulty-pill,
+.board-group-row .solved-group-explanation,
+.board-group-row .solved-word-chip {
+  color: var(--solved-group-text) !important;
+}
 
 .board-group-row--revealed {
   filter: saturate(0.78);
