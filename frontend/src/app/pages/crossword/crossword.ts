@@ -31,9 +31,9 @@ import { DailyGameCtaComponent } from '../../shared/ui/daily-game-cta/daily-game
 import { RecommendationItem, RecommendationsService } from '../../services/recommendations';
 import { SettingsService } from '../../services/settings.service';
 import { MiniFooterComponent } from '../../shared/ui/minifooter/minifooter';
-import { ConfirmationToastComponent, ConfirmationTone } from '../../shared/ui/confirmation-toast/confirmation-toast';
 import { BillingService } from '../../services/billing.service';
 import { AiUpgradeNoticeComponent } from '../../shared/ui/ai-upgrade-notice/ai-upgrade-notice';
+import { AppSnackbarService } from '../../shared/ui/app-snackbar/app-snackbar.service';
 
 type FeedbackTone = 'neutral' | 'success' | 'danger';
 const CROSSWORD_GENERATION_ERROR = 'Sorry! The crossword failed to generate. Please try again.';
@@ -72,15 +72,6 @@ interface ClueCheckSummary {
   correctFilledCells: CrosswordPosition[];
 }
 
-interface ConfirmationToastState {
-  title: string;
-  message: string;
-  confirmLabel: string;
-  cancelLabel: string;
-  icon: string;
-  tone: ConfirmationTone;
-}
-
 @Component({
   selector: 'app-crossword',
   standalone: true,
@@ -98,7 +89,6 @@ interface ConfirmationToastState {
     GameEndPopup,
     DailyGameCtaComponent,
     MiniFooterComponent,
-    ConfirmationToastComponent,
     AiUpgradeNoticeComponent,
   ],
   templateUrl: './crossword.html',
@@ -152,8 +142,6 @@ export class CrosswordComponent implements OnInit, OnDestroy {
   shareCopied = false;
   shareRateLimitedUntil = 0;
   private shareSnapshot: CrosswordGameData | null = null;
-  confirmationToast: ConfirmationToastState | null = null;
-  private pendingConfirmationResolver: ((confirmed: boolean) => void) | null = null;
   private shareRateLimitTimeout: ReturnType<typeof window.setTimeout> | null = null;
   private isSharedGame = false;
   private sessionInteracted = false;
@@ -180,6 +168,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     private recommendationsService: RecommendationsService,
     protected settings: SettingsService,
     private billingService: BillingService,
+    private snackbar: AppSnackbarService,
   ) {}
 
   ngOnInit(): void {
@@ -471,6 +460,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     if (!this.auth0Id) {
       this.feedback = 'Sign in to share this puzzle.';
       this.feedbackTone = 'neutral';
+      this.snackbar.show({ message: 'Sign in to share this puzzle.', tone: 'warning', icon: 'login' });
       return;
     }
 
@@ -492,33 +482,13 @@ export class CrosswordComponent implements OnInit, OnDestroy {
   private copyShareUrl(): void {
     navigator.clipboard.writeText(this.shareUrl).then(() => {
       this.shareCopied = true;
+      this.snackbar.success('Share link copied.');
       setTimeout(() => {
         this.shareCopied = false;
       }, 2500);
+    }).catch(() => {
+      this.snackbar.error('Could not copy share link.');
     });
-  }
-
-  private confirmAction(options: Partial<ConfirmationToastState> & Pick<ConfirmationToastState, 'title' | 'message'>): Promise<boolean> {
-    this.resolveConfirmation(false);
-    this.confirmationToast = {
-      title: options.title,
-      message: options.message,
-      confirmLabel: options.confirmLabel ?? 'Confirm',
-      cancelLabel: options.cancelLabel ?? 'Cancel',
-      icon: options.icon ?? 'warning',
-      tone: options.tone ?? 'warning',
-    };
-
-    return new Promise<boolean>((resolve) => {
-      this.pendingConfirmationResolver = resolve;
-    });
-  }
-
-  resolveConfirmation(confirmed: boolean): void {
-    const resolver = this.pendingConfirmationResolver;
-    this.pendingConfirmationResolver = null;
-    this.confirmationToast = null;
-    resolver?.(confirmed);
   }
 
   continueSavedGame(): void {
@@ -539,24 +509,16 @@ export class CrosswordComponent implements OnInit, OnDestroy {
       this.error = 'Saved crossword could not be restored.';
       this.feedback = 'Start a new crossword topic.';
       this.feedbackTone = 'danger';
+      this.snackbar.error('Saved crossword could not be restored.');
     }
   }
 
-  async restartSavedGame(): Promise<void> {
+  restartSavedGame(): void {
     const savedState = this.readSavedGameState();
     if (!savedState?.game) {
       this.refreshSavedGameMetadata();
       return;
     }
-
-    const confirmed = await this.confirmAction({
-      title: 'Restart saved crossword?',
-      message: `Restart "${savedState.game.topic}" from the beginning? Your saved progress will be removed.`,
-      confirmLabel: 'Restart',
-      icon: 'restart_alt',
-      tone: 'warning',
-    });
-    if (!confirmed) return;
 
     this.removeSavedGame(false);
     this.clearShareQueryParam();
@@ -564,31 +526,16 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     this.feedback = 'Crossword restarted.';
     this.feedbackTone = 'success';
     this.showTopicPrompt = false;
+    this.snackbar.show({ message: 'Saved crossword restarted.', tone: 'success', icon: 'restart_alt' });
   }
 
-  async deleteSavedGameConfirm(): Promise<void> {
-    const confirmed = await this.confirmAction({
-      title: 'Delete saved crossword?',
-      message: 'This cannot be undone.',
-      confirmLabel: 'Delete',
-      icon: 'delete',
-      tone: 'danger',
-    });
-    if (!confirmed) return;
+  deleteSavedGameConfirm(): void {
     this.removeSavedGame();
+    this.snackbar.show({ message: 'Saved crossword deleted.', tone: 'success', icon: 'delete' });
   }
 
-  async requestNewTopic(): Promise<void> {
-    if (this.hasPuzzle) {
-      const confirmed = await this.confirmAction({
-        title: 'Start a new topic?',
-        message: 'Your current crossword progress will be cleared.',
-        confirmLabel: 'Start New',
-        icon: 'edit',
-        tone: 'warning',
-      });
-      if (!confirmed) return;
-    }
+  requestNewTopic(): void {
+    const hadPuzzle = this.hasPuzzle;
 
     this.finalizeCurrentSession('abandoned', { keepalive: true });
     this.clearShareQueryParam();
@@ -601,6 +548,9 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     this.showSavedGameCard = true;
     this.clearActivePuzzleState();
     this.refreshSavedGameMetadata();
+    if (hadPuzzle) {
+      this.snackbar.show({ message: 'Current crossword cleared.', tone: 'success', icon: 'edit' });
+    }
   }
 
   submitGameFeedback(liked: boolean): void {
@@ -662,29 +612,24 @@ export class CrosswordComponent implements OnInit, OnDestroy {
       this.feedback = 'Crossword saved.';
       this.feedbackTone = 'success';
       this.refreshSavedGameMetadata();
+      this.snackbar.success('Crossword saved.');
     } catch {
       this.error = 'Failed to save crossword.';
       this.feedback = 'Could not save the crossword.';
       this.feedbackTone = 'danger';
+      this.snackbar.error('Failed to save crossword.');
     }
   }
 
-  async resetPuzzle(): Promise<void> {
+  resetPuzzle(): void {
     if (!this.activePuzzle || !this.activeGame) return;
 
-    const confirmed = await this.confirmAction({
-      title: 'Reset crossword?',
-      message: `Reset "${this.activePuzzle.topic}"? All entered characters will be cleared.`,
-      confirmLabel: 'Reset',
-      icon: 'refresh',
-      tone: 'warning',
-    });
-    if (!confirmed) return;
     if (!this.activeGame) return;
 
     this.activateGame(this.activeGame, undefined, { trackSession: false });
     this.feedback = 'Grid reset. Start solving again.';
     this.feedbackTone = 'neutral';
+    this.snackbar.show({ message: 'Crossword grid reset.', tone: 'success', icon: 'refresh' });
   }
 
   toggleDirection(): void {
@@ -858,6 +803,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     this.checkedCorrectCellKeys.add(this.getCellKey(cell.row, cell.col));
     this.feedback = 'Character revealed.';
     this.feedbackTone = 'success';
+    this.snackbar.show({ message: 'Character revealed.', tone: 'success', icon: 'visibility' });
     this.markDirty();
     this.maybeCompletePuzzle();
   }
@@ -879,21 +825,14 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     this.checkedCorrectClueIds.add(clue.id);
     this.feedback = `${clue.number} ${this.formatDirection(clue.direction)} revealed.`;
     this.feedbackTone = 'success';
+    this.snackbar.show({ message: `${clue.number} ${this.formatDirection(clue.direction)} revealed.`, tone: 'success', icon: 'preview' });
     this.markDirty();
     this.maybeCompletePuzzle();
   }
 
-  async revealPuzzle(): Promise<void> {
+  revealPuzzle(): void {
     if (!this.activePuzzle || this.completed) return;
 
-    const confirmed = await this.confirmAction({
-      title: 'Reveal entire crossword?',
-      message: 'This will fill every answer and end the current game.',
-      confirmLabel: 'Reveal',
-      icon: 'visibility',
-      tone: 'danger',
-    });
-    if (!confirmed) return;
     if (!this.activePuzzle || this.completed) return;
 
     this.puzzleRevealCount += 1;
@@ -918,6 +857,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     this.solvedAt = null;
     this.feedback = `${this.activePuzzle.topic} revealed.`;
     this.feedbackTone = 'success';
+    this.snackbar.show({ message: 'Crossword revealed.', tone: 'success', icon: 'visibility' });
     this.viewingEndedPuzzle = false;
     this.stopTimer();
     this.markDirty();
@@ -1337,8 +1277,10 @@ export class CrosswordComponent implements OnInit, OnDestroy {
   }
 
   private notifyShareRateLimit(): void {
-    this.feedback = `Please wait ${this.getShareRateLimitSecondsRemaining()}s before sharing again.`;
+    const message = `Please wait ${this.getShareRateLimitSecondsRemaining()}s before sharing again.`;
+    this.feedback = message;
     this.feedbackTone = 'neutral';
+    this.snackbar.show({ message, tone: 'warning', icon: 'schedule' });
   }
 
   private isShareRateLimited(): boolean {

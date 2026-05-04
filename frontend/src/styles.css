@@ -188,6 +188,10 @@ body.dark .mat-mdc-select-panel {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45) !important;
 }
 
+.cdk-overlay-container {
+  z-index: 1400;
+}
+
 .mat-mdc-snack-bar-container.app-snackbar-panel {
   --mdc-snackbar-container-color: transparent;
   --mat-snack-bar-button-color: inherit;

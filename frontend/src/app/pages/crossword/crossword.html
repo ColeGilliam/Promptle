@@ -458,18 +458,6 @@
   (dislikedGame)="submitGameFeedback(false)"
 ></app-game-end-popup>
 
-<app-confirmation-toast
-  *ngIf="confirmationToast as confirmation"
-  [title]="confirmation.title"
-  [message]="confirmation.message"
-  [confirmLabel]="confirmation.confirmLabel"
-  [cancelLabel]="confirmation.cancelLabel"
-  [icon]="confirmation.icon"
-  [tone]="confirmation.tone"
-  (confirmed)="resolveConfirmation(true)"
-  (cancelled)="resolveConfirmation(false)"
-></app-confirmation-toast>
-
 <div
   class="incorrect-completion-overlay"
   *ngIf="showIncorrectCompletionPopup"
