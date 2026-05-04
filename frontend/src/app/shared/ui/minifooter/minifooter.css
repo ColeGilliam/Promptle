@@ -5,16 +5,19 @@
 }
 
 .mini-footer {
+  --mini-footer-primary: #4f46e5;
+  --mini-footer-primary-strong: #3b82f6;
+  --mini-footer-muted: #64748b;
+  --mini-footer-soft: #94a3b8;
+  --mini-footer-divider: rgba(99, 102, 241, 0.18);
+
   padding: 0 24px 20px;
 }
 
 .mini-footer__divider {
-  opacity: 0.35;
+  border-top-color: var(--mini-footer-divider);
   margin-bottom: 14px;
-}
-
-:host-context(.dark) .mini-footer__divider {
-  opacity: 0.25;
+  opacity: 1;
 }
 
 .mini-footer__row {
@@ -26,30 +29,56 @@
 }
 
 .mini-footer__brand {
-  font-weight: 700 !important;
-  letter-spacing: 0.06em !important;
-  text-transform: uppercase;
-  color: var(--mat-sys-on-surface-variant, #64748b);
+  background: linear-gradient(135deg, var(--mini-footer-primary-strong), var(--mini-footer-primary));
+  background-clip: text;
+  font-size: 0.84rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.03em !important;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .mini-footer__text {
-  color: var(--mat-sys-on-surface-variant, #94a3b8);
+  color: var(--mini-footer-soft);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
 }
 
 .mini-footer__link {
-  color: var(--mat-sys-on-surface-variant, #64748b);
+  color: var(--mini-footer-muted);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 650;
+  letter-spacing: 0.015em;
   text-decoration: none;
   transition: color 0.18s ease, opacity 0.18s ease;
 }
 
 .mini-footer__link:hover {
-  color: var(--mat-sys-primary, #3b82f6);
+  color: var(--mini-footer-primary);
+}
+
+.mini-footer__game-link {
+  color: var(--mini-footer-primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  opacity: 0.9;
 }
 
 .mini-footer__dot {
   font-size: 5px !important;
   width: 5px !important;
   height: 5px !important;
-  color: var(--mat-sys-outline-variant, #94a3b8);
+  color: var(--mini-footer-primary);
   opacity: 0.5;
+}
+
+:host-context(.dark) .mini-footer {
+  --mini-footer-primary: #a5b4fc;
+  --mini-footer-primary-strong: #93c5fd;
+  --mini-footer-muted: #94a3b8;
+  --mini-footer-soft: #64748b;
+  --mini-footer-divider: rgba(139, 92, 246, 0.24);
 }
