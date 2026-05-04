@@ -34,6 +34,7 @@ import { SettingsService } from '../../services/settings.service';
 import { GameFeedbackService } from '../../services/game-feedback';
 import { CustomGameSessionService } from '../../services/custom-game-session';
 import { SharedGameService } from '../../services/shared-game';
+import { AppSnackbarService } from '../../shared/ui/app-snackbar/app-snackbar.service';
 
 type GuessColor = 'green' | 'yellow' | 'gray';
 type QuantitativeDirection = 'up' | 'down';
@@ -373,7 +374,8 @@ export class PromptleComponent implements OnInit, OnDestroy {
     private settings: SettingsService,
     private gameFeedbackService: GameFeedbackService,
     private customGameSessionService: CustomGameSessionService,
-    private sharedGameService: SharedGameService
+    private sharedGameService: SharedGameService,
+    private snackbar: AppSnackbarService
   ) { }
 
   ngOnInit() {
@@ -872,13 +874,10 @@ export class PromptleComponent implements OnInit, OnDestroy {
     if (this.isMultiplayer) return;
     if (!this.topic || !this.headers.length) return;
 
-    if (this.hasSavedGame) {
-      const confirmed = window.confirm(
-        'You already have a saved game. Saving this game will replace it. Continue?'
-      );
-      if (!confirmed) return;
-    }
+    this.saveGameConfirmed();
+  }
 
+  private saveGameConfirmed() {
     const payload = {
       savedAt: Date.now(),
       topic: this.topic,
@@ -899,15 +898,33 @@ export class PromptleComponent implements OnInit, OnDestroy {
       const savedAtStr = new Date(payload.savedAt).toLocaleString();
       if (user && user.sub) {
         this.http.post('/api/save-game', { auth0Id: user.sub, game: payload }).subscribe({
-          next:  () => { this.savedTimestamp = savedAtStr; this.serverSaveExists = true; },
+          next:  () => {
+            this.savedTimestamp = savedAtStr;
+            this.serverSaveExists = true;
+            this.snackbar.success('Game saved.');
+          },
           error: () => {
-            try { localStorage.setItem('promptle_saved_game', JSON.stringify(payload)); this.savedTimestamp = savedAtStr; }
-            catch (e) { this.gameError = 'Failed to save game'; }
+            try {
+              localStorage.setItem('promptle_saved_game', JSON.stringify(payload));
+              this.savedTimestamp = savedAtStr;
+              this.snackbar.success('Game saved locally.');
+            }
+            catch (e) {
+              this.gameError = 'Failed to save game';
+              this.snackbar.error('Failed to save game.');
+            }
           }
         });
       } else {
-        try { localStorage.setItem('promptle_saved_game', JSON.stringify(payload)); this.savedTimestamp = savedAtStr; }
-        catch (e) { this.gameError = 'Failed to save game'; }
+        try {
+          localStorage.setItem('promptle_saved_game', JSON.stringify(payload));
+          this.savedTimestamp = savedAtStr;
+          this.snackbar.success('Game saved.');
+        }
+        catch (e) {
+          this.gameError = 'Failed to save game';
+          this.snackbar.error('Failed to save game.');
+        }
       }
     });
   }
@@ -1804,13 +1821,14 @@ export class PromptleComponent implements OnInit, OnDestroy {
 
   deleteCurrentRoom() {
     if (!this.currentRoom) return;
-    if (!confirm(`Delete room ${this.currentRoom}? All players will be removed.`)) return;
-    this.http.delete(`/api/game/rooms/${this.currentRoom}`, { body: { auth0Id: this.myAuth0Id } }).subscribe({
+    const roomId = this.currentRoom;
+    this.http.delete(`/api/game/rooms/${roomId}`, { body: { auth0Id: this.myAuth0Id } }).subscribe({
       next: () => {
-        this.multiplayerService.emitDeleteRoom(this.currentRoom);
+        this.snackbar.success(`Room ${roomId} deleted.`);
+        this.multiplayerService.emitDeleteRoom(roomId);
         this.router.navigate(['/']);
       },
-      error: (err) => alert(err?.error?.error || 'Failed to delete room.'),
+      error: (err) => this.snackbar.error(err?.error?.error || 'Failed to delete room.'),
     });
   }
 

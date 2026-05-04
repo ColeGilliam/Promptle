@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { AuthService as Auth0Service, User } from '@auth0/auth0-angular';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
+import { AppSnackbarService } from '../shared/ui/app-snackbar/app-snackbar.service';
 
 type DevAuthSessionResponse = {
   enabled: boolean;
@@ -20,7 +21,8 @@ export class AuthenticationService {
 
   constructor(
     private auth0: Auth0Service,
-    private http: HttpClient
+    private http: HttpClient,
+    private snackbar: AppSnackbarService
   ) {
     this.initializeAuthState();
   }
@@ -76,11 +78,12 @@ export class AuthenticationService {
     this.http.delete(`${this.apiUrl}/delete-account/${encodedId}`).subscribe({
       next: () => {
         console.log('Account deleted from database and Auth0');
+        this.snackbar.success('Account deleted.');
         this.logout(); // Log out the user after successful deletion
       },
       error: (err) => {
         console.error('Error deleting account:', err);
-        alert('Could not delete account. Please try again later.');
+        this.snackbar.error('Could not delete account. Please try again later.');
       }
     });
   }

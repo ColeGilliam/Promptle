@@ -28,6 +28,7 @@ import { MiniFooterComponent } from '../../shared/ui/minifooter/minifooter';
 import { SwitchMode } from '../../shared/ui/switch-mode/switch-mode';
 import { LoadSavedGameCard } from '../../shared/ui/load-saved-game-card/load-saved-game-card';
 import { DailyGameCtaComponent } from '../../shared/ui/daily-game-cta/daily-game-cta';
+import { AppSnackbarService } from '../../shared/ui/app-snackbar/app-snackbar.service';
 
 interface TopicValidationResponse {
   allowed?: boolean;
@@ -148,6 +149,7 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
     private http: HttpClient,
     private recommendationsService: RecommendationsService,
     private billingService: BillingService,
+    private snackbar: AppSnackbarService,
   ) { }
 
   ngOnInit() {
@@ -380,12 +382,10 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
     this.router.navigate(['/game'], { queryParams: { restartSaved: 'true' } });
   }
 
-  /** Ask user to confirm deletion, then delete saved game */
+  /** Delete saved game immediately and notify with snackbar. */
   deleteSavedConfirm() {
     if (this.isMultiplayer) return; // Disabled in multiplayer
 
-    const ok = confirm('Delete saved game? This cannot be undone.');
-    if (!ok) return;
     this.deleteSavedGame();
   }
 
@@ -395,26 +395,26 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
       if (user && user.sub) {
         this.http.delete(`/api/delete-saved-game/${encodeURIComponent(user.sub)}`).subscribe({
           next: () => {
-            alert('Saved game deleted from your account.');
+            this.snackbar.success('Saved game deleted from your account.');
             this.showLoadConfirm = false;
             this.refreshSavedGameState();
             setTimeout(() => this.setupRevealObserver(), 50);
           },
           error: (err) => {
             console.error('Failed to delete saved game on server', err);
-            alert('Failed to delete saved game on server.');
+            this.snackbar.error('Failed to delete saved game on server.');
           }
         });
       } else {
         try {
           localStorage.removeItem('promptle_saved_game');
-          alert('Local saved game deleted.');
+          this.snackbar.success('Local saved game deleted.');
           this.showLoadConfirm = false;
           this.refreshSavedGameState();
           setTimeout(() => this.setupRevealObserver(), 50);
         } catch (e) {
           console.error('Failed to delete local saved game', e);
-          alert('Failed to delete local saved game.');
+          this.snackbar.error('Failed to delete local saved game.');
         }
       }
     });

@@ -14,6 +14,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { NavbarComponent } from '../../shared/components/navbar/navbar';
 import { MiniFooterComponent } from '../../shared/ui/minifooter/minifooter';
+import { AppSnackbarService } from '../../shared/ui/app-snackbar/app-snackbar.service';
 
 export interface LobbyRoom {
   roomId: string;
@@ -59,7 +60,8 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnDestroy {
   constructor(
     private http: HttpClient,
     private router: Router,
-    private auth: AuthenticationService
+    private auth: AuthenticationService,
+    private snackbar: AppSnackbarService
   ) {}
 
   ngOnInit() {
@@ -142,10 +144,12 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnDestroy {
 
   deleteRoom(roomId: string, event: Event) {
     event.stopPropagation();
-    if (!confirm(`Delete room ${roomId}?`)) return;
     this.http.delete(`/api/game/rooms/${roomId}`, { body: { auth0Id: this.myAuth0Id } }).subscribe({
-      next: () => this.fetchRooms(),
-      error: (err) => alert(err?.error?.error || 'Failed to delete room.'),
+      next: () => {
+        this.snackbar.success(`Room ${roomId} deleted.`);
+        this.fetchRooms();
+      },
+      error: (err) => this.snackbar.error(err?.error?.error || 'Failed to delete room.'),
     });
   }
 

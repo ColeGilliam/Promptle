@@ -15,6 +15,7 @@ import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NavbarComponent } from '../../shared/components/navbar/navbar';
 import { MiniFooterComponent } from '../../shared/ui/minifooter/minifooter';
+import { AppSnackbarService } from '../../shared/ui/app-snackbar/app-snackbar.service';
 
 @Component({
   selector: 'app-profile',
@@ -77,6 +78,7 @@ export class ProfileComponent implements OnInit {
     private billing: BillingService,
     private route: ActivatedRoute,
     private router: Router,
+    private snackbar: AppSnackbarService,
   ) {}
 
   ngOnInit() {
@@ -131,10 +133,8 @@ export class ProfileComponent implements OnInit {
   deleteAccount() {
     this.auth.user$.pipe(take(1)).subscribe(user => {
       if (user && user.sub) {
-        const confirmDelete = confirm("Are you sure? This will permanently remove your data.");
-        if (confirmDelete) {
-          this.auth.deleteAccount(user.sub);
-        }
+        const auth0Id = user.sub;
+        this.auth.deleteAccount(auth0Id);
       } else {
         console.error("User ID not found. Are you logged in?");
       }
@@ -169,7 +169,7 @@ export class ProfileComponent implements OnInit {
         this.profile.updateProfile(payload)
           .subscribe({
             next: (response) => {
-              alert('Profile updated!');
+              this.snackbar.success('Profile updated!');
               this.dbUsername = response?.username || this.dbUsername;
               this.dbProfilePic = response?.profilePic ?? (this.selectedImageBase64 || this.dbProfilePic);
               this.selectedImageBase64 = ''; 
@@ -222,7 +222,7 @@ export class ProfileComponent implements OnInit {
       if (!user?.sub) return;
       this.billing.startCheckout(user.sub, mode).subscribe({
         next: ({ url }) => { window.location.href = url; },
-        error: (err) => alert(err?.error?.error || 'Failed to start checkout. Please try again.'),
+        error: (err) => this.snackbar.error(err?.error?.error || 'Failed to start checkout. Please try again.'),
       });
     });
   }
@@ -232,7 +232,7 @@ export class ProfileComponent implements OnInit {
       if (!user?.sub) return;
       this.billing.openPortal(user.sub).subscribe({
         next: ({ url }) => { window.location.href = url; },
-        error: (err) => alert(err?.error?.error || 'Failed to open billing portal.'),
+        error: (err) => this.snackbar.error(err?.error?.error || 'Failed to open billing portal.'),
       });
     });
   }

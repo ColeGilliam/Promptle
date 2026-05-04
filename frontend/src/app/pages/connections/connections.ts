@@ -27,6 +27,7 @@ import { RecommendationItem, RecommendationsService } from '../../services/recom
 import { MiniFooterComponent } from '../../shared/ui/minifooter/minifooter';
 import { BillingService } from '../../services/billing.service';
 import { AiUpgradeNoticeComponent } from '../../shared/ui/ai-upgrade-notice/ai-upgrade-notice';
+import { AppSnackbarService } from '../../shared/ui/app-snackbar/app-snackbar.service';
 
 const CONNECTIONS_GENERATION_ERROR = 'Sorry! The Connections failed to generate. Please try again.';
 
@@ -133,6 +134,7 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
     private sharedGameService: SharedGameService,
     private recommendationsService: RecommendationsService,
     private billingService: BillingService,
+    private snackbar: AppSnackbarService,
   ) {}
 
   ngOnInit(): void {
@@ -446,14 +448,12 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
 
   requestNewTopic(): void {
     // Resetting from the sidebar should fully clear the old board before exposing the prompt again.
-    const confirmed = window.confirm('Start a new topic? Your current Connections board will be cleared.');
-    if (!confirmed) return;
-
     this.finalizeCurrentSession('abandoned', { keepalive: true });
     this.clearShareQueryParam();
     this.resetBoardState();
     this.topic = '';
     this.showTopicPrompt = true;
+    this.snackbar.show({ message: 'Started a new Connections topic.', tone: 'success', icon: 'refresh' });
   }
 
   submitGameFeedback(liked: boolean): void {
