@@ -30,6 +30,7 @@ import {
   summarizeRawAiOutput,
 } from '../services/aiSecurityLogging.js';
 import { validateTopicInput } from '../services/topicInputValidation.js';
+import { checkAIAccess, consumeToken, consumeDailyFreeToken } from '../services/billingService.js';
 import { appLogger } from '../lib/logger.js';
 
 const DEV_EMAIL = 'promptle99@gmail.com';
@@ -458,12 +459,20 @@ export function createGenerateConnectionsHandler({
     }
     const normalizedTopic = topicValidation.topic;
 
-    const isDevUser = await isDevAccountFn(auth0Id);
-    if (!isDevUser) {
-      // Non-dev users can only generate boards when the dev toggle explicitly opens generation up.
-      const settings = await fetchDevSettingsFn();
-      if (!settings.allowAllAIGeneration) {
-        return res.status(403).json({ error: 'AI game generation is restricted to the dev account.' });
+    const access = await checkAIAccess(auth0Id);
+    if (!access.allowed) {
+      return res.status(403).json({ error: 'AI game creation requires a subscription or tokens.', code: access.code });
+    }
+    if (access.type === 'tokens') {
+      const deducted = await consumeToken(auth0Id);
+      if (!deducted) {
+        return res.status(403).json({ error: 'AI game creation requires a subscription or tokens.', code: 'payment_required' });
+      }
+    }
+    if (access.type === 'daily_free') {
+      const deducted = await consumeDailyFreeToken(auth0Id);
+      if (!deducted) {
+        return res.status(403).json({ error: 'Daily free limit reached.', code: 'payment_required' });
       }
     }
 

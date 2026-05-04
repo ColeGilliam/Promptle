@@ -2,8 +2,9 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
+    "start": "node server.js",
     "devStart": "nodemon server.js",
     "test": "MONGODB_URI=mongodb://localhost:27017/promptle-test OPENAI_API_KEY=test-key NODE_ENV=test node --test"
   },
@@ -14,15 +15,16 @@
   "dependencies": {
     "auth0": "^5.3.1",
     "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "mongodb": "^6.21.0",
     "mongoose": "^8.19.2",
     "openai": "^4.77.4",
     "socket.io": "^4.8.3",
-    "socket.io-client": "^4.8.3"
+    "socket.io-client": "^4.8.3",
+    "stripe": "^22.1.0"
   },
   "devDependencies": {
-    "dotenv": "^17.2.3",
     "nodemon": "^3.1.10"
   }
 }

@@ -6,14 +6,19 @@
 
     <mat-icon class="mini-footer__dot" aria-hidden="true">circle</mat-icon>
 
-    <span class="mat-body-2 mini-footer__text">Topic-based guessing game</span>
+    <a class="mat-body-2 mini-footer__link" routerLink="/privacy">Privacy</a>
 
     <mat-icon class="mini-footer__dot" aria-hidden="true">circle</mat-icon>
 
-    <a class="mat-body-2 mini-footer__link" routerLink="/about">About</a>
+    <a class="mat-body-2 mini-footer__link" routerLink="/terms">Terms</a>
+
+    @if (isDevAccount) {
+      <mat-icon class="mini-footer__dot" aria-hidden="true">circle</mat-icon>
+      <a class="mat-body-2 mini-footer__link" routerLink="/about">About</a>
+    }
 
     <mat-icon class="mini-footer__dot" aria-hidden="true">circle</mat-icon>
 
-    <span class="mat-body-2 mini-footer__text">&copy; {{ year }}</span>
+    <span class="mat-body-2 mini-footer__text">&copy; {{ year }} Promptle. All rights reserved.</span>
   </div>
 </footer>

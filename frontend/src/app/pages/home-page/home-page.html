@@ -210,8 +210,8 @@
         </mat-card-content>
       </mat-card>
 
-      <!-- AI / Custom topic card (only when dev account or AI gen enabled) -->
-      <mat-card class="play-card reveal" style="--delay: 100ms" *ngIf="canUseAI">
+      <!-- AI / Custom topic card — always visible; guests see a sign-in overlay -->
+      <mat-card class="play-card reveal" style="--delay: 100ms">
         <mat-card-content>
           <div class="play-card-header">
             <div class="play-card-icon-wrap play-icon-ai">
@@ -221,82 +221,94 @@
           </div>
           <p class="play-card-desc">Enter any topic and AI generates a brand-new Promptle on the fly.</p>
 
-          <div class="play-card-form">
-            <mat-form-field appearance="fill" class="topic-field" subscriptSizing="dynamic">
-              <mat-label>Enter a custom topic</mat-label>
-              <input
-                matInput
-                placeholder="e.g. Marvel Characters, Sitcoms..."
-                [(ngModel)]="customTopic"
-                (ngModelChange)="onCustomTopicChange($event)"
-                (focus)="onCustomTopicFocus()"
-                (blur)="onCustomTopicBlur()"
-              >
-            </mat-form-field>
+          <!-- Form area — overlaid for guests, disabled for free signed-in users -->
+          <div class="play-card-form-wrap">
 
-            <mat-checkbox
-              class="improved-generation-checkbox"
-              [(ngModel)]="improvedGeneration"
-            >
-              Improved generation
-            </mat-checkbox>
-
-            <p class="improved-generation-note" *ngIf="improvedGeneration">
-              Warning: Improved generation will take longer to load.
-            </p>
-
-            <p class="custom-topic-error" *ngIf="customTopicError">{{ customTopicError }}</p>
-
-            <div class="custom-topic-ideas" *ngIf="showCustomTopicIdeas">
-              <p class="custom-topic-ideas-label">Need ideas?</p>
-              <div class="custom-topic-ideas-list">
-                <button
-                  *ngFor="let item of customTopicIdeas"
-                  matButton="outlined"
-                  class="rect-btn promp3-btn custom-topic-idea-chip"
-                  (mousedown)="startRecommendedCustomTopic(item)"
-                >
-                  {{ item.topic }}
+            <!-- Guest overlay -->
+            @if (isGuest) {
+              <div class="ai-guest-overlay">
+                <button class="ai-guest-sign-in-btn" (click)="login()">
+                  <mat-icon>login</mat-icon>
+                  Sign In to Unlock
                 </button>
               </div>
+            }
+
+            <div class="play-card-form" [class.ai-section--guest]="isGuest" (click)="onLockedInputClick()">
+
+                <mat-form-field appearance="fill" class="topic-field" subscriptSizing="dynamic">
+                  <mat-label>Enter a custom topic</mat-label>
+                  <input
+                    matInput
+                    placeholder="e.g. Marvel Characters, Sitcoms..."
+                    [(ngModel)]="customTopic"
+                    [disabled]="isGuest || aiInputDisabled"
+                    (ngModelChange)="onCustomTopicChange($event)"
+                    (focus)="onCustomTopicFocus()"
+                    (blur)="onCustomTopicBlur()"
+                  >
+                </mat-form-field>
+
+                <mat-checkbox
+                  class="improved-generation-checkbox"
+                  [(ngModel)]="improvedGeneration"
+                  [disabled]="isGuest || aiInputDisabled"
+                >
+                  Improved generation
+                </mat-checkbox>
+
+                <p class="improved-generation-note" *ngIf="improvedGeneration">
+                  Warning: Improved generation will take longer to load.
+                </p>
+
+                <p class="custom-topic-error" *ngIf="customTopicError">{{ customTopicError }}</p>
+
+                <div class="custom-topic-ideas" *ngIf="showCustomTopicIdeas">
+                  <p class="custom-topic-ideas-label">Need ideas?</p>
+                  <div class="custom-topic-ideas-list">
+                    <button
+                      *ngFor="let item of customTopicIdeas"
+                      matButton="outlined"
+                      class="rect-btn promp3-btn custom-topic-idea-chip"
+                      (mousedown)="startRecommendedCustomTopic(item)"
+                    >
+                      {{ item.topic }}
+                    </button>
+                  </div>
+                </div>
+
+                <div class="topic-match-choice" *ngIf="resolvedCustomTopicMatch as matchedTopic; else defaultCustomStart">
+                  <p class="play-card-desc topic-match-copy">
+                    <strong>{{ matchedTopic.topicName }}</strong> is one of our popular topics. You can play it for a preset game with no load time or generate a new custom game.
+                  </p>
+                  <div class="topic-match-actions">
+                    <button matButton="filled" class="rect-btn promp2-btn play-start-btn"
+                      [disabled]="isGuest || aiInputDisabled || !customTopic.trim() || isCreatingRoom || isValidatingCustomTopic"
+                      (click)="startMatchedCustomGame()">
+                      {{ matchedTopicActionLabel }}
+                    </button>
+                    <button matButton="outlined" class="rect-btn promp3-btn play-start-btn play-start-btn-alt"
+                      [disabled]="isGuest || aiInputDisabled || !customTopic.trim() || isCreatingRoom || isValidatingCustomTopic"
+                      (click)="startCustomGeneratedGame()">
+                      {{ customGeneratedActionLabel }}
+                    </button>
+                  </div>
+                </div>
+
+                <ng-template #defaultCustomStart>
+                  <button matButton="filled" class="rect-btn promp2-btn play-start-btn"
+                    [disabled]="isGuest || aiInputDisabled || !customTopic.trim() || isCreatingRoom || isValidatingCustomTopic"
+                    (click)="startAiGame()">
+                    {{ customTopicActionLabel }}
+                  </button>
+                </ng-template>
+
             </div>
 
-            <div class="topic-match-choice" *ngIf="resolvedCustomTopicMatch as matchedTopic; else defaultCustomStart">
-              <p class="play-card-desc topic-match-copy">
-                <strong>{{ matchedTopic.topicName }}</strong> is one of our popular topics. You can play it for a preset game with no load time or generate a new custom game.
-              </p>
-
-              <div class="topic-match-actions">
-                <button
-                  matButton="filled"
-                  class="rect-btn promp2-btn play-start-btn"
-                  [disabled]="!customTopic.trim() || isCreatingRoom || isValidatingCustomTopic"
-                  (click)="startMatchedCustomGame()"
-                >
-                  {{ matchedTopicActionLabel }}
-                </button>
-
-                <button
-                  matButton="outlined"
-                  class="rect-btn promp3-btn play-start-btn play-start-btn-alt"
-                  [disabled]="!customTopic.trim() || isCreatingRoom || isValidatingCustomTopic"
-                  (click)="startCustomGeneratedGame()"
-                >
-                  {{ customGeneratedActionLabel }}
-                </button>
-              </div>
+            <div class="upgrade-notice-slot" *ngIf="isLoggedIn && !hasAIAccess && upgradeNoticeVisible">
+              <app-ai-upgrade-notice (dismissed)="onUpgradeDismissed()"></app-ai-upgrade-notice>
             </div>
 
-            <ng-template #defaultCustomStart>
-              <button
-                matButton="filled"
-                class="rect-btn promp2-btn play-start-btn"
-                [disabled]="!customTopic.trim() || isCreatingRoom || isValidatingCustomTopic"
-                (click)="startAiGame()"
-              >
-                {{ customTopicActionLabel }}
-              </button>
-            </ng-template>
           </div>
         </mat-card-content>
       </mat-card>

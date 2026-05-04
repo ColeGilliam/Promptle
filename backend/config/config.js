@@ -24,6 +24,12 @@ export const DEV_AUTH0_ID = process.env.DEV_AUTH0_ID || '';
 export const DEV_AUTH_EMAIL = process.env.DEV_AUTH_EMAIL || '';
 export const DEV_AUTH_NAME = process.env.DEV_AUTH_NAME || '';
 
+export const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
+export const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '';
+export const STRIPE_MONTHLY_PRICE_ID = process.env.STRIPE_MONTHLY_PRICE_ID || '';
+export const STRIPE_TOKEN_PRICE_ID = process.env.STRIPE_TOKEN_PRICE_ID || '';
+export const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:4200';
+
 if (!MONGODB_URI || typeof MONGODB_URI !== 'string' || !MONGODB_URI.trim()) {
   configLogger.fatal('missing_mongodb_uri', {
     detail: 'MONGODB_URI is missing or empty. Set it in your .env before starting the backend.',

@@ -76,70 +76,78 @@
           </div>
         </div>
 
-        <ng-container *ngIf="canUseAI">
-          <app-load-saved-game-card
-            *ngIf="showSavedGamePrompt"
-            [topic]="savedGameTopic"
-            [savedAt]="savedGameSavedAt"
-            (continueClicked)="continueSavedGame()"
-            (restartClicked)="restartSavedGame()"
-            (deleteClicked)="deleteSavedGameConfirm()"
-          ></app-load-saved-game-card>
+        <!-- Topic form — always shown; guests get a sign-in overlay -->
+        <div class="ai-form-wrap">
 
-          <mat-form-field appearance="fill" class="topic-field" subscriptSizing="dynamic">
-            <mat-label>Enter a topic</mat-label>
-            <input
-              matInput
-              placeholder="Type any topic"
-              [(ngModel)]="topic"
-              (focus)="onTopicFocus()"
-              (blur)="onTopicBlur()"
-              (keydown.enter)="generateGame()"
-            >
-          </mat-form-field>
-
-          <div class="custom-topic-ideas" *ngIf="showTopicIdeas">
-            <p class="custom-topic-ideas-label">Need ideas?</p>
-            <div class="custom-topic-ideas-list">
-              <button
-                *ngFor="let item of topicIdeas"
-                matButton="outlined"
-                class="rect-btn promp3-btn custom-topic-idea-chip"
-                (mousedown)="startRecommendedTopic(item)"
-              >
-                {{ item.topic }}
+          @if (!auth0Id) {
+            <div class="ai-guest-overlay">
+              <button class="ai-guest-sign-in-btn" (click)="auth.login()">
+                <mat-icon>login</mat-icon>
+                Sign In to Unlock
               </button>
             </div>
+          }
+
+          <div [class.ai-section--guest]="!auth0Id" (click)="onLockedInputClick()">
+
+              <app-load-saved-game-card
+                *ngIf="showSavedGamePrompt"
+                [topic]="savedGameTopic"
+                [savedAt]="savedGameSavedAt"
+                (continueClicked)="continueSavedGame()"
+                (restartClicked)="restartSavedGame()"
+                (deleteClicked)="deleteSavedGameConfirm()"
+              ></app-load-saved-game-card>
+
+              <mat-form-field appearance="fill" class="topic-field" subscriptSizing="dynamic">
+                <mat-label>Enter a topic</mat-label>
+                <input
+                  matInput
+                  placeholder="Type any topic"
+                  [(ngModel)]="topic"
+                  [disabled]="!auth0Id || aiInputDisabled"
+                  (focus)="onTopicFocus()"
+                  (blur)="onTopicBlur()"
+                  (keydown.enter)="generateGame()"
+                >
+              </mat-form-field>
+
+              <div class="custom-topic-ideas" *ngIf="showTopicIdeas">
+                <p class="custom-topic-ideas-label">Need ideas?</p>
+                <div class="custom-topic-ideas-list">
+                  <button
+                    *ngFor="let item of topicIdeas"
+                    matButton="outlined"
+                    class="rect-btn promp3-btn custom-topic-idea-chip"
+                    (mousedown)="startRecommendedTopic(item)"
+                  >
+                    {{ item.topic }}
+                  </button>
+                </div>
+              </div>
+
+              <div class="control-actions">
+                <button
+                  matButton="filled"
+                  class="rect-btn promp1-btn generate-btn"
+                  type="button"
+                  (click)="generateGame()"
+                  [disabled]="!auth0Id || aiInputDisabled || !topic.trim() || loading"
+                >
+                  <mat-spinner *ngIf="loading" diameter="18"></mat-spinner>
+                  <mat-icon *ngIf="!loading">auto_awesome</mat-icon>
+                  Generate Crossword
+                </button>
+              </div>
+
+              <p class="control-error" *ngIf="error">{{ error }}</p>
           </div>
 
-          <div class="control-actions">
-            <button
-              matButton="filled"
-              class="rect-btn promp1-btn generate-btn"
-              type="button"
-              (click)="generateGame()"
-              [disabled]="!topic.trim() || loading"
-            >
-              <mat-spinner *ngIf="loading" diameter="18"></mat-spinner>
-              <mat-icon *ngIf="!loading">auto_awesome</mat-icon>
-              Generate Crossword
-            </button>
+          <div class="upgrade-notice-slot" *ngIf="auth0Id && !hasAIAccess && upgradeNoticeVisible">
+            <app-ai-upgrade-notice (dismissed)="onUpgradeDismissed()"></app-ai-upgrade-notice>
           </div>
 
-          <p class="control-error" *ngIf="error">{{ error }}</p>
-        </ng-container>
-
-        <ng-container *ngIf="!canUseAI">
-          <div class="crossword-disabled">
-            <div class="crossword-disabled__icon">
-              <mat-icon>block</mat-icon>
-            </div>
-            <div class="crossword-disabled__copy">
-              <span class="eyebrow">Unavailable</span>
-              <h2>Sorry! Crossword generation is currently disabled, please try again later.</h2>
-            </div>
-          </div>
-        </ng-container>
+        </div>
       </section>
     </section>
 

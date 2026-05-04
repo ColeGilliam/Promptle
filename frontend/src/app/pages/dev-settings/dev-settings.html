@@ -241,6 +241,47 @@
         </div>
       </div>
 
+      <div class="settings-divider"></div>
+
+      <div class="settings-section">
+        <h2 class="section-title">
+          <mat-icon>token</mat-icon>
+          Free Daily AI Generations
+        </h2>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-label">Free AI generations per account per day</span>
+            <span class="setting-desc">
+              How many free AI game generations each account gets per day. Resets at midnight UTC.
+              Set to 0 to require payment for all generations.
+            </span>
+          </div>
+          <div class="setting-control">
+            <div class="daily-free-input-wrap">
+              <button
+                matButton="outlined"
+                type="button"
+                class="rect-btn secondary-btn daily-free-step-btn"
+                (click)="decrementDailyFree()"
+                [disabled]="dailyFreeGenerations <= 0"
+              >
+                <mat-icon>remove</mat-icon>
+              </button>
+              <span class="daily-free-value">{{ dailyFreeGenerations }}</span>
+              <button
+                matButton="outlined"
+                type="button"
+                class="rect-btn secondary-btn daily-free-step-btn"
+                (click)="incrementDailyFree()"
+              >
+                <mat-icon>add</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="settings-footer">
         <div class="save-feedback success" *ngIf="saveSuccess">
           <mat-icon>check_circle</mat-icon>

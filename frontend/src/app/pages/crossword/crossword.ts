@@ -32,6 +32,8 @@ import { RecommendationItem, RecommendationsService } from '../../services/recom
 import { SettingsService } from '../../services/settings.service';
 import { MiniFooterComponent } from '../../shared/ui/minifooter/minifooter';
 import { ConfirmationToastComponent, ConfirmationTone } from '../../shared/ui/confirmation-toast/confirmation-toast';
+import { BillingService } from '../../services/billing.service';
+import { AiUpgradeNoticeComponent } from '../../shared/ui/ai-upgrade-notice/ai-upgrade-notice';
 
 type FeedbackTone = 'neutral' | 'success' | 'danger';
 const CROSSWORD_GENERATION_ERROR = 'Sorry! The crossword failed to generate. Please try again.';
@@ -97,6 +99,7 @@ interface ConfirmationToastState {
     DailyGameCtaComponent,
     MiniFooterComponent,
     ConfirmationToastComponent,
+    AiUpgradeNoticeComponent,
   ],
   templateUrl: './crossword.html',
   styleUrls: ['./crossword.css'],
@@ -140,7 +143,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
   wordRevealCount = 0;
   puzzleRevealCount = 0;
   private hasShownIncorrectCompletionPopup = false;
-  private auth0Id = '';
+  auth0Id = '';
   private currentPlayId = '';
   private currentDailyGame: DailyGameMeta | null = null;
   shareUrl = '';
@@ -166,7 +169,7 @@ export class CrosswordComponent implements OnInit, OnDestroy {
   private readonly saveStorageKey = 'promptle_crossword_saved_game';
 
   constructor(
-    private auth: AuthenticationService,
+    public auth: AuthenticationService,
     private crosswordGameService: CrosswordGameService,
     private http: HttpClient,
     private gameFeedbackService: GameFeedbackService,
@@ -175,7 +178,8 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private sharedGameService: SharedGameService,
     private recommendationsService: RecommendationsService,
-    protected settings: SettingsService
+    protected settings: SettingsService,
+    private billingService: BillingService,
   ) {}
 
   ngOnInit(): void {
@@ -186,8 +190,12 @@ export class CrosswordComponent implements OnInit, OnDestroy {
       this.auth0Id = user?.sub ?? '';
       if (this.auth0Id) {
         this.loadRecommendations();
+        this.billingService.getStatus(this.auth0Id).subscribe(s => {
+          this.hasAIAccess = s?.hasAccess ?? false;
+        });
       } else {
         this.recommendations = [];
+        this.hasAIAccess = false;
       }
     });
 
@@ -207,9 +215,18 @@ export class CrosswordComponent implements OnInit, OnDestroy {
     this.clearShareRateLimitCooldown();
   }
 
+  hasAIAccess = false;
+  upgradeNoticeVisible = true;
+
   get canUseAI(): boolean {
-    return this.isDevAccount || this.allowAllAIGeneration;
+    return !!this.auth0Id;
   }
+
+  get aiInputDisabled(): boolean { return !this.hasAIAccess; }
+
+  login() { this.auth.login(); }
+  onUpgradeDismissed() { this.upgradeNoticeVisible = false; }
+  onLockedInputClick() { if (!this.hasAIAccess) this.upgradeNoticeVisible = true; }
 
   get topicIdeas(): RecommendationItem[] {
     return this.recommendations.filter((item) => item.type === 'custom').slice(0, 3);

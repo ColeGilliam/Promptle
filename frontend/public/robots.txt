@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /dev-settings
+Disallow: /about
+Disallow: /testing
+Disallow: /chat
+
+Sitemap: https://promptle.unr.dev/sitemap.xml

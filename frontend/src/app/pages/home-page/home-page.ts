@@ -7,6 +7,8 @@ import { AuthenticationService } from '../../services/authentication.service';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { take } from 'rxjs';
 import { RecommendationItem, RecommendationsService } from '../../services/recommendations';
+import { BillingService } from '../../services/billing.service';
+import { AiUpgradeNoticeComponent } from '../../shared/ui/ai-upgrade-notice/ai-upgrade-notice';
 
 // Angular Material modules
 import { MatCardModule } from '@angular/material/card';
@@ -57,6 +59,7 @@ interface TopicValidationResponse {
     SwitchMode,
     LoadSavedGameCard,
     DailyGameCtaComponent,
+    AiUpgradeNoticeComponent,
   ],
   templateUrl: './home-page.html',
   styleUrls: ['./home-page.css'],
@@ -108,9 +111,17 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
     return this.isDevAccount || this.allowGuestsCreateRooms;
   }
 
-  get canUseAI(): boolean {
-    return this.isDevAccount || this.allowAllAIGeneration;
-  }
+  hasAIAccess = false;
+  upgradeNoticeVisible = true;
+
+  get canUseAI(): boolean { return true; }
+  get aiInputDisabled(): boolean { return !this.hasAIAccess; }
+  get isGuest(): boolean { return !this.isLoggedIn; }
+
+  login() { this.auth.login(); }
+
+  onUpgradeDismissed() { this.upgradeNoticeVisible = false; }
+  onLockedInputClick() { if (!this.hasAIAccess) this.upgradeNoticeVisible = true; }
 
   get promptleDailyGame(): { topic?: string; date?: string; available?: boolean } | null {
     return this.dailyGames['promptle'] || null;
@@ -135,7 +146,8 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
     private router: Router,
     private auth: AuthenticationService,
     private http: HttpClient,
-    private recommendationsService: RecommendationsService
+    private recommendationsService: RecommendationsService,
+    private billingService: BillingService,
   ) { }
 
   ngOnInit() {
@@ -158,6 +170,9 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
         this.isDevAccount = user.email === 'promptle99@gmail.com';
         this.registerUser(user);
         this.loadRecommendations();
+        this.billingService.getStatus(user.sub!).subscribe(s => {
+          this.hasAIAccess = s?.hasAccess ?? false;
+        });
         // Re-run observer so AI card (now in DOM) gets picked up
         setTimeout(() => this.setupRevealObserver(), 50);
         return;

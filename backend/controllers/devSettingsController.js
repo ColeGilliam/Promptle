@@ -53,6 +53,7 @@ export async function getDevSettings(req, res) {
       allowGuestsCreateRooms: settings.allowGuestsCreateRooms,
       allowAllAIGeneration: settings.allowAllAIGeneration,
       showPromptleAnswerAtTop: settings.showPromptleAnswerAtTop,
+      dailyFreeGenerations: settings.dailyFreeGenerations ?? 1,
       dailyGames: buildPublicDailyGamesSummary(effectiveDailyGames),
       ...(isDevUser
         ? {
@@ -77,6 +78,7 @@ export async function updateDevSettings(req, res) {
       allowAllAIGeneration,
       showPromptleAnswerAtTop,
       dailyGameQueues,
+      dailyFreeGenerations,
     } = req.body;
 
     if (!(await isDevAccount(auth0Id))) {
@@ -102,6 +104,7 @@ export async function updateDevSettings(req, res) {
           allowGuestsCreateRooms: !!allowGuestsCreateRooms,
           allowAllAIGeneration: !!allowAllAIGeneration,
           showPromptleAnswerAtTop: !!showPromptleAnswerAtTop,
+          dailyFreeGenerations: Math.max(0, Math.floor(Number(dailyFreeGenerations) || 1)),
           dailyGames: mergedDailyGames,
         },
       },
@@ -119,6 +122,7 @@ export async function updateDevSettings(req, res) {
       allowGuestsCreateRooms: !!allowGuestsCreateRooms,
       allowAllAIGeneration: !!allowAllAIGeneration,
       showPromptleAnswerAtTop: !!showPromptleAnswerAtTop,
+      dailyFreeGenerations: Math.max(0, Math.floor(Number(dailyFreeGenerations) || 1)),
       dailyGames: buildPublicDailyGamesSummary(mergedDailyGames),
       dailyGameAdmin: buildAdminDailyGamesSummary(mergedDailyGames),
     });

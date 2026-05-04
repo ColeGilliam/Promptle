@@ -5,11 +5,14 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthenticationService } from '../../services/authentication.service';
 import { ProfileService } from '../../services/profile.service';
+import { BillingService, BillingStatus } from '../../services/billing.service';
 import { take } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { ActivatedRoute, Router } from '@angular/router';
 import { NavbarComponent } from '../../shared/components/navbar/navbar';
 import { MiniFooterComponent } from '../../shared/ui/minifooter/minifooter';
 
@@ -23,6 +26,7 @@ import { MiniFooterComponent } from '../../shared/ui/minifooter/minifooter';
     MatInputModule,
     MatButtonModule,
     MatIconModule,
+    MatProgressSpinnerModule,
     FormsModule,
     NavbarComponent,
     MiniFooterComponent,
@@ -31,6 +35,7 @@ import { MiniFooterComponent } from '../../shared/ui/minifooter/minifooter';
   styleUrls: ['./profile.css'],
 })
 export class ProfileComponent implements OnInit {
+  authChecking = true;
   isLoggedIn = false;
   isDarkTheme = false;
   dbUsername: string = '';
@@ -46,6 +51,9 @@ export class ProfileComponent implements OnInit {
   saveError = '';
   usernameError = '';
   profilePicError = '';
+  billingStatus: BillingStatus | null = null;
+  billingLoading = false;
+  billingBanner: { type: 'success' | 'cancel'; message: string } | null = null;
   private readonly themeStorageKey = 'promptle-theme';
 
   get avgGuesses(): string {
@@ -62,14 +70,31 @@ export class ProfileComponent implements OnInit {
     return `${min}:${String(sec).padStart(2, '0')}`;
   }
 
-  constructor(private http: HttpClient, private auth: AuthenticationService, private profile: ProfileService) {}
+  constructor(
+    private http: HttpClient,
+    private auth: AuthenticationService,
+    private profile: ProfileService,
+    private billing: BillingService,
+    private route: ActivatedRoute,
+    private router: Router,
+  ) {}
 
   ngOnInit() {
-    this.auth.isAuthenticated$.subscribe((status) => {
-      this.isLoggedIn = status;
-    });
+    const billing = this.route.snapshot.queryParamMap.get('billing');
+    if (billing === 'success') {
+      this.billingBanner = { type: 'success', message: 'Payment successful! Your access has been activated.' };
+    } else if (billing === 'cancel') {
+      this.billingBanner = { type: 'cancel', message: 'Checkout cancelled — no charge was made.' };
+    }
+    if (billing) {
+      this.router.navigate([], { queryParams: {}, replaceUrl: true });
+    }
 
     this.auth.user$.subscribe((user) => {
+      if (user === undefined) return; // Auth0 still initializing — wait
+      this.authChecking = false;
+      this.isLoggedIn = !!user;
+
       if (user) {
         this.registerUser(user);
       }
@@ -86,6 +111,7 @@ export class ProfileComponent implements OnInit {
       }
 
       this.fetchMongoProfile(user.sub);
+      this.fetchBillingStatus(user.sub);
     });
   }
 
@@ -172,6 +198,42 @@ export class ProfileComponent implements OnInit {
             }
           });
       }
+    });
+  }
+
+  private fetchBillingStatus(auth0Id: string) {
+    this.billingLoading = true;
+    this.billing.getStatus(auth0Id).subscribe({
+      next: (status) => {
+        this.billingStatus = status;
+        this.billingLoading = false;
+      },
+      error: () => { this.billingLoading = false; }
+    });
+  }
+
+  get subscriptionPeriodEnd(): string {
+    if (!this.billingStatus?.subscription?.currentPeriodEnd) return '';
+    return new Date(this.billingStatus.subscription.currentPeriodEnd).toLocaleDateString();
+  }
+
+  subscribe(mode: 'subscription' | 'tokens') {
+    this.auth.user$.pipe(take(1)).subscribe(user => {
+      if (!user?.sub) return;
+      this.billing.startCheckout(user.sub, mode).subscribe({
+        next: ({ url }) => { window.location.href = url; },
+        error: (err) => alert(err?.error?.error || 'Failed to start checkout. Please try again.'),
+      });
+    });
+  }
+
+  openBillingPortal() {
+    this.auth.user$.pipe(take(1)).subscribe(user => {
+      if (!user?.sub) return;
+      this.billing.openPortal(user.sub).subscribe({
+        next: ({ url }) => { window.location.href = url; },
+        error: (err) => alert(err?.error?.error || 'Failed to open billing portal.'),
+      });
     });
   }
 

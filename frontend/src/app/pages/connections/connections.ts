@@ -25,6 +25,8 @@ import { GameEndPopup, GameEndPopupRecapRow, GameEndPopupStat } from '../../shar
 import { DailyGameCtaComponent } from '../../shared/ui/daily-game-cta/daily-game-cta';
 import { RecommendationItem, RecommendationsService } from '../../services/recommendations';
 import { MiniFooterComponent } from '../../shared/ui/minifooter/minifooter';
+import { BillingService } from '../../services/billing.service';
+import { AiUpgradeNoticeComponent } from '../../shared/ui/ai-upgrade-notice/ai-upgrade-notice';
 
 const CONNECTIONS_GENERATION_ERROR = 'Sorry! The Connections failed to generate. Please try again.';
 
@@ -59,6 +61,7 @@ interface ConnectionsGroupState extends ConnectionsGroup {
     GameEndPopup,
     DailyGameCtaComponent,
     MiniFooterComponent,
+    AiUpgradeNoticeComponent,
   ],
   templateUrl: './connections.html',
   styleUrls: ['./connections.css'],
@@ -99,7 +102,7 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
   viewingEndedBoard = false;
   elapsedSeconds = 0;
   guessRecapRows: GameEndPopupRecapRow[] = [];
-  private auth0Id = '';
+  auth0Id = '';
   private currentPlayId = '';
   private currentDailyGame: DailyGameMeta | null = null;
   shareUrl = '';
@@ -113,12 +116,14 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
   private sessionInteracted = false;
   private sessionFinalized = false;
 
+  private readonly saveStorageKey = 'promptle_connections_saved_game';
+
   // Hold onto the shake timer so a reset/new generation can cancel stale animations cleanly.
   private shakeTimeout: ReturnType<typeof setTimeout> | null = null;
   private timerHandle: ReturnType<typeof window.setInterval> | null = null;
 
   constructor(
-    private auth: AuthenticationService,
+    public auth: AuthenticationService,
     private connectionsGameService: ConnectionsGameService,
     private http: HttpClient,
     private gameFeedbackService: GameFeedbackService,
@@ -126,20 +131,26 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
     private router: Router,
     private route: ActivatedRoute,
     private sharedGameService: SharedGameService,
-    private recommendationsService: RecommendationsService
+    private recommendationsService: RecommendationsService,
+    private billingService: BillingService,
   ) {}
 
   ngOnInit(): void {
     // Frontend mirrors the same AI-generation gate the backend enforces.
     this.loadDevSettings();
+    this.tryRestoreSavedGame();
 
     this.auth.user$.subscribe((user) => {
       this.isDevAccount = user?.email === 'promptle99@gmail.com';
       this.auth0Id = user?.sub ?? '';
       if (this.auth0Id) {
         this.loadRecommendations();
+        this.billingService.getStatus(this.auth0Id).subscribe(s => {
+          this.hasAIAccess = s?.hasAccess ?? false;
+        });
       } else {
         this.recommendations = [];
+        this.hasAIAccess = false;
       }
     });
 
@@ -157,10 +168,18 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
     this.clearShareRateLimitCooldown();
   }
 
+  hasAIAccess = false;
+  upgradeNoticeVisible = true;
+
   get canUseAI(): boolean {
-    // Dev account always has access; everyone else depends on the global setting.
-    return this.isDevAccount || this.allowAllAIGeneration;
+    return !!this.auth0Id;
   }
+
+  get aiInputDisabled(): boolean { return !this.hasAIAccess; }
+
+  login() { this.auth.login(); }
+  onUpgradeDismissed() { this.upgradeNoticeVisible = false; }
+  onLockedInputClick() { if (!this.hasAIAccess) this.upgradeNoticeVisible = true; }
 
   get topicIdeas(): RecommendationItem[] {
     return this.recommendations.filter((item) => item.type === 'custom').slice(0, 3);
@@ -527,9 +546,11 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
         this.viewingEndedBoard = false;
         this.stopTimer();
         this.finalizeCurrentSession('completed');
+        this.clearSavedGame();
       } else {
         this.feedback = `Solved: ${matchedGroup.category}`;
         this.feedbackTone = 'success';
+        this.saveGame();
       }
       return;
     }
@@ -561,6 +582,9 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
         this.feedbackTone = 'danger';
         this.viewingEndedBoard = false;
         this.stopTimer();
+        this.clearSavedGame();
+      } else {
+        this.saveGame();
       }
     }, 430);
   }
@@ -647,6 +671,7 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
   }
 
   private applyGame(game: ConnectionsGameData, options: { isShared?: boolean } = {}): void {
+    this.clearSavedGame();
     this.clearPendingShake();
     this.currentDailyGame = game.dailyGame ?? null;
     this.isSharedGame = !!options.isShared;
@@ -997,6 +1022,57 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
         this.sessionFinalized = false;
       },
     });
+  }
+
+  private saveGame(): void {
+    if (!this.hasGame || this.gameOver) return;
+    try {
+      const state = {
+        activeTopic: this.activeTopic,
+        boardWords: this.boardWords,
+        solvedGroups: this.solvedGroups,
+        remainingGroups: this.remainingGroups,
+        allGroups: this.allGroups,
+        mistakesLeft: this.mistakesLeft,
+        gameOver: this.gameOver,
+        gameWon: this.gameWon,
+        guessRecapRows: this.guessRecapRows,
+        elapsedSeconds: this.elapsedSeconds,
+      };
+      localStorage.setItem(this.saveStorageKey, JSON.stringify(state));
+    } catch { /* storage unavailable — ignore */ }
+  }
+
+  private clearSavedGame(): void {
+    try { localStorage.removeItem(this.saveStorageKey); } catch { /* ignore */ }
+  }
+
+  private tryRestoreSavedGame(): boolean {
+    try {
+      const raw = localStorage.getItem(this.saveStorageKey);
+      if (!raw) return false;
+      const state = JSON.parse(raw);
+      if (!state?.activeTopic || !Array.isArray(state.boardWords) || !Array.isArray(state.remainingGroups)) return false;
+
+      this.activeTopic = state.activeTopic;
+      this.boardWords = state.boardWords;
+      this.solvedGroups = state.solvedGroups ?? [];
+      this.remainingGroups = state.remainingGroups;
+      this.allGroups = state.allGroups ?? [];
+      this.mistakesLeft = state.mistakesLeft ?? this.maxMistakes;
+      this.gameOver = state.gameOver ?? false;
+      this.gameWon = state.gameWon ?? false;
+      this.guessRecapRows = state.guessRecapRows ?? [];
+      this.elapsedSeconds = state.elapsedSeconds ?? 0;
+      this.showTopicPrompt = false;
+      this.feedback = 'Welcome back! Pick up where you left off.';
+      this.feedbackTone = 'neutral';
+      if (!this.gameOver) this.startTimer();
+      return true;
+    } catch {
+      this.clearSavedGame();
+      return false;
+    }
   }
 
   // Fisher-Yates shuffle for client-side tile order randomization.

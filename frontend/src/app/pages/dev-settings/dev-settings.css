@@ -194,6 +194,34 @@
   flex-shrink: 0;
 }
 
+.daily-free-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.daily-free-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  min-width: 28px;
+  text-align: center;
+  color: var(--mat-sys-on-surface, #1e293b);
+}
+
+:host-context(.dark) .daily-free-value {
+  color: #f1f5f9;
+}
+
+.daily-free-step-btn {
+  min-width: 36px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .status-pill {
   font-size: 0.68rem;
   font-weight: 700;
