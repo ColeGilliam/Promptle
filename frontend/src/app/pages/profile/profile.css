@@ -454,17 +454,6 @@
 
 .danger-btn {
   gap: 6px;
-  color: #dc2626 !important;
-  border-color: rgba(220, 38, 38, 0.4) !important;
-}
-
-.danger-btn:hover {
-  background: rgba(220, 38, 38, 0.07) !important;
-}
-
-:host-context(.dark) .danger-btn {
-  color: #fca5a5 !important;
-  border-color: rgba(252, 165, 165, 0.35) !important;
 }
 
 .stat-divider {

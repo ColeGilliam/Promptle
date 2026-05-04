@@ -122,44 +122,8 @@
   font-size: 0.875rem !important;
 }
 
-.saved-btn--primary {
-  background: linear-gradient(135deg, #3b82f6, #6366f1) !important;
-  color: white !important;
-  border: none !important;
-  box-shadow: 0 3px 10px rgba(99, 102, 241, 0.35) !important;
-}
-
-.saved-btn--primary:hover {
-  filter: brightness(1.08);
-}
-
-.saved-btn--secondary {
-  color: #6366f1 !important;
-  border-color: rgba(99, 102, 241, 0.4) !important;
-}
-
-.saved-btn--secondary:hover {
-  background: rgba(99, 102, 241, 0.07) !important;
-}
-
 .saved-btn--delete {
-  color: #dc2626 !important;
-  border-color: rgba(220, 38, 38, 0.35) !important;
   margin-left: auto;
-}
-
-.saved-btn--delete:hover {
-  background: rgba(220, 38, 38, 0.07) !important;
-}
-
-:host-context(.dark) .saved-btn--secondary {
-  color: #818cf8 !important;
-  border-color: rgba(129, 140, 248, 0.4) !important;
-}
-
-:host-context(.dark) .saved-btn--delete {
-  color: #fca5a5 !important;
-  border-color: rgba(252, 165, 165, 0.35) !important;
 }
 
 @media (max-width: 520px) {

@@ -555,17 +555,3 @@
   color: #fda4af;
 }
 
-/* ── Shared button style (must match rest of app) ── */
-.rect-btn {
-  border-radius: var(--rect-btn-radius, 8px) !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.04em !important;
-  text-transform: uppercase !important;
-  padding: 0 20px !important;
-  height: 40px !important;
-}
-
-.promp1-btn {
-  background: linear-gradient(135deg, #3b82f6, #6366f1) !important;
-  color: white !important;
-}

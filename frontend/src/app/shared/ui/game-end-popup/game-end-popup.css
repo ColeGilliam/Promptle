@@ -230,16 +230,6 @@
   flex-wrap: wrap;
 }
 
-.view-game-btn {
-  background: linear-gradient(135deg, #0f766e, #0ea5a4) !important;
-  color: white !important;
-}
-
-.share-btn {
-  background: linear-gradient(135deg, #22c55e, #16a34a) !important;
-  color: white !important;
-}
-
 @media (max-width: 480px) {
   .end-card {
     padding: 36px 20px 24px;

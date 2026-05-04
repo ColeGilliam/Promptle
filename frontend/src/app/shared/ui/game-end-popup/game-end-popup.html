@@ -45,7 +45,7 @@
     ></app-game-feedback-card>
 
     <div class="end-actions">
-      <button matButton="filled" class="rect-btn promp3-btn view-game-btn" (click)="onViewGame()">
+      <button matButton="filled" class="rect-btn promp3-btn" (click)="onViewGame()">
         <mat-icon>visibility</mat-icon>
         {{ viewLabel }}
       </button>
@@ -59,7 +59,7 @@
       </button>
       <button
         matButton="filled"
-        class="rect-btn promp2-btn share-btn"
+        class="rect-btn promp2-btn"
         [disabled]="shareDisabled"
         (click)="onShare()"
         *ngIf="showShareButton"

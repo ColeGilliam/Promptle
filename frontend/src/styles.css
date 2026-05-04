@@ -39,8 +39,8 @@ app-navbar {
 .rect-btn {
   border-radius: var(--rect-btn-radius);    /* Closer to 0 = squarer */
   padding: 12px 20px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   text-transform: none;
 }
 
@@ -53,7 +53,74 @@ app-navbar {
   --mdc-filled-button-container-shape: var(--rect-btn-radius);
   --mdc-outlined-button-container-shape: var(--rect-btn-radius);
   --mdc-text-button-container-shape: var(--rect-btn-radius);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   border-radius: var(--rect-btn-radius);
+}
+
+.generate-btn,
+.submit-btn,
+.secondary-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.generate-btn mat-spinner {
+  margin-right: 2px;
+}
+
+.custom-topic-idea-chip {
+  border-radius: 999px !important;
+  border-color: rgba(8, 145, 178, 0.3) !important;
+  background: rgba(240, 253, 250, 0.9) !important;
+  color: #0f172a !important;
+  padding-inline: 14px !important;
+}
+
+.custom-topic-idea-chip:hover {
+  background: rgba(204, 251, 241, 0.95) !important;
+}
+
+body.dark .custom-topic-idea-chip {
+  background: rgba(15, 23, 42, 0.82) !important;
+  border-color: rgba(34, 211, 238, 0.28) !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark .custom-topic-idea-chip:hover {
+  background: rgba(30, 41, 59, 0.92) !important;
+}
+
+.ai-guest-sign-in-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 22px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--promp1-from, #6366f1), var(--promp1-to, #3b82f6));
+  color: #fff;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(99, 102, 241, 0.35);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.ai-guest-sign-in-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.ai-guest-sign-in-btn mat-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  font-size: 1.1rem;
 }
 
 /* Prevent iOS Safari from auto-zooming when any input is focused.
