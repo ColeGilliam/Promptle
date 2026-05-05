@@ -15,6 +15,7 @@ export const PORT = process.env.PORT || 3001;
 export const MONGODB_URI = process.env.MONGODB_URI;
 export const DB_NAME = process.env.DB_NAME || 'promptle';
 export const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+export const API_NINJAS_API_KEY = process.env.API_NINJAS_API_KEY || '';
 export const LOG_LEVEL = process.env.LOG_LEVEL || '';
 const dbPingInterval = Number(process.env.DB_PING_INTERVAL_MS || 30000);
 export const DB_PING_INTERVAL_MS =

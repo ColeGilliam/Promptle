@@ -2,6 +2,7 @@ import { Server } from "socket.io";
 import { setIo } from "./socketState.js";
 import { markRoomStarted, getRoomMode } from "../controllers/gameController.js";
 import { validateProfileUsernameRules } from "../services/profileModeration.js";
+import { filterProfanity } from "../services/profanityFilter.js";
 import { appLogger } from "../lib/logger.js";
 
 const socketLogger = appLogger.child({ component: 'socket' });
@@ -322,24 +323,26 @@ export function setupSocket(server) {
       }
     });
 
-    socket.on('chat message', (data) => {
+    socket.on('chat message', async (data) => {
       let room = 'general';
       let message = '';
       if (typeof data === 'string') {
         message = data;
-      } else if (data && data.room && data.text) {
+      } else if (data && typeof data.room === 'string' && typeof data.text === 'string') {
         room = data.room.trim();
         message = data.text.trim();
       }
       if (!message) return;
       const senderName = playerNames.get(socket.id) || 'Unknown';
+      const filteredMessage = await filterProfanity(message);
+
       socketLogger.debug('socket_chat_message', {
         roomId: room,
         socketId: socket.id,
         senderName,
-        message,
+        messageLength: message.length,
       });
-      io.to(room).emit('chat message', { senderName, text: message });
+      io.to(room).emit('chat message', { senderName, text: filteredMessage });
     });
 
     socket.on('leave-room', () => {
