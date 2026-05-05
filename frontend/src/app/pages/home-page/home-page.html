@@ -44,7 +44,7 @@
       <!-- Single-player CTA -->
       <div class="hero-actions" *ngIf="!isMultiplayer">
         <div
-          class="action-card"
+          class="action-card surface-card surface-card--interactive"
           [class.action-card--disabled]="!hasSavedGame"
           (click)="hasSavedGame && onLoadClicked()"
           role="button"
@@ -70,7 +70,7 @@
       <!-- Multiplayer CTA -->
       <div class="hero-actions" *ngIf="isMultiplayer">
         <div
-          class="action-card"
+          class="action-card surface-card surface-card--interactive"
           (click)="joinChatRoom()"
           role="button"
           tabindex="0"
@@ -100,7 +100,7 @@
     <div class="modes-grid">
 
       <div
-        class="mode-card reveal"
+        class="mode-card surface-card surface-card--interactive reveal"
         [class.mode-card--active]="multiplayerMode === 'standard'"
         (click)="multiplayerMode = 'standard'"
         role="button"
@@ -115,7 +115,7 @@
       </div>
 
       <div
-        class="mode-card mode-card--chaos reveal"
+        class="mode-card mode-card--chaos surface-card surface-card--interactive reveal"
         style="--delay: 90ms"
         [class.mode-card--active]="multiplayerMode === 'chaos'"
         (click)="multiplayerMode = 'chaos'"
@@ -131,7 +131,7 @@
       </div>
 
       <div
-        class="mode-card mode-card--1v1 reveal"
+        class="mode-card mode-card--1v1 surface-card surface-card--interactive reveal"
         style="--delay: 180ms"
         [class.mode-card--active]="multiplayerMode === '1v1'"
         (click)="multiplayerMode = '1v1'"
@@ -169,7 +169,7 @@
     <div class="play-grid" *ngIf="!isMultiplayer || canCreateRooms || canUseAI">
 
       <!-- Popular Topics card (hidden in multiplayer if user can't create DB rooms) -->
-      <mat-card class="play-card reveal" *ngIf="!isMultiplayer || canCreateRooms">
+      <mat-card class="play-card surface-card surface-card--interactive reveal" *ngIf="!isMultiplayer || canCreateRooms">
         <mat-card-content>
           <div class="play-card-header">
             <div class="play-card-icon-wrap play-icon-db">
@@ -211,7 +211,7 @@
       </mat-card>
 
       <!-- AI / Custom topic card — always visible; guests see a sign-in overlay -->
-      <mat-card class="play-card reveal" style="--delay: 100ms">
+      <mat-card class="play-card surface-card surface-card--interactive reveal" style="--delay: 100ms">
         <mat-card-content>
           <div class="play-card-header">
             <div class="play-card-icon-wrap play-icon-ai">
@@ -335,7 +335,7 @@
     <div class="game-cards-grid">
 
       <!-- Connections card -->
-      <a class="game-card game-card--connections reveal" routerLink="/connections">
+      <a class="game-card game-card--connections surface-card surface-card--interactive reveal" routerLink="/connections">
         <div class="game-card-banner">
           <div class="conn-preview" aria-hidden="true">
             <div class="conn-preview-row conn-row-yellow"></div>
@@ -359,7 +359,7 @@
       </a>
 
       <!-- Crossword card -->
-      <a class="game-card game-card--crossword reveal" style="--delay: 90ms" routerLink="/crossword">
+      <a class="game-card game-card--crossword surface-card surface-card--interactive reveal" style="--delay: 90ms" routerLink="/crossword">
         <div class="game-card-banner game-card-banner--crossword">
           <img
             class="crossword-preview-image"
@@ -400,7 +400,7 @@
 
 <!-- ══ Room-creation loading overlay ══ -->
 <div class="creating-overlay" *ngIf="isCreatingRoom" aria-live="polite">
-  <mat-card class="creating-card">
+  <mat-card class="creating-card surface-card">
     <mat-card-content>
       <mat-spinner diameter="48"></mat-spinner>
       <h3>Creating your multiplayer room…</h3>

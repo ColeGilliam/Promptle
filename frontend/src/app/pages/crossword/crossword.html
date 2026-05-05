@@ -16,7 +16,7 @@
   <app-navbar></app-navbar>
 
   <main class="crossword-main">
-    <section class="hero-card">
+    <section class="hero-card surface-card surface-card--page">
       <div class="hero-copy">
         <h1>Build a custom crossword for any topic</h1>
         <p>
@@ -69,7 +69,7 @@
     </section>
 
     <section class="panel-grid" *ngIf="showTopicPrompt">
-      <section class="panel-card panel-card--controls">
+      <section class="panel-card panel-card--controls surface-card surface-card--page">
         <div class="panel-header">
           <div>
             <h2>Topic Prompt</h2>
@@ -152,7 +152,7 @@
     </section>
 
     <section class="game-layout" *ngIf="showGameLayout">
-      <section class="board-panel panel-card">
+      <section class="board-panel panel-card surface-card surface-card--page">
         <ng-container *ngIf="activePuzzle as puzzle; else loadingBoard">
           <div class="panel-header board-header">
             <div class="board-header-copy">
@@ -374,7 +374,7 @@
       </section>
 
       <section class="sidebar-stack" *ngIf="activePuzzle as puzzle">
-        <section class="panel-card clues-panel">
+        <section class="panel-card clues-panel surface-card surface-card--page">
           <div class="clue-group">
             <div class="panel-header clue-header">
               <div>

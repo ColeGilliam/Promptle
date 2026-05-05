@@ -18,7 +18,7 @@
 
   <main class="connections-main">
     <!-- Static hero copy introducing the mode before the prompt or board appears. -->
-    <section class="hero-card">
+    <section class="hero-card surface-card surface-card--page">
       <div class="hero-copy">
         <h1>Build a topic-specific Connections board with AI.</h1>
         <p>
@@ -45,7 +45,7 @@
 
     <!-- Topic entry is only shown before a board exists or after the player explicitly resets it. -->
     <section class="panel-grid" *ngIf="showTopicPrompt">
-      <section class="panel-card panel-card--controls">
+      <section class="panel-card panel-card--controls surface-card surface-card--page">
         <div class="panel-header">
           <div>
             <h2>Topic Prompt</h2>
@@ -132,7 +132,7 @@
 
     <!-- The game shell stays mounted during loading so the board can transition in immediately. -->
     <section class="game-layout" *ngIf="showGameLayout">
-      <section class="board-panel panel-card">
+      <section class="board-panel panel-card surface-card surface-card--page">
         <div class="panel-header board-header">
           <div>
             <h2>Find the four connections</h2>
@@ -231,7 +231,7 @@
         </div>
       </section>
 
-      <section class="panel-card panel-card--stats">
+      <section class="panel-card panel-card--stats surface-card surface-card--page">
         <!-- Sidebar keeps meta state visible without competing with the puzzle grid itself. -->
         <div class="stats-topic-row">
           <h2>{{ activeTopic || 'No board loaded' }}</h2>

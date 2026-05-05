@@ -103,23 +103,6 @@
   grid-template-columns: minmax(0, 1fr);
 }
 
-.hero-card,
-.panel-card {
-  border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 16px 44px rgba(40, 78, 130, 0.12);
-}
-
-:host-context(.dark) .hero-card,
-:host-context(.dark) .panel-card {
-  background: rgba(11, 18, 32, 0.74);
-  border-color: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 18px 52px rgba(0, 0, 0, 0.34);
-}
-
 .hero-card {
   display: flex;
   align-items: center;

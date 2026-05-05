@@ -32,7 +32,7 @@
       ></app-promptle-game-card>
 
       <section
-        class="loading-project-placeholder"
+        class="loading-project-placeholder surface-card surface-card--soft surface-card--pad-lg"
         *ngIf="gameLoading && !gameError"
         [@cardEnter]
         aria-label="Loading placeholder"
@@ -80,7 +80,7 @@
       </section>
 
       <div
-        class="dev-answer-preview-card"
+        class="dev-answer-preview-card surface-card surface-card--success surface-card--pad-md"
         *ngIf="showDevAnswerPreview"
         [@cardEnter]
       >
@@ -119,7 +119,7 @@
 
       <!-- ══ MULTIPLAYER PRE-GAME PANEL ══ -->
       <div
-        class="mp-pregame-card"
+        class="mp-pregame-card surface-card"
         *ngIf="isMultiplayer && !gameStarted && !gameLoading && !gameError"
         [@cardEnter]
       >
@@ -305,7 +305,7 @@
         [isSpectating]="isSpectating"
       ></app-game-onboarding-tour>
       <div
-        class="guess-actions-card"
+        class="guess-actions-card surface-card surface-card--pad-sm"
         *ngIf="answers.length && (!isMultiplayer || gameStarted) && !isSpectating"
         [@cardEnter]
       >
@@ -377,7 +377,7 @@
 
       <!-- ══ 1v1 SHARED GUESS GRID ══ -->
       <div
-        class="game-grid-card"
+        class="game-grid-card surface-card surface-card--pad-md"
         *ngIf="isOneVsOne && headers.length && gameStarted"
         [@cardEnterDelayed]
       >
@@ -428,7 +428,7 @@
 
       <!-- ══ SPECTATE GRID ══ -->
       <div
-        class="game-grid-card spectate-grid-card"
+        class="game-grid-card spectate-grid-card surface-card surface-card--pad-md"
         *ngIf="isSpectating && !isOneVsOne && headers.length"
         [@cardEnterDelayed]
       >
@@ -496,7 +496,7 @@
         [arrowSide]="'down'"
       ></app-game-onboarding-tour>
       <div
-        class="game-grid-card"
+        class="game-grid-card surface-card surface-card--pad-md"
         *ngIf="!isOneVsOne && !isSpectating && headers.length && (!isMultiplayer || gameStarted)"
         [@cardEnterDelayed]
       >
