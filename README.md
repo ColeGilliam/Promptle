@@ -1,31 +1,117 @@
 # Promptle
-This is a wordle-like puzle game which allows for infinite topics to be played in a wordle style.
+
+Promptle is a browser puzzle game inspired by Wordle. Players pick or generate a topic, make guesses, and use structured feedback to narrow down the answer. The app also includes daily games, Connections-style puzzles, crosswords, multiplayer rooms, profiles, saved games, recommendations, and optional billing-backed AI access.
+
+## Tech Stack
+
+- Angular 20 frontend
+- Node.js / Express backend
+- MongoDB for persistence
+- Socket.IO for multiplayer and chat
+- Auth0 for sign-in, with an optional local dev auth bypass
+- OpenAI for generated puzzle content and moderation
+- Stripe for paid AI access
 
 ## Prerequisites
-- Node.js 18+ and npm installed
+
+- Node.js 20+ and npm
 - MongoDB connection string
-- (Optional, for AI generation) OpenAI API key
+- OpenAI API key if you want AI-generated games or moderation to work
+- Stripe keys only if you are testing billing flows
 
-## Backend (Node/Express)
-1. `cd backend`
-2. `npm install`
-3. Create a `.env` in `backend/`:
-   ```
-   MONGODB_URI=your_mongodb_connection_string
-   PORT=3001
-   OPENAI_API_KEY=your_openai_key   # required for /api/subjects
-   ```
-4. Start the server: `npm run devStart` (or `node server.js`). It listens on `http://localhost:3001`.
+## Setup
 
-Key endpoints:
-- `GET /health` – health check
-- `GET /api/popularTopics/list` – list topics
-- `GET /api/game/start?topicId=1` – game data from MongoDB
-- `POST /api/subjects` – generate subjects via OpenAI (needs `OPENAI_API_KEY`)
+From the project root, install dependencies for each app:
 
-## Frontend (Angular)
-1. `cd frontend`
-2. `npm install`
-3. `npm start` (or `ng serve`) then open `http://localhost:4200/`.
+```bash
+npm install --prefix backend
+npm install --prefix frontend
+```
 
-The frontend expects the backend at `http://localhost:3001` (see services). Adjust service URLs if you change ports or deploy.
+Create `backend/.env` from the example file:
+
+```bash
+cp backend/.env.example backend/.env
+```
+
+At minimum, set:
+
+```bash
+MONGODB_URI=your_mongodb_connection_string
+DB_NAME=promptle
+PORT=3001
+```
+
+For local development without using Auth0, enable the dev auth bypass:
+
+```bash
+DEV_AUTH_ENABLED=true
+DEV_AUTH0_ID=dev-user
+DEV_AUTH_EMAIL=dev@example.com
+DEV_AUTH_NAME=Dev User
+```
+
+Optional service variables:
+
+- `OPENAI_API_KEY` enables AI-generated Promptle, Connections, Crossword, topic validation, and moderation features.
+- `API_NINJAS_API_KEY` enables external profanity filtering.
+- `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_MONTHLY_PRICE_ID`, and `STRIPE_TOKEN_PRICE_ID` enable billing flows.
+- `CLIENT_URL=http://localhost:8080` keeps Stripe redirects pointed at the local Angular dev server.
+
+## Run Locally
+
+Start the backend in one terminal:
+
+```bash
+cd backend
+npm run devStart
+```
+
+Start the frontend in another terminal:
+
+```bash
+cd frontend
+npm start
+```
+
+Open `http://localhost:8080`.
+
+The Angular dev server proxies `/api` and `/socket.io` to `http://localhost:3001`, so the frontend and backend should both be running for the full app experience.
+
+## Useful Scripts
+
+Backend:
+
+```bash
+cd backend
+npm start        # start with Node
+npm run devStart # start with nodemon
+npm test         # run backend node:test tests
+```
+
+Frontend:
+
+```bash
+cd frontend
+npm start # run Angular dev server on port 8080
+npm test  # run Angular tests
+npm run build
+```
+
+## Project Layout
+
+```text
+backend/
+  app.js              Express app setup
+  server.js           HTTP and Socket.IO server startup
+  routes/             API route registration
+  controllers/        Request handlers
+  services/           Game generation, moderation, billing, and persistence helpers
+  sockets/            Multiplayer socket behavior
+  test/               Backend tests
+
+frontend/
+  src/app/pages/      Main Angular views
+  src/app/services/   API, auth, game, billing, and socket clients
+  src/app/shared/     Shared UI and layout code
+```
